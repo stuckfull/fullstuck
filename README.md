@@ -301,4 +301,19 @@ Anda bisa menelusuri elemen yang lebih menjorok ke dalam (children) menggunakan 
         "p.bio" => '$user["bio"]'
     ]
 ]
+]
 ```
+
+---
+
+## 🚀 Penggunaan Lanjutan (Advanced Usage)
+
+Mesin *templating* ini bukan sekadar untuk mengganti teks biasa. Berkat eksekusi yang terjadi murni di level abstraksi DOM sebelum dokumen dikirim ke *browser*, sistem ini sanggup mengeksekusi operasi injeksi kompleks yang sangat membantu integrasi *Backend* dan *Frontend*.
+
+Beberapa studi kasus nyata tingkat lanjut meliputi:
+1. **Injeksi "State Hydration"** untuk memberikan _initial state_ JSON tanpa AJAX.
+2. **Manipulasi Meta Tag SEO Dinamis** untuk *Open Graph* (Thumbnail WA/Twitter).
+3. **Injeksi Token Keamanan (CSRF Siluman)** pada *form* HTML statis.
+4. **Pencegahan FOUC (Flash of Unstyled Content)** untuk preferensi *Dark Mode*.
+
+Baca lebih lanjut tentang trik-trik ini di dokumen **[Advanced Usage (Panduan Tingkat Lanjut)](advanced-usage.md)**.
