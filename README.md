@@ -224,7 +224,8 @@ $rules = [
 ];
 
 // 3. Render
-render_template(__DIR__ . '/blog-list.html', $data, $rules);
+// Parameter keempat bersifat opsional, namun disarankan untuk mengatur direktori output cache secara eksplisit
+render_template(__DIR__ . '/blog-list.html', $data, $rules, __DIR__ . "/build-template");
 ```
 
 ---
