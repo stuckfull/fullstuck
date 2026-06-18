@@ -3,21 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <title>Judul Sementara</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; line-height: 1.6; }
+        .banner-promo { background: #ffd700; padding: 10px; text-align: center; margin-bottom: 20px; }
+        .alert { background: #ffebee; color: #c62828; padding: 10px; margin-bottom: 10px; border-radius: 4px; }
+        .debug-panel { background: #333; color: lime; padding: 10px; font-family: monospace; margin-bottom: 20px; }
+        .thumbnail { max-width: 150px; display: block; margin-bottom: 10px; }
+        .nav { list-style: none; padding: 0; display: flex; gap: 15px; background: #eee; padding: 10px; }
+        .nav a { text-decoration: none; color: #333; font-weight: bold; }
+        .content { display: block; padding: 15px; border: 1px solid #ccc; background: #fafafa; margin-top: 10px; }
+        .user-controls { margin-bottom: 20px; }
+        .user-controls a, .user-controls button { padding: 8px 15px; text-decoration: none; border-radius: 4px; border: none; cursor: pointer; }
+        .btn-primary { background: #4a90e2; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+    </style>
 </head>
 <body>
-    <div id="blog-container">
-        <article class="post-item">
-            <h2>Judul 1</h2>
-            <p>Ringkasan 1</p>
-            <div class="content">Content HTML statis</div>
-            <a href="#" class="read-more">Baca selengkapnya</a>
-        </article>
-        <article class="post-item">
-            <h2>Judul 2</h2>
-            <p>Ringkasan 2</p>
-            <div class="content">Content HTML statis</div>
-            <a href="#" class="read-more">Baca selengkapnya</a>
-        </article>
+    <!-- 5. RUN-TIME LOGIC (IF Murni) -->
+    <div class="banner-promo">
+        <strong>PROMO:</strong> Dapatkan fitur premium sekarang juga!
     </div>
+
+    <header>
+        <div class="user-controls">
+            <!-- 5. RUN-TIME LOGIC (IF & ELSE) -->
+            <a href="?page=dashboard" class="btn-dashboard btn-primary">Ke Dashboard</a>
+            <a href="?page=login" class="btn-login btn-primary">Masuk</a>
+
+            <!-- 5. RUN-TIME LOGIC (TERNARY) -->
+            <button class="btn-auth" href="#">Auth Placeholder</button>
+        </div>
+
+        <!-- 5. RUN-TIME LOGIC (FOREACH) -->
+        <ul class="nav">
+            <li><a href="#">Menu 1</a></li>
+            <li><a href="#">Menu Dummy</a></li>
+        </ul>
+    </header>
+
+    <main>
+        <hr>
+        <!-- 3. TARGETING TUNGGAL (^ prefix) -->
+        <div class="alert">Alert Pertama (Target)</div>
+        <div class="alert">Alert Kedua (Abaikan)</div>
+        <hr>
+
+        <!-- 4. COMPILE-TIME CLEANUP (@remove Node) -->
+        <div class="debug-panel">Ini adalah sampah debug dari front-end. HARUS DIHAPUS SAAT COMPILE.</div>
+
+        <!-- 4. COMPILE-TIME CLEANUP (@remove Attribute) -->
+        <p><strong>Gambar di bawah seharusnya tidak memiliki border merah (style) dan atribut data-dummy:</strong></p>
+        <img class="thumbnail" style="border:5px solid red" data-dummy="123" src="https://via.placeholder.com/150" alt="Thumbnail">
+
+        <!-- 1. EXPLICIT TEXT (@text) -->
+        <h3>Subjudul Placeholder</h3>
+
+        <!-- 2. MANIPULASI ATRIBUT -->
+        <p>
+            <a class="external" href="#">Eksternal Link Dummy</a> | 
+            <a data-type="link" href="#">Teks Asli Data-Type Link</a>
+        </p>
+
+        <!-- 1. RAW HTML -->
+        <span class="content">HTML Dummy</span>
+    </main>
 </body>
 </html>

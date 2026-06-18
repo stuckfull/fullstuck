@@ -69,44 +69,73 @@ if ($route === 'profile') {
 
 } elseif ($route === 'blog') {
     // ==========================================
-    // CONTROLLER: BLOG (Demo Dasar)
+    // CONTROLLER: BLOG (Demo Semua Fitur DSL)
     // ==========================================
     
     $data = [
-        'pageTitle' => 'Eksperimen DOM Templating Deklaratif (Procedural)',
-        'blogs' => [
-            [
-                'title' => 'Vibe Coding', 
-                'summary' => 'Sangat menyenangkan ketika tidak ada OOP yang rumit...',
-                'wysiwyg_content' => '<strong>OOP</strong> terkadang over-engineered. Procedural ftw!',
-                'url' => 'https://example.com/vibe-coding'
-            ],
-            [
-                'title' => 'Procedural PHP', 
-                'summary' => 'Lebih fungsional, bersih, ringan dan elegan.',
-                'wysiwyg_content' => 'Gunakan <em>array</em> sebagai struktur datanya. Mudah dan <u>cepat</u>.',
-                'url' => 'https://example.com/procedural-php'
-            ]
+        'pageTitle' => 'Eksperimen Fitur Komplit',
+        'subJudul' => 'Daftar Artikel (Dirender dengan @text)',
+        'htmlContent' => '<i>Ini di-render secara <b>Raw HTML</b> tanpa lolos XSS escape.</i>',
+        'linkUrl' => 'https://github.com/alex-subroto',
+        'realImageUrl' => 'https://ui-avatars.com/api/?name=Thumbnail&background=random',
+        
+        // Logika Kondisional
+        'isPromoActive' => true,
+        'isLoggedIn' => true, // Coba ubah menjadi false untuk melihat perubahan elemen auth
+        
+        'menus' => [
+            ['url' => '?page=dashboard', 'label' => 'Beranda'],
+            ['url' => '?page=profile', 'label' => 'Profil Pengguna'],
+            ['url' => '?page=blog', 'label' => 'Daftar Artikel']
         ]
     ];
 
     $rules = [
-        "title" => '$pageTitle',
-        "article.post-item" => [
-            "@foreach" => '$blogs as $blog',
-            "h2" => '$blog["title"]',
-            "p"  => '$blog["summary"]',
-            "div.content" => [
-                "@html" => '$blog["wysiwyg_content"]'
-            ],
-            "a.read-more" => [
-                "[href]" => '$blog["url"]',
-                "[title]" => '$blog["title"]'
+        // 1. MANIPULASI TEKS & HTML
+        "title" => '$pageTitle', 
+        "h3" => ["@text" => '$subJudul'],
+        "span.content" => ["@html" => '$htmlContent'],
+
+        // 2. MANIPULASI ATRIBUT
+        "a.external" => ["[href]" => '$linkUrl', "[target]" => '"_blank"'],
+        "a[data-type='link']" => 'Teks Link Baru',
+
+        // 3. TARGETING TUNGGAL (^ prefix)
+        "^div.alert" => '"Ini alert pertama saja yang terganti (" . date("H:i:s") . ")"',
+
+        // 4. COMPILE-TIME CLEANUP
+        "div.debug-panel" => "@remove",
+        "img.thumbnail" => [
+            "[style]" => "@remove",       
+            "[data-dummy]" => "@remove",  
+            "[src]" => '$realImageUrl'    
+        ],
+
+        // 5. RUN-TIME LOGIC (@if, Ternary, @foreach)
+        "div.banner-promo" => [
+            "@if" => '$isPromoActive'
+        ],
+        "a.btn-dashboard" => [
+            "@if" => '$isLoggedIn'
+        ],
+        "a.btn-login" => [
+            "@if" => '!$isLoggedIn'
+        ],
+        "button.btn-auth" => [
+            "@text"   => '$isLoggedIn ? "Logout" : "Login"',
+            "[href]"  => '$isLoggedIn ? "?logout=1" : "?page=login"',
+            "[class]" => '$isLoggedIn ? "btn-danger" : "btn-primary"'
+        ],
+        "ul.nav > li" => [
+            "@foreach" => '$menus as $menu',
+            "a" => [
+                "[href]" => '$menu["url"]',
+                "@text"  => '$menu["label"]'
             ]
         ]
     ];
 
-    render_template(__DIR__ . '/blog-list.html', $data, $rules);
+    render_template(__DIR__ . '/blog-list.html', $data, $rules, __DIR__ . '/build-template');
 
 } else {
     // ==========================================
