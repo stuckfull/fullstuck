@@ -15,6 +15,7 @@ Mesin ini menggunakan arsitektur **JIT (Just-In-Time) Caching** yang berfokus pa
 Mesin templating pada umumnya selalu mem-parsing sintaks setiap kali halaman diakses (CPU intensive). Engine ini memecahkan masalah tersebut dengan bertumpu pada *file statis PHP*:
 - **Pemeriksaan 0-Overhead**: Engine mengandalkan perintah native `filemtime($templatePath) > filemtime($cacheFile)`. Selama file sumber HTML belum diubah secara fisik, blok logika parser DOM dan XPath **tidak akan pernah** dieksekusi.
 - **Eksekusi Sekilat Native PHP**: Jika file HTML tidak berubah, sistem hanya me-*require* file `.php` hasil kompilasinya saja. Performa eksekusi rendering Anda akan dijamin 100% sama dengan mengeksekusi script native PHP prosedural biasa!
+- **Kustomisasi Direktori Cache**: Secara default, *engine* akan mengumpulkan *cache* ke dalam folder `build-template/`. Anda dapat bebas mengatur lokasi folder ini dengan menyisipkan parameter opsional `$cacheDir` pada argumen keempat pemanggilan fungsi `render_template()`.
 
 ### 🛡️ Keamanan (Security)
 Keamanan adalah nyawa bagi sistem templating yang merender data secara dinamis. Engine ini sudah memblokir celah serangan fatal:
@@ -51,6 +52,37 @@ Secara bawaan (*native*), *compiler* mengubah selektor CSS menjadi XPath. Untuk 
 - Pseudo-elements: `::before`, `::after`, `::placeholder`
 - Sibling Combinators: `+` (Adjacent Sibling), `~` (General Sibling)
 *(Catatan: Jika compiler mendeteksi karakter blacklist, pencarian akan secara aman diredam/dihentikan pada scope tersebut tanpa menyebabkan error parsial)*.
+
+### 3. Logika Perbandingan (Vanilla JavaScript)
+Untuk mempermudah konseptualisasi, penulisan *ruleset* pada dasarnya ekuivalen dengan operasi DOM pada Vanilla JavaScript:
+
+```php
+$rules = [
+    // Menimpa isi teks (menggunakan String Shorthand)
+    "title" => 'Isi Title Baru', 
+    // Sama dengan: document.querySelector("title").innerText = "Isi Title Baru";
+
+    // Menimpa isi teks (menggunakan Logic Directive spesifik)
+    "h3" => ["@text" => 'Subjudul Halaman'],
+    // Sama dengan: document.querySelector("h3").innerText = "Subjudul Halaman";
+
+    // Menyuntikkan Raw HTML (Bypass XSS protection)
+    "span" => ["@html" => '<strong>Teks Tebal</strong>'],
+    // Sama dengan: document.querySelector("span").innerHTML = "<strong>Teks Tebal</strong>";
+
+    // Menimpa teks pada elemen ber-atribut (BUKAN mengubah atributnya)
+    "a[href]" => 'Teks Link Baru',
+    // Sama dengan: document.querySelector("a[href]").innerText = "Teks Link Baru";
+
+    // Menimpa/menambah nilai pada atribut
+    "a" => ["[href]" => 'https://example.com'],
+    // Sama dengan: document.querySelector("a").setAttribute("href", "https://example.com");
+
+    // Menambah atribut spesifik/custom
+    "a" => ["[data-custom]" => '123']
+    // Sama dengan: document.querySelector("a").setAttribute("data-custom", "123");
+];
+```
 
 ---
 
