@@ -18,30 +18,24 @@ $data = [
     ]
 ];
 
-// Aturan/Ruleset penyuntikkan ke DOM (Berbasis CSS Selector & Deklaratif murni)
+// Aturan/Ruleset penyuntikkan ke DOM (Berbasis CSS-styled Declarative)
 $rules = [
-    'texts' => [
-        "title" => '$pageTitle'
-    ],
-    'loops' => [
-        "#blog-container" => [
-            'item'  => "article.post-item",
-            'array' => '$blogs',
-            'alias' => '$blog',
-            
-            // Teks dinamis pada masing-masing item
-            'texts' => [
-                "h2" => '$blog["title"]',
-                "p"  => '$blog["summary"]'
-            ],
-            
-            // Atribut dinamis
-            'attributes' => [
-                "a.read-more" => [
-                    "href" => '$blog["url"]',
-                    "title" => '$blog["title"]'
-                ]
-            ]
+    // Teks langsung (shorthand)
+    "title" => '$pageTitle',
+    
+    // Looping & Nested Selector (Selector sebagai key utama)
+    "#blog-container" => [
+        // 'loop' key bertugas mendeklarasikan array looping: [arrayVar, aliasVar, itemSelector]
+        "loop" => ['$blogs', '$blog', 'article.post-item'],
+        
+        // Nested selectors (Relatif terhadap 'article.post-item' karena berada di dalam loop)
+        "h2" => '$blog["title"]',
+        "p"  => '$blog["summary"]',
+        
+        "a.read-more" => [
+            // Jika diawali dengan '@', maka ia akan mengatur atribut
+            "@href"  => '$blog["url"]',
+            "@title" => '$blog["title"]'
         ]
     ]
 ];

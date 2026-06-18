@@ -58,69 +58,48 @@ function render_template(string $templatePath, array $data, array $rules, string
             return implode(' | ', $paths);
         };
 
-        // Fungsi rekursif untuk mengurai rules array (text, attribute, loops)
+        // Fungsi rekursif untuk mengurai rules array (Nested Selector / CSS Style)
         $applyRules = function(array $currentRules, ?DOMNode $context = null) use (&$applyRules, $xpath, &$replacements, $getMarker, $dom, $css2xpath) {
-            
-            // 1. Aturan Teks
-            if (isset($currentRules['texts'])) {
-                foreach ($currentRules['texts'] as $selector => $phpVar) {
-                    $xpathSel = $css2xpath($selector);
-                    $nodes = $context ? $xpath->query($xpathSel, $context) : $xpath->query($xpathSel);
-                    if ($nodes !== false) {
-                        foreach ($nodes as $node) {
-                            $marker = $getMarker();
-                            $node->nodeValue = $marker;
-                            $replacements[$marker] = "<?= htmlspecialchars({$phpVar} ?? '', ENT_QUOTES, 'UTF-8') ?>";
-                        }
-                    }
+            foreach ($currentRules as $selector => $value) {
+                // Abaikan reserved keys
+                if ($selector === 'loop' || $selector === 'text' || str_starts_with($selector, '@')) {
+                    continue;
                 }
-            }
 
-            // 2. Aturan Atribut
-            if (isset($currentRules['attributes'])) {
-                foreach ($currentRules['attributes'] as $selector => $attrs) {
-                    $xpathSel = $css2xpath($selector);
-                    $nodes = $context ? $xpath->query($xpathSel, $context) : $xpath->query($xpathSel);
-                    if ($nodes !== false) {
-                        foreach ($nodes as $node) {
-                            if ($node instanceof DOMElement) {
-                                foreach ($attrs as $attr => $phpVar) {
-                                    $marker = $getMarker();
-                                    $node->setAttribute($attr, $marker);
-                                    $replacements[$marker] = "<?= htmlspecialchars({$phpVar} ?? '', ENT_QUOTES, 'UTF-8') ?>";
-                                }
-                            }
-                        }
+                $xpathSel = $css2xpath($selector);
+                $nodes = $context ? $xpath->query($xpathSel, $context) : $xpath->query($xpathSel);
+                
+                if ($nodes === false || $nodes->length === 0) continue;
+
+                if (is_string($value)) {
+                    // Shorthand untuk mengatur text node
+                    foreach ($nodes as $node) {
+                        $marker = $getMarker();
+                        $node->nodeValue = $marker;
+                        $replacements[$marker] = "<?= htmlspecialchars({$value} ?? '', ENT_QUOTES, 'UTF-8') ?>";
                     }
-                }
-            }
-
-            // 3. Aturan Looping
-            if (isset($currentRules['loops'])) {
-                foreach ($currentRules['loops'] as $containerSel => $loopConfig) {
-                    $xpathSel = $css2xpath($containerSel);
-                    $containers = $context ? $xpath->query($xpathSel, $context) : $xpath->query($xpathSel);
-                    if ($containers !== false) {
-                        foreach ($containers as $container) {
-                            $itemSel = $css2xpath($loopConfig['item']);
-                            $items = $xpath->query($itemSel, $container);
+                } elseif (is_array($value)) {
+                    // Konfigurasi kompleks (Looping, Atribut, atau Nested Selectors)
+                    if (isset($value['loop'])) {
+                        // Aturan Looping
+                        foreach ($nodes as $container) {
+                            list($arrayVar, $alias, $itemSel) = $value['loop'];
+                            $itemXPath = $css2xpath($itemSel);
+                            $items = $xpath->query($itemXPath, $container);
                             
                             if ($items !== false && $items->length > 0) {
                                 $templateNode = $items->item(0);
                                 
-                                // Aplikasikan rules secara rekursif pada template node (child element)
-                                $applyRules($loopConfig, $templateNode);
+                                // Terapkan sisa rule array ini pada item template (nesting)
+                                $applyRules($value, $templateNode);
                                 
                                 $startMarker = $getMarker();
                                 $endMarker = $getMarker();
                                 
-                                $arrayVar = $loopConfig['array'];
-                                $alias = $loopConfig['alias'];
-                                
                                 $replacements[$startMarker] = "<?php foreach ({$arrayVar} as {$alias}): ?>";
                                 $replacements[$endMarker] = "<?php endforeach; ?>";
                                 
-                                // Sisipkan PHP Foreach tag sebelum dan sesudah node template
+                                // Sisipkan PHP Foreach tag
                                 $container->insertBefore($dom->createTextNode($startMarker), $templateNode);
                                 if ($templateNode->nextSibling) {
                                     $container->insertBefore($dom->createTextNode($endMarker), $templateNode->nextSibling);
@@ -128,11 +107,32 @@ function render_template(string $templatePath, array $data, array $rules, string
                                     $container->appendChild($dom->createTextNode($endMarker));
                                 }
                                 
-                                // Bersihkan item dummy lainnya di dalam container HTML
+                                // Bersihkan item dummy lainnya
                                 for ($i = 1; $i < $items->length; $i++) {
                                     $container->removeChild($items->item($i));
                                 }
                             }
+                        }
+                    } else {
+                        // Atribut, Eksplisit Text, dan Nested Selector biasa
+                        foreach ($nodes as $node) {
+                            if (isset($value['text'])) {
+                                $marker = $getMarker();
+                                $node->nodeValue = $marker;
+                                $replacements[$marker] = "<?= htmlspecialchars({$value['text']} ?? '', ENT_QUOTES, 'UTF-8') ?>";
+                            }
+                            
+                            foreach ($value as $k => $v) {
+                                if (str_starts_with($k, '@') && $node instanceof DOMElement) {
+                                    $attrName = substr($k, 1);
+                                    $marker = $getMarker();
+                                    $node->setAttribute($attrName, $marker);
+                                    $replacements[$marker] = "<?= htmlspecialchars({$v} ?? '', ENT_QUOTES, 'UTF-8') ?>";
+                                }
+                            }
+                            
+                            // Eksekusi nested rules lebih dalam dengan elemen ini sebagai context
+                            $applyRules($value, $node);
                         }
                     }
                 }
