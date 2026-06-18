@@ -276,6 +276,18 @@ Digunakan khusus untuk merender tag HTML mentah (Raw HTML) secara langsung dari 
     "@html" => '$blog["wysiwyg_content"]'
 ]
 ```
+Fitur ini juga sangat kuat untuk kebutuhan injeksi (Hotfix) statis, seperti menyelipkan blok `<style>` atau `<script>` darurat di dalam HTML:
+```php
+// Contoh 1: Hotfix CSS Responsif
+"head" => [
+    "@html" => '"<style>@media (max-width: 768px) { .sidebar { display: none !important; } }</style>"'
+];
+
+// Contoh 2: Injeksi Notifikasi/Maintenance via Vanilla JS
+"#js-hotfix" => [
+    "@html" => '"<script>console.log(\"Hotfix aktif!\"); alert(\"Server maintenance 10 menit lagi!\");</script>"'
+];
+```
 
 ### 5. Recursive/Nested Selectors
 Anda bisa menelusuri elemen yang lebih menjorok ke dalam (children) menggunakan standar penulisan Selector CSS biasa di sub-array. Selector yang bersarang (nested) jangkauan XPath pencariannya akan dilakukan sebatas pada internal elemen pembungkus (relatif) saja. Ini membuat parsing 10x lipat lebih akurat dan minim bentrokan di memori global.
