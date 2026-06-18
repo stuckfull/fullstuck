@@ -112,6 +112,17 @@ function render_template(string $templatePath, array $data, array $rules, string
                 } 
                 // 4. Nested Rules & Logic Directives (Jika value berupa ARRAY)
                 elseif (is_array($value)) {
+                    
+                    if (isset($value['@html'])) {
+                        // Logic Directive: @html (Raw HTML bypass XSS)
+                        foreach ($nodes as $node) {
+                            $marker = $getMarker();
+                            $node->nodeValue = $marker;
+                            $replacements[$marker] = "<?= {$value['@html']} ?? '' ?>";
+                        }
+                        unset($value['@html']);
+                    }
+
                     if (isset($value['@foreach'])) {
                         // Logic Directive: @foreach
                         $templateNode = $nodes->item(0);
@@ -143,12 +154,16 @@ function render_template(string $templatePath, array $data, array $rules, string
                         }
                         
                         // Eksekusi nested rule pada $templateNode
-                        $applyRules($value, $templateNode);
+                        if (!empty($value)) {
+                            $applyRules($value, $templateNode);
+                        }
                         
                     } else {
                         // Atribut, Teks, dan Nested Selector pada semua node yang cocok
-                        foreach ($nodes as $node) {
-                            $applyRules($value, $node);
+                        if (!empty($value)) {
+                            foreach ($nodes as $node) {
+                                $applyRules($value, $node);
+                            }
                         }
                     }
                 }

@@ -134,7 +134,15 @@ Digunakan untuk mereplikasi/me-loop elemen HTML ke dalam format iterasi. Aturan 
 ```
 *(Catatan: Anda dapat menggunakan properti khusus bernama `text` untuk mengganti inner text apabila elemen tersebut juga memiliki atribut array directive yang disetel secara bersamaan).*
 
-### 4. Recursive/Nested Selectors
+### 4. Logic Directive `@html`
+Digunakan khusus untuk merender tag HTML mentah (Raw HTML) secara langsung dari string ke dalam DOM tanpa dilakukan proses *escaping* XSS. Fitur ini sangat berguna untuk menampilkan hasil output dari *WYSIWYG Editor*.
+```php
+"div.content" => [
+    "@html" => '$blog["wysiwyg_content"]'
+]
+```
+
+### 5. Recursive/Nested Selectors
 Anda bisa menelusuri elemen yang lebih menjorok ke dalam (children) menggunakan standar penulisan Selector CSS biasa di sub-array. Selector yang bersarang (nested) jangkauan XPath pencariannya akan dilakukan sebatas pada internal elemen pembungkus (relatif) saja. Ini membuat parsing 10x lipat lebih akurat dan minim bentrokan di memori global.
 ```php
 "#profile" => [
