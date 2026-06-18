@@ -23,6 +23,37 @@ Keamanan adalah nyawa bagi sistem templating yang merender data secara dinamis. 
 
 ---
 
+## 📋 Cheatsheet Sintaks
+
+### 1. Daftar Logic Directive
+| Directive | Penjelasan | Contoh Penggunaan |
+|---|---|---|
+| `"selector" => '...'` | **Shorthand Text**: Menimpa *nodeValue* elemen langsung. Aman dari XSS. | `"h1" => '$title'` |
+| `"@text" => '...'` | **Safe Text**: Menimpa isi teks secara aman (sama dengan shorthand, namun dipakai bila ada properti/atribut lain di blok yang sama). | `"@text" => '$desc'` |
+| `"@html" => '...'` | **Raw HTML**: Merender teks langsung sebagai HTML asli. **Peringatan: Bypasses XSS Protection**. Cocok untuk WYSIWYG. | `"@html" => '$content'` |
+| `"@foreach" => '...'` | **Looper**: Mengulangi elemen DOM beserta *child*-nya untuk data *Array*. Menghapus elemen duplikat otomatis. | `"@foreach" => '$items as $i'` |
+| `"[attr]" => '...'` | **Attribute**: Menimpa nilai *attribute* HTML (contoh `href`, `src`, `class`, `data-*`). | `"[href]" => '$url'` |
+
+### 2. Daftar Selektor CSS
+Secara bawaan (*native*), *compiler* mengubah selektor CSS menjadi XPath. Untuk menjaga efisiensi dan mencegah *crash*, sistem *whitelist* ketat diberlakukan.
+
+✅ **Didukung Penuh (Whitelist):**
+- Tag Selector: `h1`, `div`, `article`
+- Class & ID: `.class`, `#id`
+- Compound Selector: `article.post-item`, `div#container`
+- Descendant (Spasi): `.container h2`
+- Direct Child (`>`): `ul > li`
+- Attribute Bracket: `input[name="username"]`, `a[href]`, `[data-id="5"]`
+- *Escape Hatch* XPath Murni: `//div`, `.//span` (jika selektor berawalan `//` atau `.//`)
+
+❌ **Ditolak / Diabaikan (Blacklist):**
+- Pseudo-classes: `:hover`, `:focus`, `:nth-child()`, `:not()`
+- Pseudo-elements: `::before`, `::after`, `::placeholder`
+- Sibling Combinators: `+` (Adjacent Sibling), `~` (General Sibling)
+*(Catatan: Jika compiler mendeteksi karakter blacklist, pencarian akan secara aman diredam/dihentikan pada scope tersebut tanpa menyebabkan error parsial)*.
+
+---
+
 ## 🚀 Cara Penggunaan
 
 Panggil `render_template()` dengan mencantumkan path dokumen HTML sumber, susunan *data dinamis*, dan *ruleset* pemetaannya.
