@@ -1,150 +1,137 @@
 <?php
 
-class DomCompiler {
-    private string $templatePath;
-    private string $cacheDir;
-    private ?DOMDocument $dom = null;
-    private ?DOMXPath $xpath = null;
-    private array $replacements = [];
-    private int $markerCount = 0;
+/**
+ * Merender file HTML menjadi dinamis melalui DOM Manipulation dan men-cache hasilnya ke file PHP.
+ * Pendekatan prosedural/deklaratif (tanpa class/OOP).
+ * 
+ * @param string $templatePath Path ke file HTML statis
+ * @param array $data Array asosiatif berisi data yang ingin dirender
+ * @param array $rules Aturan (rules) injeksi DOM berupa array
+ * @param string $cacheDir Folder tujuan penyimpanan cache
+ */
+function render_template(string $templatePath, array $data, array $rules, string $cacheDir = __DIR__ . '/build-template'): void {
+    if (!file_exists($cacheDir)) {
+        mkdir($cacheDir, 0777, true);
+    }
+    
+    $cacheFile = $cacheDir . '/' . basename($templatePath) . '.php';
 
-    public function __construct(string $templatePath, string $cacheDir = __DIR__ . '/build-template') {
-        $this->templatePath = $templatePath;
-        $this->cacheDir = $cacheDir;
+    // Cek validitas cache
+    if (!file_exists($cacheFile) || filemtime($templatePath) > filemtime($cacheFile)) {
         
-        if (!file_exists($this->cacheDir)) {
-            mkdir($this->cacheDir, 0777, true);
-        }
-    }
-
-    private function isCacheValid(string $cacheFile): bool {
-        if (!file_exists($cacheFile)) return false;
-        return filemtime($this->templatePath) <= filemtime($cacheFile);
-    }
-
-    private function getMarker(): string {
-        $this->markerCount++;
-        return "@@__FST_MARKER_{$this->markerCount}__@@";
-    }
-
-    private function loadDom(): void {
-        if ($this->dom !== null) return;
-        
-        $this->dom = new DOMDocument();
+        $dom = new DOMDocument();
         libxml_use_internal_errors(true);
-        $html = file_get_contents($this->templatePath);
+        $html = file_get_contents($templatePath);
         if ($html) {
-            // Encode as UTF-8
-            $this->dom->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+            // Force UTF-8 encoding
+            $dom->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
         }
         libxml_clear_errors();
-        $this->xpath = new DOMXPath($this->dom);
-    }
-
-    public function setText(string $selector, string $phpVariable, ?DOMNode $contextNode = null): self {
-        $this->loadDom();
-        $nodes = $contextNode ? $this->xpath->query($selector, $contextNode) : $this->xpath->query($selector);
         
-        if ($nodes !== false) {
-            foreach ($nodes as $node) {
-                $marker = $this->getMarker();
-                $node->nodeValue = $marker;
-                $this->replacements[$marker] = "<?= htmlspecialchars({$phpVariable} ?? '', ENT_QUOTES, 'UTF-8') ?>";
-            }
-        }
-        return $this;
-    }
-
-    public function setAttribute(string $selector, string $attribute, string $phpVariable, ?DOMNode $contextNode = null): self {
-        $this->loadDom();
-        $nodes = $contextNode ? $this->xpath->query($selector, $contextNode) : $this->xpath->query($selector);
+        $xpath = new DOMXPath($dom);
+        $replacements = [];
+        $markerCount = 0;
         
-        if ($nodes !== false) {
-            foreach ($nodes as $node) {
-                if ($node instanceof DOMElement) {
-                    $marker = $this->getMarker();
-                    $node->setAttribute($attribute, $marker);
-                    $this->replacements[$marker] = "<?= htmlspecialchars({$phpVariable} ?? '', ENT_QUOTES, 'UTF-8') ?>";
-                }
-            }
-        }
-        return $this;
-    }
+        // Generator marker unik
+        $getMarker = function() use (&$markerCount) {
+            $markerCount++;
+            return "@@__FST_MARKER_{$markerCount}__@@";
+        };
 
-    public function setLoop(string $containerSelector, string $itemSelector, string $arrayVariable, string $alias, callable $callback): self {
-        $this->loadDom();
-        
-        $containers = $this->xpath->query($containerSelector);
-        if ($containers !== false) {
-            foreach ($containers as $container) {
-                $items = $this->xpath->query($itemSelector, $container);
-                if ($items !== false && $items->length > 0) {
-                    $templateNode = $items->item(0);
-                    
-                    $subCompiler = new class($this, $templateNode) {
-                        private $compiler;
-                        private $node;
-                        public function __construct($compiler, $node) {
-                            $this->compiler = $compiler;
-                            $this->node = $node;
+        // Fungsi rekursif untuk mengurai rules array (text, attribute, loops)
+        $applyRules = function(array $currentRules, ?DOMNode $context = null) use (&$applyRules, $xpath, &$replacements, $getMarker, $dom) {
+            
+            // 1. Aturan Teks
+            if (isset($currentRules['texts'])) {
+                foreach ($currentRules['texts'] as $selector => $phpVar) {
+                    $nodes = $context ? $xpath->query($selector, $context) : $xpath->query($selector);
+                    if ($nodes !== false) {
+                        foreach ($nodes as $node) {
+                            $marker = $getMarker();
+                            $node->nodeValue = $marker;
+                            $replacements[$marker] = "<?= htmlspecialchars({$phpVar} ?? '', ENT_QUOTES, 'UTF-8') ?>";
                         }
-                        public function setText(string $selector, string $phpVariable) {
-                            $this->compiler->setText($selector, $phpVariable, $this->node);
-                            return $this;
-                        }
-                        public function setAttribute(string $selector, string $attribute, string $phpVariable) {
-                            $this->compiler->setAttribute($selector, $attribute, $phpVariable, $this->node);
-                            return $this;
-                        }
-                    };
-                    
-                    $callback($subCompiler);
-                    
-                    $startMarker = $this->getMarker();
-                    $endMarker = $this->getMarker();
-                    
-                    $this->replacements[$startMarker] = "<?php foreach ({$arrayVariable} as {$alias}): ?>";
-                    $this->replacements[$endMarker] = "<?php endforeach; ?>";
-                    
-                    $container->insertBefore($this->dom->createTextNode($startMarker), $templateNode);
-                    if ($templateNode->nextSibling) {
-                        $container->insertBefore($this->dom->createTextNode($endMarker), $templateNode->nextSibling);
-                    } else {
-                        $container->appendChild($this->dom->createTextNode($endMarker));
-                    }
-                    
-                    for ($i = 1; $i < $items->length; $i++) {
-                        $container->removeChild($items->item($i));
                     }
                 }
             }
-        }
-        return $this;
-    }
 
-    public function compile(): string {
-        $cacheFile = $this->cacheDir . '/' . basename($this->templatePath) . '.php';
+            // 2. Aturan Atribut
+            if (isset($currentRules['attributes'])) {
+                foreach ($currentRules['attributes'] as $selector => $attrs) {
+                    $nodes = $context ? $xpath->query($selector, $context) : $xpath->query($selector);
+                    if ($nodes !== false) {
+                        foreach ($nodes as $node) {
+                            if ($node instanceof DOMElement) {
+                                foreach ($attrs as $attr => $phpVar) {
+                                    $marker = $getMarker();
+                                    $node->setAttribute($attr, $marker);
+                                    $replacements[$marker] = "<?= htmlspecialchars({$phpVar} ?? '', ENT_QUOTES, 'UTF-8') ?>";
+                                }
+                            }
+                        }
+                    }
+                }
+            }
 
-        if ($this->isCacheValid($cacheFile)) {
-            return $cacheFile;
-        }
+            // 3. Aturan Looping
+            if (isset($currentRules['loops'])) {
+                foreach ($currentRules['loops'] as $containerSel => $loopConfig) {
+                    $containers = $context ? $xpath->query($containerSel, $context) : $xpath->query($containerSel);
+                    if ($containers !== false) {
+                        foreach ($containers as $container) {
+                            $itemSel = $loopConfig['item'];
+                            $items = $xpath->query($itemSel, $container);
+                            
+                            if ($items !== false && $items->length > 0) {
+                                $templateNode = $items->item(0);
+                                
+                                // Aplikasikan rules secara rekursif pada template node (child element)
+                                $applyRules($loopConfig, $templateNode);
+                                
+                                $startMarker = $getMarker();
+                                $endMarker = $getMarker();
+                                
+                                $arrayVar = $loopConfig['array'];
+                                $alias = $loopConfig['alias'];
+                                
+                                $replacements[$startMarker] = "<?php foreach ({$arrayVar} as {$alias}): ?>";
+                                $replacements[$endMarker] = "<?php endforeach; ?>";
+                                
+                                // Sisipkan PHP Foreach tag sebelum dan sesudah node template
+                                $container->insertBefore($dom->createTextNode($startMarker), $templateNode);
+                                if ($templateNode->nextSibling) {
+                                    $container->insertBefore($dom->createTextNode($endMarker), $templateNode->nextSibling);
+                                } else {
+                                    $container->appendChild($dom->createTextNode($endMarker));
+                                }
+                                
+                                // Bersihkan item dummy lainnya di dalam container HTML
+                                for ($i = 1; $i < $items->length; $i++) {
+                                    $container->removeChild($items->item($i));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        };
 
-        $this->loadDom();
-        $html = $this->dom->saveHTML();
+        // Mulai eksekusi ruleset
+        $applyRules($rules);
         
-        $html = str_replace('<?xml encoding="utf-8" ?>', '', $html);
-
-        foreach ($this->replacements as $marker => $phpCode) {
-            $html = str_replace($marker, $phpCode, $html);
+        $htmlOut = $dom->saveHTML();
+        // Hapus hack header XML
+        $htmlOut = str_replace('<?xml encoding="utf-8" ?>', '', $htmlOut);
+        
+        // Replace semua marker teks di file final dengan script PHP
+        foreach ($replacements as $marker => $phpCode) {
+            $htmlOut = str_replace($marker, $phpCode, $htmlOut);
         }
-
-        file_put_contents($cacheFile, $html);
-        return $cacheFile;
+        
+        file_put_contents($cacheFile, $htmlOut);
     }
 
-    public function render(array $data): void {
-        $cacheFile = $this->compile();
-        extract($data);
-        require $cacheFile;
-    }
+    // Render file cache (Output)
+    extract($data);
+    require $cacheFile;
 }
