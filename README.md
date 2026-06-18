@@ -11,6 +11,16 @@ Mesin ini menggunakan arsitektur **JIT (Just-In-Time) Caching** yang berfokus pa
 4. **Manipulasi Marker**: Berdasarkan instruksi dari *Ruleset DSL*, compiler tidak merusak struktur DOM aslinya secara gegabah. Alih-alih mengeksekusi PHP secara langsung, script akan meletakkan *marker unik* (misal: `@@__FST_MARKER_1__@@`), men-dump struktur DOM final menjadi format string teks (via `saveHTML()`), lalu menukar semua *marker* tersebut dengan skrip asli PHP seperti `<?= htmlspecialchars(...) ?>`. Hal ini menjamin file yang dihasilkan tidak memicu *parser error* ketika ada tag aneh yang di-inject.
 5. **Konverter CSS Ketat (Strict CSS2XPath)**: Secara *native*, engine mengonversi sintaks CSS (id, class, child, sibling, attribute) ke dalam ekuivalensi `XPath`. Untuk menjaga sistem tidak error dari regex yang berat, sistem dilengkapi algoritma *whitelist* CSS. Pseudo-class seperti (`:hover`, `:nth-child()`) dan sibling complex selectors secara aman akan dihapus/diterjemahkan sebagai *XPath* buntu (blacklist).
 
+### ⚡ Performa JIT (Just-In-Time) Caching
+Mesin templating pada umumnya selalu mem-parsing sintaks setiap kali halaman diakses (CPU intensive). Engine ini memecahkan masalah tersebut dengan bertumpu pada *file statis PHP*:
+- **Pemeriksaan 0-Overhead**: Engine mengandalkan perintah native `filemtime($templatePath) > filemtime($cacheFile)`. Selama file sumber HTML belum diubah secara fisik, blok logika parser DOM dan XPath **tidak akan pernah** dieksekusi.
+- **Eksekusi Sekilat Native PHP**: Jika file HTML tidak berubah, sistem hanya me-*require* file `.php` hasil kompilasinya saja. Performa eksekusi rendering Anda akan dijamin 100% sama dengan mengeksekusi script native PHP prosedural biasa!
+
+### 🛡️ Keamanan (Security)
+Keamanan adalah nyawa bagi sistem templating yang merender data secara dinamis. Engine ini sudah memblokir celah serangan fatal:
+- **Proteksi XSS (Cross-Site Scripting)**: Tidak peduli apakah itu isi teks tag atau properti *attribute*, engine akan selalu membungkus hasil kompilasi ke dalam perintah aman `<?= htmlspecialchars($var ?? '', ENT_QUOTES, 'UTF-8') ?>`. Tag HTML liar (seperti `<script>`) akan ter-encode secara sempurna dan aman di browser.
+- **Pencegahan LFI (Local File Inclusion)**: Proses *rendering* (require/extract) dilakukan di *scope* lokal function. Nama dari file *cache* yang dieksekusi telah melewati tahapan filter parsial menggunakan `basename($templatePath)`. Sehingga, percobaan serangan Path Traversal via parameter file eksternal (seperti merender `../../../etc/passwd`) akan dipotong dan ditolak mentah-mentah.
+
 ---
 
 ## 🚀 Cara Penggunaan
