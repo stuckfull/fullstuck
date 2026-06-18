@@ -88,7 +88,7 @@ $rules = [
     // JS Murni: document.querySelectorAll("a.external").forEach(el => { el.setAttribute("href", linkUrl); el.setAttribute("target", "_blank"); });
 
     // Mengubah isi teks PADA elemen yang memiliki atribut spesifik
-    "a[data-type='link']" => 'Teks Link Baru',
+    "a[data-type='link']" => '"Teks Link Baru"',
     // JS Murni: document.querySelectorAll("a[data-type='link']").forEach(el => el.innerText = "Teks Link Baru");
 
 
@@ -97,7 +97,7 @@ $rules = [
     // Gunakan prefix `^` untuk menghentikan pencarian di elemen pertama
     // ==========================================
     
-    "^div.alert" => 'Ini alert pertama saja',
+    "^div.alert" => '"Ini alert pertama saja"',
     // JS Murni: document.querySelector("div.alert").innerText = "Ini alert pertama saja";
 
 
