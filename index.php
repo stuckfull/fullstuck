@@ -98,7 +98,7 @@ if ($route === 'profile') {
 
         // 2. MANIPULASI ATRIBUT
         "a.external" => ["[href]" => '$linkUrl', "[target]" => '"_blank"'],
-        "a[data-type='link']" => 'Teks Link Baru',
+        "a[data-type='link']" => '"Teks Link Baru"',
 
         // 3. TARGETING TUNGGAL (^ prefix)
         "^div.alert" => '"Ini alert pertama saja yang terganti (" . date("H:i:s") . ")"',
