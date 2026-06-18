@@ -84,9 +84,13 @@ function render_template(string $templatePath, array $data, array $rules, string
                 if (str_starts_with($key, '[') && str_ends_with($key, ']')) {
                     if ($context instanceof DOMElement) {
                         $attrName = substr($key, 1, -1);
-                        $marker = $getMarker();
-                        $context->setAttribute($attrName, $marker);
-                        $replacements[$marker] = "<?= htmlspecialchars({$value} ?? '', ENT_QUOTES, 'UTF-8') ?>";
+                        if ($value === '@remove') {
+                            $context->removeAttribute($attrName);
+                        } else {
+                            $marker = $getMarker();
+                            $context->setAttribute($attrName, $marker);
+                            $replacements[$marker] = "<?= htmlspecialchars({$value} ?? '', ENT_QUOTES, 'UTF-8') ?>";
+                        }
                     }
                     continue;
                 }
@@ -97,14 +101,34 @@ function render_template(string $templatePath, array $data, array $rules, string
                 }
 
                 // 2. CSS Selector
+                $isSingleSelection = false;
+                if (str_starts_with($key, '^')) {
+                    $isSingleSelection = true;
+                    $key = substr($key, 1);
+                }
+
                 $xpathSel = $css2xpath($key);
                 $nodes = $context ? $xpath->query($xpathSel, $context) : $xpath->query($xpathSel);
                 
                 if ($nodes === false || $nodes->length === 0) continue;
 
+                $targetNodes = [];
+                if ($isSingleSelection) {
+                    $targetNodes[] = $nodes->item(0);
+                } else {
+                    foreach ($nodes as $n) $targetNodes[] = $n;
+                }
+
                 // 3. Text Manipulation (Jika value berupa STRING)
                 if (is_string($value)) {
-                    foreach ($nodes as $node) {
+                    if ($value === '@remove') {
+                        foreach ($targetNodes as $node) {
+                            $node->parentNode->removeChild($node);
+                        }
+                        continue;
+                    }
+
+                    foreach ($targetNodes as $node) {
                         $marker = $getMarker();
                         $node->nodeValue = $marker;
                         $replacements[$marker] = "<?= htmlspecialchars({$value} ?? '', ENT_QUOTES, 'UTF-8') ?>";
@@ -113,9 +137,30 @@ function render_template(string $templatePath, array $data, array $rules, string
                 // 4. Nested Rules & Logic Directives (Jika value berupa ARRAY)
                 elseif (is_array($value)) {
                     
+                    if (isset($value['@if'])) {
+                        foreach ($targetNodes as $node) {
+                            $startMarker = $getMarker();
+                            $endMarker = $getMarker();
+                            
+                            $replacements[$startMarker] = "<?php if ({$value['@if']}): ?>";
+                            $replacements[$endMarker] = "<?php endif; ?>";
+                            
+                            $startTextNode = $dom->createTextNode($startMarker);
+                            $endTextNode = $dom->createTextNode($endMarker);
+                            
+                            $node->parentNode->insertBefore($startTextNode, $node);
+                            if ($node->nextSibling) {
+                                $node->parentNode->insertBefore($endTextNode, $node->nextSibling);
+                            } else {
+                                $node->parentNode->appendChild($endTextNode);
+                            }
+                        }
+                        unset($value['@if']);
+                    }
+
                     if (isset($value['@text'])) {
                         // Logic Directive: @text (Safe Text with XSS protection)
-                        foreach ($nodes as $node) {
+                        foreach ($targetNodes as $node) {
                             $marker = $getMarker();
                             $node->nodeValue = $marker;
                             $replacements[$marker] = "<?= htmlspecialchars({$value['@text']} ?? '', ENT_QUOTES, 'UTF-8') ?>";
@@ -125,7 +170,7 @@ function render_template(string $templatePath, array $data, array $rules, string
 
                     if (isset($value['@html'])) {
                         // Logic Directive: @html (Raw HTML bypass XSS)
-                        foreach ($nodes as $node) {
+                        foreach ($targetNodes as $node) {
                             $marker = $getMarker();
                             $node->nodeValue = $marker;
                             $replacements[$marker] = "<?= {$value['@html']} ?? '' ?>";
@@ -169,9 +214,9 @@ function render_template(string $templatePath, array $data, array $rules, string
                         }
                         
                     } else {
-                        // Atribut, Teks, dan Nested Selector pada semua node yang cocok
+                        // Atribut, Teks, dan Nested Selector pada target nodes
                         if (!empty($value)) {
-                            foreach ($nodes as $node) {
+                            foreach ($targetNodes as $node) {
                                 $applyRules($value, $node);
                             }
                         }

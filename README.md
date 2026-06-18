@@ -33,7 +33,9 @@ Keamanan adalah nyawa bagi sistem templating yang merender data secara dinamis. 
 | `"@text" => '...'` | **Safe Text**: Menimpa isi teks secara aman (sama dengan shorthand, namun dipakai bila ada properti/atribut lain di blok yang sama). | `"@text" => '$desc'` |
 | `"@html" => '...'` | **Raw HTML**: Merender teks langsung sebagai HTML asli. **Peringatan: Bypasses XSS Protection**. Cocok untuk WYSIWYG. | `"@html" => '$content'` |
 | `"@foreach" => '...'` | **Looper**: Mengulangi elemen DOM beserta *child*-nya untuk data *Array*. Menghapus elemen duplikat otomatis. | `"@foreach" => '$items as $i'` |
+| `"@if" => '...'` | **Conditional**: Membungkus elemen dengan blok `if` PHP. | `"@if" => '$isActive'` |
 | `"[attr]" => '...'` | **Attribute**: Menimpa nilai *attribute* HTML (contoh `href`, `src`, `class`, `data-*`). | `"[href]" => '$url'` |
+| `"@remove"` (value) | **Cleanup**: Menghapus elemen atau atribut secara permanen pada saat kompilasi. | `"div.dummy" => "@remove"` |
 
 ### 2. Daftar Selektor CSS
 Secara bawaan (*native*), *compiler* mengubah selektor CSS menjadi XPath. Untuk menjaga efisiensi dan mencegah *crash*, sistem *whitelist* ketat diberlakukan.
@@ -45,6 +47,7 @@ Secara bawaan (*native*), *compiler* mengubah selektor CSS menjadi XPath. Untuk 
 - Descendant (Spasi): `.container h2`
 - Direct Child (`>`): `ul > li`
 - Attribute Bracket: `input[name="username"]`, `a[href]`, `[data-id="5"]`
+- Targeting Tunggal: `^div.alert` (Berikan prefix `^` untuk membatasi pencarian hanya pada node pertama).
 - *Escape Hatch* XPath Murni: `//div`, `.//span` (jika selektor berawalan `//` atau `.//`)
 
 ❌ **Ditolak / Diabaikan (Blacklist):**
@@ -58,29 +61,97 @@ Untuk mempermudah konseptualisasi, penulisan *ruleset* pada dasarnya ekuivalen d
 
 ```php
 $rules = [
-    // Menimpa isi teks (menggunakan String Shorthand)
-    "title" => 'Isi Title Baru', 
-    // Sama dengan: document.querySelector("title").innerText = "Isi Title Baru";
+    // ==========================================
+    // 1. MANIPULASI TEKS & HTML (Mass Execution)
+    // Berlaku untuk SEMUA elemen yang cocok (querySelectorAll)
+    // ==========================================
 
-    // Menimpa isi teks (menggunakan Logic Directive spesifik)
-    "h3" => ["@text" => 'Subjudul Halaman'],
-    // Sama dengan: document.querySelector("h3").innerText = "Subjudul Halaman";
+    // Shorthand Text (Aman dari XSS)
+    "title" => '$pageTitle', 
+    // JS Murni: document.querySelectorAll("title").forEach(el => el.innerText = pageTitle);
 
-    // Menyuntikkan Raw HTML (Bypass XSS protection)
-    "span" => ["@html" => '<strong>Teks Tebal</strong>'],
-    // Sama dengan: document.querySelector("span").innerHTML = "<strong>Teks Tebal</strong>";
+    // Explicit Text (Dipakai jika ada manipulasi atribut di blok yang sama)
+    "h3" => ["@text" => '$subJudul'],
+    // JS Murni: document.querySelectorAll("h3").forEach(el => el.innerText = subJudul);
 
-    // Menimpa teks pada elemen ber-atribut (BUKAN mengubah atributnya)
-    "a[href]" => 'Teks Link Baru',
-    // Sama dengan: document.querySelector("a[href]").innerText = "Teks Link Baru";
+    // Raw HTML (Bypass XSS - Khusus untuk output WYSIWYG)
+    "span.content" => ["@html" => '$htmlContent'],
+    // JS Murni: document.querySelectorAll("span.content").forEach(el => el.innerHTML = htmlContent);
 
-    // Menimpa/menambah nilai pada atribut
-    "a" => ["[href]" => 'https://example.com'],
-    // Sama dengan: document.querySelector("a").setAttribute("href", "https://example.com");
 
-    // Menambah atribut spesifik/custom
-    "a" => ["[data-custom]" => '123']
-    // Sama dengan: document.querySelector("a").setAttribute("data-custom", "123");
+    // ==========================================
+    // 2. MANIPULASI ATRIBUT
+    // ==========================================
+
+    // Mengganti/Menambah atribut (Teks di dalam elemen tetap utuh)
+    "a.external" => ["[href]" => '$linkUrl', "[target]" => '"_blank"'],
+    // JS Murni: document.querySelectorAll("a.external").forEach(el => { el.setAttribute("href", linkUrl); el.setAttribute("target", "_blank"); });
+
+    // Mengubah isi teks PADA elemen yang memiliki atribut spesifik
+    "a[data-type='link']" => 'Teks Link Baru',
+    // JS Murni: document.querySelectorAll("a[data-type='link']").forEach(el => el.innerText = "Teks Link Baru");
+
+
+    // ==========================================
+    // 3. TARGETING TUNGGAL (Single Node Selection)
+    // Gunakan prefix `^` untuk menghentikan pencarian di elemen pertama
+    // ==========================================
+    
+    "^div.alert" => 'Ini alert pertama saja',
+    // JS Murni: document.querySelector("div.alert").innerText = "Ini alert pertama saja";
+
+
+    // ==========================================
+    // 4. COMPILE-TIME CLEANUP (Pembersihan DOM sebelum masuk Cache)
+    // Menggunakan string mutlak "@remove"
+    // ==========================================
+
+    // Memusnahkan elemen secara utuh beserta anak-anaknya
+    "div.debug-panel" => "@remove",
+    // JS Murni: document.querySelectorAll("div.debug-panel").forEach(el => el.remove());
+
+    // Membuang atribut sampah/dummy dari FE
+    "img.thumbnail" => [
+        "[style]" => "@remove",       // Hapus inline style
+        "[data-dummy]" => "@remove",  // Hapus atribut dummy
+        "[src]" => '$realImageUrl'    // Set src asli
+    ],
+    // JS Murni: document.querySelectorAll("img.thumbnail").forEach(el => el.removeAttribute("style"));
+
+
+    // ==========================================
+    // 5. RUN-TIME LOGIC (Kondisional & Iterasi di eksekusi PHP)
+    // ==========================================
+
+    // IF Murni (Menyembunyikan/Menampilkan Elemen)
+    "div.banner-promo" => [
+        "@if" => '$isPromoActive'
+    ],
+
+    // IF & ELSE (Gunakan Inverse Logic ! pada class berbeda)
+    "a.btn-dashboard" => [
+        "@if" => '$isLoggedIn'
+    ],
+    "a.btn-login" => [
+        "@if" => '!$isLoggedIn'
+    ],
+
+    // TERNARY (Logika sebaris untuk elemen yang sama)
+    "button.btn-auth" => [
+        "@text"   => '$isLoggedIn ? "Logout" : "Login"',
+        "[href]"  => '$isLoggedIn ? "/logout" : "/login"',
+        "[class]" => '$isLoggedIn ? "btn-danger" : "btn-primary"'
+    ],
+
+    // FOREACH (Looping Data Array)
+    // Otomatis mengambil node pertama sebagai cetakan, dan menghapus node duplikat (dummy) lainnya.
+    "ul.nav > li" => [
+        "@foreach" => '$menus as $menu',
+        "a" => [
+            "[href]" => '$menu["url"]',
+            "@text"  => '$menu["label"]'
+        ]
+    ]
 ];
 ```
 
