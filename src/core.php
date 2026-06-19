@@ -243,7 +243,7 @@ function fst_extract_html_fragment($html, $selector = 'body') {
         // Jika tag bukan singleton, atau tidak ditemukan, kita fallback ke DOMDocument di bawah
     }
 
-    // Fallback DOMDocument: hanya untuk selector #id dan .class
+    // Fallback DOMDocument: untuk selector #id, .class, dan tag non-singleton (div, section, dll.)
     // (tidak bisa diandalkan via regex karena butuh traversal DOM)
     libxml_use_internal_errors(true);
     $dom = new DOMDocument();
@@ -255,10 +255,18 @@ function fst_extract_html_fragment($html, $selector = 'body') {
         $id = substr($selector, 1);
         if (!preg_match('/^[a-zA-Z0-9_\-]+$/', $id)) return $html; // Fallback jika format ID tidak valid
         $xpath_query = "//*[@id='{$id}']";
-    } else {
+    } elseif (str_starts_with($selector, '.')) {
         $class = substr($selector, 1);
         if (!preg_match('/^[a-zA-Z0-9_\-]+$/', $class)) return $html; // Fallback jika format Class tidak valid
         $xpath_query = "//*[contains(concat(' ', normalize-space(@class), ' '), ' {$class} ')]";
+    } else {
+        // Tag selector non-singleton (div, section, article, dsb.) — harus pakai DOMDocument
+        $allowed_tags = ['body', 'main', 'header', 'footer', 'div', 'section', 'article', 'nav', 'aside', 'span', 'p', 'form', 'table'];
+        if (in_array(strtolower($selector), $allowed_tags)) {
+            $xpath_query = '//' . strtolower($selector);
+        } else {
+            return $html;
+        }
     }
 
     $xpath = new DOMXPath($dom);

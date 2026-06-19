@@ -3,7 +3,7 @@
  * 🚀 FULLSTUCK.PHP - The Zero-Config, AI-Friendly Framework
  * 🔗 Repository: https://github.com/milio48/fullstuck
  * 📚 Raw Docs: https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v0.2.0.md
- * 💡 Version: 0.2.0 | FST_HASH: 13251d8436153f217350a4472f8f6c3509856df28b95397f3232cdc4a0c5af64
+ * 💡 Version: 0.2.0 | FST_HASH: 9901f4ee53219a18c15bb819e3ca986e688f7494ba02aa4186c76b4a734c6d84
  *
  * 🛑 ===================================================================== 🛑
  * 🤖 STRICT AI AGENT DIRECTIVE (LLM / VIBE CODER INSTRUCTIONS)
@@ -278,10 +278,18 @@ function fst_extract_html_fragment($html, $selector = 'body') {
         $id = substr($selector, 1);
         if (!preg_match('/^[a-zA-Z0-9_\-]+$/', $id)) return $html; 
         $xpath_query = "//*[@id='{$id}']";
-    } else {
+    } elseif (str_starts_with($selector, '.')) {
         $class = substr($selector, 1);
         if (!preg_match('/^[a-zA-Z0-9_\-]+$/', $class)) return $html; 
         $xpath_query = "//*[contains(concat(' ', normalize-space(@class), ' '), ' {$class} ')]";
+    } else {
+        
+        $allowed_tags = ['body', 'main', 'header', 'footer', 'div', 'section', 'article', 'nav', 'aside', 'span', 'p', 'form', 'table'];
+        if (in_array(strtolower($selector), $allowed_tags)) {
+            $xpath_query = '//' . strtolower($selector);
+        } else {
+            return $html;
+        }
     }
 
     $xpath = new DOMXPath($dom);
