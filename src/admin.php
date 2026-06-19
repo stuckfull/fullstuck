@@ -410,7 +410,7 @@ HTML;
         $admin_base = $fst_config['admin']['page_url'] ?? '/stuck';
         $csrf = fst_csrf_field();
         
-        $config_content = file_get_contents(FST_CONFIG_FILE);
+        $config_content = htmlspecialchars(file_get_contents(FST_CONFIG_FILE), ENT_QUOTES, 'UTF-8');
         
         $content = <<<HTML
 <p>Edit the raw JSON configuration below. Be careful with syntax!</p>

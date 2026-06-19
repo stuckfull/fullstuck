@@ -33,9 +33,9 @@ document.addEventListener('click', async function(e) {
         
         const bodyAttrs = response.headers.get('X-FST-Body-Attrs');
         if (bodyAttrs !== null && targetSelector === 'body') {
-            const tmp = document.createElement('div');
-            tmp.innerHTML = `<div ${bodyAttrs}></div>`;
-            const newBody = tmp.firstChild;
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(`<div ${bodyAttrs}></div>`, 'text/html');
+            const newBody = doc.body.firstChild;
             Array.from(document.body.attributes).forEach(attr => document.body.removeAttribute(attr.name));
             Array.from(newBody.attributes).forEach(attr => document.body.setAttribute(attr.name, attr.value));
         }
@@ -167,9 +167,9 @@ document.addEventListener('submit', async function(e) {
         
         const bodyAttrs = response.headers.get('X-FST-Body-Attrs');
         if (bodyAttrs !== null && targetSelector === 'body') {
-            const tmp = document.createElement('div');
-            tmp.innerHTML = `<div ${bodyAttrs}></div>`;
-            const newBody = tmp.firstChild;
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(`<div ${bodyAttrs}></div>`, 'text/html');
+            const newBody = doc.body.firstChild;
             Array.from(document.body.attributes).forEach(attr => document.body.removeAttribute(attr.name));
             Array.from(newBody.attributes).forEach(attr => document.body.setAttribute(attr.name, attr.value));
         }

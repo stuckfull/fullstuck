@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **View**: Added `fst_template` for ultra-minimalist declarative HTML DOM templating without inline PHP tags.
 
 ### Fixed
+- **Security**: Fixed XSS vulnerability in Admin Configuration Editor by escaping raw JSON output.
+- **Security**: Fixed potential XSS execution in SPA `X-FST-Body-Attrs` injection by replacing `innerHTML` with `DOMParser`.
+- **Security**: Hardened `fst_view()` with an extension whitelist (`php`, `html`, `htm`) to prevent sensitive data exposure via path traversal.
 - **Admin**: Removed dead `_fst_connect_db()` call in System Monitor that caused fatal errors on first load.
 - **Admin**: Fixed database driver configuration path check in System Monitor.
 - **Core**: Synchronized `FST_VERSION` to `0.2.0` to match the compiled output, fixing remote OTA comparisons and docs URLs.
