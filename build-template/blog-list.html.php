@@ -17,7 +17,7 @@
         .btn-primary { background: #4a90e2; color: white; }
         .btn-danger { background: #e74c3c; color: white; }
     </style>
-</head>
+<?= "<style> .injected-style { border: 2px dashed purple; padding: 10px; } </style>" ?? '' ?></head>
 <body>
     <!-- 5. RUN-TIME LOGIC (IF Murni) -->
     <?php if ($isPromoActive): ?><div class="banner-promo">
@@ -41,7 +41,7 @@
         </ul>
     </header>
 
-    <main>
+    <main><?= "<div class=\"alert\">Ini hasil injeksi @prepend di awal &lt;main&gt;</div>" ?? '' ?>
         <hr>
         <!-- 3. TARGETING TUNGGAL (^ prefix) -->
         <div class="alert"><?= htmlspecialchars("Ini alert pertama saja yang terganti (" . date("H:i:s") . ")" ?? '', ENT_QUOTES, 'UTF-8') ?></div>
@@ -65,7 +65,7 @@
         </p>
 
         <!-- 1. RAW HTML -->
-        <span class="content"><?= $htmlContent ?? '' ?></span>
+        <span class="content injected-style"><?= $htmlContent ?? '' ?></span>
     </main>
 </body>
 </html>

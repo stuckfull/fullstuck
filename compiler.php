@@ -8,16 +8,21 @@
  * @param array $data Array asosiatif berisi data yang ingin dirender
  * @param array $rules Aturan (rules) injeksi DOM berupa array DSL baru
  * @param string $cacheDir Folder tujuan penyimpanan cache
+ * @param bool $forceRebuild Paksa recompile mengabaikan cache
  */
-function render_template(string $templatePath, array $data, array $rules, string $cacheDir = __DIR__ . '/build-template'): void {
+function render_template(string $templatePath, array $data, array $rules, string $cacheDir = __DIR__ . '/build-template', bool $forceRebuild = false): void {
+    if (!file_exists($templatePath)) {
+        throw new \RuntimeException("Template not found: {$templatePath}");
+    }
+
     if (!file_exists($cacheDir)) {
-        mkdir($cacheDir, 0777, true);
+        mkdir($cacheDir, 0755, true);
     }
     
     $cacheFile = $cacheDir . '/' . basename($templatePath) . '.php';
 
     // Cek validitas cache
-    if (!file_exists($cacheFile) || filemtime($templatePath) > filemtime($cacheFile)) {
+    if ($forceRebuild || !file_exists($cacheFile) || filemtime($templatePath) > filemtime($cacheFile)) {
         
         $dom = new DOMDocument();
         libxml_use_internal_errors(true);
@@ -261,6 +266,6 @@ function render_template(string $templatePath, array $data, array $rules, string
     }
 
     // Render file cache (Output)
-    extract($data);
+    extract($data, EXTR_SKIP);
     require $cacheFile;
 }

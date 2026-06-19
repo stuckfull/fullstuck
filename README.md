@@ -117,6 +117,7 @@ $rules = [
     // Memusnahkan elemen secara utuh beserta anak-anaknya
     "div.debug-panel" => "@remove",
     // JS Murni: document.querySelectorAll("div.debug-panel").forEach(el => el.remove());
+    // CATATAN: "@remove" hanya menghapus node DOM HTML-nya saja. Aturan CSS di dalam tag <style> atau file eksternal yang mereferensikan elemen ini tidak akan ikut terhapus (menjadi dead CSS).
 
     // Membuang atribut sampah/dummy dari FE
     "img.thumbnail" => [
@@ -322,7 +323,6 @@ Anda bisa menelusuri elemen yang lebih menjorok ke dalam (children) menggunakan 
         "h3" => '$user["name"]',
         "p.bio" => '$user["bio"]'
     ]
-]
 ]
 ```
 
