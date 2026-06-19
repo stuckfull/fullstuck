@@ -10,6 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **View**: Added `fst_template` for ultra-minimalist declarative HTML DOM templating without inline PHP tags.
 
+### Fixed
+- **Admin**: Removed dead `_fst_connect_db()` call in System Monitor that caused fatal errors on first load.
+- **Admin**: Fixed database driver configuration path check in System Monitor.
+- **Core**: Synchronized `FST_VERSION` to `0.2.0` to match the compiled output, fixing remote OTA comparisons and docs URLs.
+- **SPA**: Fixed missing inline `<script>` re-execution when processing `fst.js` SPA form submissions.
+- **SPA**: Implemented regex fast-path for singleton tags (`body`, `main`) during HTML extraction to prevent double `DOMDocument` parsing corruption.
+- **Router**: Added buffer safety check in `fst_run()` to prevent blank pages if an exception handler flushes the output buffer early.
+
 ## [v0.1.0] - 2026-05-15
 
 ### Added
