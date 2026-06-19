@@ -249,6 +249,7 @@ function fst_run() {
     }
     
     $output = ob_get_clean();
+    if ($output === false) $output = ''; // Guard: buffer sudah di-flush oleh exception handler
 
     // Evaluasi Opsi SPA
     $spa_mode = fst_config('spa.enabled', false);

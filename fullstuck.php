@@ -3,7 +3,7 @@
  * 🚀 FULLSTUCK.PHP - The Zero-Config, AI-Friendly Framework
  * 🔗 Repository: https://github.com/milio48/fullstuck
  * 📚 Raw Docs: https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v0.2.0.md
- * 💡 Version: 0.2.0 | FST_HASH: 418c061bce6ab34d1e1293f04bfa1a13db244f8ce5421fecaf51854259541c66
+ * 💡 Version: 0.2.0 | FST_HASH: 13251d8436153f217350a4472f8f6c3509856df28b95397f3232cdc4a0c5af64
  *
  * 🛑 ===================================================================== 🛑
  * 🤖 STRICT AI AGENT DIRECTIVE (LLM / VIBE CODER INSTRUCTIONS)
@@ -250,6 +250,24 @@ function fst_spa_page() {
 
 function fst_extract_html_fragment($html, $selector = 'body') {
     if (empty(trim($html))) return '';
+
+    
+    
+    
+    $singleton_tags = ['body', 'main'];
+    if (!str_starts_with($selector, '#') && !str_starts_with($selector, '.')) {
+        $tag = strtolower($selector);
+        if (in_array($tag, $singleton_tags)) {
+            
+            if (preg_match('/<' . $tag . '[^>]*>(.*?)<\/' . $tag . '>/is', $html, $m)) {
+                return $m[1];
+            }
+        }
+        
+    }
+
+    
+    
     libxml_use_internal_errors(true);
     $dom = new DOMDocument();
     $dom->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_NOERROR | LIBXML_NOWARNING | LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
@@ -260,17 +278,10 @@ function fst_extract_html_fragment($html, $selector = 'body') {
         $id = substr($selector, 1);
         if (!preg_match('/^[a-zA-Z0-9_\-]+$/', $id)) return $html; 
         $xpath_query = "//*[@id='{$id}']";
-    } elseif (str_starts_with($selector, '.')) {
+    } else {
         $class = substr($selector, 1);
         if (!preg_match('/^[a-zA-Z0-9_\-]+$/', $class)) return $html; 
         $xpath_query = "//*[contains(concat(' ', normalize-space(@class), ' '), ' {$class} ')]";
-    } else {
-        $allowed_tags = ['body', 'main', 'header', 'footer', 'div', 'section', 'article', 'nav', 'aside', 'span', 'p', 'form', 'table'];
-        if (in_array(strtolower($selector), $allowed_tags)) {
-            $xpath_query = '//' . strtolower($selector);
-        } else {
-            return $html; 
-        }
     }
 
     $xpath = new DOMXPath($dom);
@@ -720,6 +731,7 @@ function fst_run() {
     }
     
     $output = ob_get_clean();
+    if ($output === false) $output = ''; 
 
     
     $spa_mode = fst_config('spa.enabled', false);

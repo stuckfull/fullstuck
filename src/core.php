@@ -227,6 +227,24 @@ function fst_spa_page() {
 
 function fst_extract_html_fragment($html, $selector = 'body') {
     if (empty(trim($html))) return '';
+
+    // [PATCH] Regex Fast-Path untuk tag selector utama (hanya body & main)
+    // Menghindari double DOMDocument parsing ketika digunakan bersama fst_template.
+    // Peringatan: Jangan gunakan regex untuk tag yang bersarang (nested) seperti <div> atau <section>.
+    $singleton_tags = ['body', 'main'];
+    if (!str_starts_with($selector, '#') && !str_starts_with($selector, '.')) {
+        $tag = strtolower($selector);
+        if (in_array($tag, $singleton_tags)) {
+            // Regex: ambil innerHTML dengan lazy match (.*?)
+            if (preg_match('/<' . $tag . '[^>]*>(.*?)<\/' . $tag . '>/is', $html, $m)) {
+                return $m[1];
+            }
+        }
+        // Jika tag bukan singleton, atau tidak ditemukan, kita fallback ke DOMDocument di bawah
+    }
+
+    // Fallback DOMDocument: hanya untuk selector #id dan .class
+    // (tidak bisa diandalkan via regex karena butuh traversal DOM)
     libxml_use_internal_errors(true);
     $dom = new DOMDocument();
     $dom->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_NOERROR | LIBXML_NOWARNING | LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
@@ -237,17 +255,10 @@ function fst_extract_html_fragment($html, $selector = 'body') {
         $id = substr($selector, 1);
         if (!preg_match('/^[a-zA-Z0-9_\-]+$/', $id)) return $html; // Fallback jika format ID tidak valid
         $xpath_query = "//*[@id='{$id}']";
-    } elseif (str_starts_with($selector, '.')) {
+    } else {
         $class = substr($selector, 1);
         if (!preg_match('/^[a-zA-Z0-9_\-]+$/', $class)) return $html; // Fallback jika format Class tidak valid
         $xpath_query = "//*[contains(concat(' ', normalize-space(@class), ' '), ' {$class} ')]";
-    } else {
-        $allowed_tags = ['body', 'main', 'header', 'footer', 'div', 'section', 'article', 'nav', 'aside', 'span', 'p', 'form', 'table'];
-        if (in_array(strtolower($selector), $allowed_tags)) {
-            $xpath_query = '//' . strtolower($selector);
-        } else {
-            return $html; 
-        }
     }
 
     $xpath = new DOMXPath($dom);
