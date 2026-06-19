@@ -137,7 +137,8 @@ if ($route === 'profile') {
         ]
     ];
 
-    render_template(__DIR__ . '/blog-list.html', $data, $rules, __DIR__ . '/build-template');
+    // Aktifkan mode Hot-Reload (parameter ke-5 = true) agar Anda bisa bebas bereksperimen dengan $rules di atas tanpa perlu menghapus folder cache
+    render_template(__DIR__ . '/blog-list.html', $data, $rules, __DIR__ . '/build-template', true);
 
 } else {
     // ==========================================

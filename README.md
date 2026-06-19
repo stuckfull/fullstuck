@@ -233,8 +233,9 @@ $rules = [
 ];
 
 // 3. Render
-// Parameter keempat bersifat opsional, namun disarankan untuk mengatur direktori output cache secara eksplisit
-render_template(__DIR__ . '/blog-list.html', $data, $rules, __DIR__ . "/build-template");
+// - Parameter 4 (Opsional): Direktori output cache (default: build-template/)
+// - Parameter 5 (Opsional): Set `true` untuk memaksa recompile mengabaikan cache (berguna saat Hot-Reloading/Development)
+render_template(__DIR__ . '/blog-list.html', $data, $rules, __DIR__ . "/build-template", false);
 ```
 
 ---
