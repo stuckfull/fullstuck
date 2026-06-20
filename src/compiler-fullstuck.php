@@ -4,7 +4,7 @@
 $src_dir = __DIR__;
 $output_file = dirname(__DIR__) . '/fullstuck.php';
 
-define('FST_VERSION', '0.1.0');
+define('FST_VERSION', '0.2.0');
 define('FST_DOCS_URL', 'https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v' . FST_VERSION . '.md');
 
 // Minify fst.js
@@ -27,6 +27,7 @@ $files = [
     'utility.php',
     'install.php',
     'admin.php',
+    'template.php',
     'bootstrap.php'
 ];
 

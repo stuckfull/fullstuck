@@ -286,7 +286,6 @@ HTML;
     function fst_admin_show_monitor() {
         fst_admin_check_auth();
         $fst_config = fst_app('config');
-        $fst_pdo = fst_app('pdo');
 
         $update_banner = '';
         $remote_data = fst_admin_get_remote_info();
@@ -342,32 +341,18 @@ HTML;
 
         // Cek Koneksi DB
         $db_status = '';
-        $db_driver = $fst_config['database']['driver'] ?? 'none';
+        $default_conn = $fst_config['database']['default'] ?? 'main';
+        $db_driver = $fst_config['database']['connections'][$default_conn]['driver'] ?? 'none';
         
         if ($db_driver === 'none') {
             $db_status = '<span style="color:orange;">⚠ Not Configured</span>';
         } else {
-            if ($fst_pdo === null) {
-                try {
-                    _fst_connect_db();
-                    $fst_pdo = fst_app('pdo');
-                } catch (Exception $e) {
-                    // Error ditangani oleh _fst_connect_db
-                }
-            }
-
-            if ($fst_pdo) { 
-                try {
-                    $stmt = $fst_pdo->query("SELECT 1");
-                    $stmt->fetch();
-                    $db_status = '<span style="color:green;">✔ OK</span> (Driver: ' . $db_driver . ')';
-                } catch (Exception $e) {
-                    $db_status = '<span style="color:red;">❌ FAILED</span>: ' . $e->getMessage();
-                    $errors[] = "Database connection test failed: " . $e->getMessage();
-                }
-            } else {
-                $db_status = '<span style="color:red;">❌ FAILED</span> (Could not initialize connection)';
-                $errors[] = "Database connection could not be established. Check 'fullstuck.json' or server logs.";
+            try {
+                fst_db('ROW', 'SELECT 1', [], $default_conn);
+                $db_status = '<span style="color:green;">✔ OK</span> (Driver: ' . $db_driver . ')';
+            } catch (Exception $e) {
+                $db_status = '<span style="color:red;">❌ FAILED</span>: ' . (fst_is_safe_to_debug() ? $e->getMessage() : 'Connection error.');
+                $errors[] = "Database connection test failed: " . $e->getMessage();
             }
         }
 
@@ -425,7 +410,7 @@ HTML;
         $admin_base = $fst_config['admin']['page_url'] ?? '/stuck';
         $csrf = fst_csrf_field();
         
-        $config_content = file_get_contents(FST_CONFIG_FILE);
+        $config_content = htmlspecialchars(file_get_contents(FST_CONFIG_FILE), ENT_QUOTES, 'UTF-8');
         
         $content = <<<HTML
 <p>Edit the raw JSON configuration below. Be careful with syntax!</p>
@@ -591,11 +576,12 @@ HTML;
         $function_groups = [
             'Core' => ['fst_abort', 'fst_run', 'fst_is_dev', 'fst_config', 'fst_extract_html_fragment', 'fst_app'],
 
-            'Database' => ['fst_db', 'fst_db_select', 'fst_db_row', 'fst_db_exists', 'fst_db_insert', 'fst_db_update', 'fst_db_delete', 'fst_db_quote_ident', '_fst_sanitize_order_by'],
+            'Database' => ['fst_db', 'fst_db_begin', 'fst_db_commit', 'fst_db_rollback', 'fst_db_select', 'fst_db_row', 'fst_db_exists', 'fst_db_insert', 'fst_db_update', 'fst_db_delete', 'fst_db_quote_ident', '_fst_sanitize_order_by'],
             'Views' => [
                 'fst_view',
                 'fst_partial',
-                'fst_serve_static_file'
+                'fst_serve_static_file',
+                'fst_template'
             ],
             'Request' => ['fst_uri', 'fst_method', 'fst_input', 'fst_request', 'fst_file', 'fst_is_spa', 'fst_spa_target'],
             'Routing' => ['fst_route', 'fst_get', 'fst_post', 'fst_put', 'fst_patch', 'fst_delete', 'fst_any', 'fst_group'],

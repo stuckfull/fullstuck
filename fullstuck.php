@@ -2,8 +2,8 @@
 /**
  * 🚀 FULLSTUCK.PHP - The Zero-Config, AI-Friendly Framework
  * 🔗 Repository: https://github.com/milio48/fullstuck
- * 📚 Raw Docs: https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v0.1.0.md
- * 💡 Version: 0.1.0 | FST_HASH: 61e76cc5b3b50b9bfc1fe55974cda6a9777677ed1e17826d7851c1786b79b35c
+ * 📚 Raw Docs: https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v0.2.0.md
+ * 💡 Version: 0.2.0 | FST_HASH: c40e7dcfe163eb406a331cdf1e856d55f22944d1be65240424836bb89eeb3151
  *
  * 🛑 ===================================================================== 🛑
  * 🤖 STRICT AI AGENT DIRECTIVE (LLM / VIBE CODER INSTRUCTIONS)
@@ -18,7 +18,7 @@
  * Rely ONLY on the official documentation for writing application code.
  * ==========================================================================
  */
-define('FST_SPA_JS_CODE', 'document.addEventListener(\'click\', async function(e) { if (e.defaultPrevented) return; const link = e.target.closest(\'a\'); if (!link || !link.href || link.hasAttribute(\'data-no-spa\') || link.classList.contains(\'no-spa\') || link.target === \'_blank\' || link.hasAttribute(\'download\') || link.hostname !== window.location.hostname || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); const reqHeader = document.querySelector(\'script#fst-spa-agent\')?.getAttribute(\'data-req-header\') || \'X-FST-Request\'; const targetHeader = document.querySelector(\'script#fst-spa-agent\')?.getAttribute(\'data-target-header\') || \'X-FST-Target\'; const targetSelector = link.getAttribute(\'data-fst-target\') || \'body\'; const isHistoryOptOut = link.getAttribute(\'data-fst-history\') === \'false\'; const targetElement = document.querySelector(targetSelector); if (targetElement) targetElement.classList.add(\'fst-loading\'); try { const headers = { [reqHeader]: \'true\', [targetHeader]: targetSelector }; const response = await fetch(link.href, { headers }); const redirectUrl = response.headers.get(\'X-FST-Redirect\'); if (redirectUrl) { window.location.href = redirectUrl; return; } if (!response.ok) { window.location.href = link.href; return; } const contentType = response.headers.get(\'content-type\'); if (!contentType || !contentType.includes(\'text/html\')) { window.location.href = link.href; return; } const html = await response.text(); const newTitle = html.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i); if (newTitle) document.title = newTitle[1]; const bodyAttrs = response.headers.get(\'X-FST-Body-Attrs\'); if (bodyAttrs !== null && targetSelector === \'body\') { const tmp = document.createElement(\'div\'); tmp.innerHTML = `<div ${bodyAttrs}></div>`; const newBody = tmp.firstChild; Array.from(document.body.attributes).forEach(attr => document.body.removeAttribute(attr.name)); Array.from(newBody.attributes).forEach(attr => document.body.setAttribute(attr.name, attr.value)); } if (!targetElement) throw new Error(\'Target not found\'); document.dispatchEvent(new Event(\'fst:unload\')); targetElement.innerHTML = html; if (!isHistoryOptOut) { window.history.pushState({ fstHtml: html, fstTarget: targetSelector, fstBodyAttrs: bodyAttrs }, \'\', link.href); } const scripts = targetElement.querySelectorAll(\'script\'); scripts.forEach(oldScript => { if (oldScript.id === \'fst-spa-agent\' || oldScript.hasAttribute(\'data-spa-ignore\')) return; const newScript = document.createElement(\'script\'); Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value)); newScript.appendChild(document.createTextNode(oldScript.innerHTML)); oldScript.parentNode.replaceChild(newScript, oldScript); }); document.dispatchEvent(new Event(\'fst:load\')); } catch (err) { window.location.href = link.href; } finally { if (targetElement) targetElement.classList.remove(\'fst-loading\'); } }); window.addEventListener(\'popstate\', function(e) { if (e.state && e.state.fstHtml && e.state.fstTarget) { const targetElement = document.querySelector(e.state.fstTarget); if (targetElement) { document.dispatchEvent(new Event(\'fst:unload\')); if (e.state.fstBodyAttrs && e.state.fstTarget === \'body\') { const tmp = document.createElement(\'div\'); tmp.innerHTML = `<div ${e.state.fstBodyAttrs}></div>`; const newBody = tmp.firstChild; Array.from(document.body.attributes).forEach(attr => document.body.removeAttribute(attr.name)); Array.from(newBody.attributes).forEach(attr => document.body.setAttribute(attr.name, attr.value)); } targetElement.innerHTML = e.state.fstHtml; const scripts = targetElement.querySelectorAll(\'script\'); scripts.forEach(oldScript => { if (oldScript.id === \'fst-spa-agent\' || oldScript.hasAttribute(\'data-spa-ignore\')) return; const newScript = document.createElement(\'script\'); Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value)); newScript.appendChild(document.createTextNode(oldScript.innerHTML)); oldScript.parentNode.replaceChild(newScript, oldScript); }); document.dispatchEvent(new Event(\'fst:load\')); } else { window.location.reload(); } } else { window.location.reload(); } }); document.dispatchEvent(new Event(\'fst:load\')); document.addEventListener(\'submit\', async function(e) { if (e.defaultPrevented) return; const form = e.target; if (form.hasAttribute(\'data-no-spa\') || form.classList.contains(\'no-spa\')) return; e.preventDefault(); const reqHeader = document.querySelector(\'script#fst-spa-agent\')?.getAttribute(\'data-req-header\') || \'X-FST-Request\'; const targetHeader = document.querySelector(\'script#fst-spa-agent\')?.getAttribute(\'data-target-header\') || \'X-FST-Target\'; const targetSelector = form.getAttribute(\'data-fst-target\') || \'body\'; const isHistoryOptOut = form.getAttribute(\'data-fst-history\') === \'false\'; const targetElement = document.querySelector(targetSelector); if (targetElement) targetElement.classList.add(\'fst-loading\'); try { const method = (form.getAttribute(\'method\') || \'GET\').toUpperCase(); const action = form.getAttribute(\'action\') || window.location.href; const formData = new FormData(form); const headers = { [reqHeader]: \'true\', [targetHeader]: targetSelector }; let fetchOptions = { method, headers }; let finalUrl = action; if (method === \'GET\') { const params = new URLSearchParams(formData); finalUrl = action.includes(\'?\') ? `${action}&${params.toString()}` : `${action}?${params.toString()}`; } else { fetchOptions.body = formData; } const response = await fetch(finalUrl, fetchOptions); const redirectUrl = response.headers.get(\'X-FST-Redirect\'); if (redirectUrl) { window.location.href = redirectUrl; return; } if (response.redirected) { window.location.href = response.url; return; } if (!response.ok && response.status !== 400 && response.status !== 422) { window.location.href = finalUrl; return; } const html = await response.text(); const newTitle = html.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i); if (newTitle) document.title = newTitle[1]; const bodyAttrs = response.headers.get(\'X-FST-Body-Attrs\'); if (bodyAttrs !== null && targetSelector === \'body\') { const tmp = document.createElement(\'div\'); tmp.innerHTML = `<div ${bodyAttrs}></div>`; const newBody = tmp.firstChild; Array.from(document.body.attributes).forEach(attr => document.body.removeAttribute(attr.name)); Array.from(newBody.attributes).forEach(attr => document.body.setAttribute(attr.name, attr.value)); } if (!targetElement) throw new Error(\'Target not found\'); document.dispatchEvent(new Event(\'fst:unload\')); targetElement.innerHTML = html; if (!isHistoryOptOut && method === \'GET\') { window.history.pushState({ fstHtml: html, fstTarget: targetSelector, fstBodyAttrs: bodyAttrs }, \'\', finalUrl); } document.dispatchEvent(new Event(\'fst:load\')); } catch (err) { window.location.reload(); } finally { if (targetElement) targetElement.classList.remove(\'fst-loading\'); } });');
+define('FST_SPA_JS_CODE', 'function _fstGetIndicatorClass(triggerElement) { return (triggerElement && triggerElement.getAttribute(\"data-fst-indicator\")) || document.querySelector(\"script#fst-spa-agent\")?.getAttribute(\"data-indicator-class\") || \"fst-loading\"; } async function _fstNavigate(url, targetSelector, pushHistory, triggerElement = null) { const reqHeader = document.querySelector(\'script#fst-spa-agent\')?.getAttribute(\'data-req-header\') || \'X-FST-Request\'; const targetHeader = document.querySelector(\'script#fst-spa-agent\')?.getAttribute(\'data-target-header\') || \'X-FST-Target\'; const targetElement = document.querySelector(targetSelector); const indicator = _fstGetIndicatorClass(triggerElement); if (targetElement) targetElement.classList.add(...indicator.split(\' \')); try { const headers = { [reqHeader]: \'true\', [targetHeader]: targetSelector }; const response = await fetch(url, { headers }); if (!response.ok) { const errorHtml = await response.text(); document.open(); document.write(errorHtml); document.close(); return; } const contentType = response.headers.get(\'content-type\'); if (!contentType || !contentType.includes(\'text/html\')) { window.location.href = url; return; } const html = await response.text(); const newTitle = html.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i); if (newTitle) document.title = newTitle[1]; const bodyAttrs = response.headers.get(\'X-FST-Body-Attrs\'); if (bodyAttrs !== null && targetSelector === \'body\') { const parser = new DOMParser(); const doc = parser.parseFromString(`<div ${bodyAttrs}></div>`, \'text/html\'); const newBody = doc.body.firstChild; Array.from(document.body.attributes).forEach(attr => document.body.removeAttribute(attr.name)); Array.from(newBody.attributes).forEach(attr => document.body.setAttribute(attr.name, attr.value)); } if (!targetElement) throw new Error(\'Target not found\'); document.dispatchEvent(new Event(\'fst:unload\')); targetElement.innerHTML = html; if (pushHistory) { window.history.pushState({ fstHtml: html, fstTarget: targetSelector, fstBodyAttrs: bodyAttrs }, \'\', url); } const scripts = targetElement.querySelectorAll(\'script\'); scripts.forEach(oldScript => { if (oldScript.id === \'fst-spa-agent\' || oldScript.hasAttribute(\'data-fst-ignore\')) return; const newScript = document.createElement(\'script\'); Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value)); newScript.appendChild(document.createTextNode(oldScript.innerHTML)); oldScript.parentNode.replaceChild(newScript, oldScript); }); document.dispatchEvent(new Event(\'fst:load\')); } catch (err) { window.location.href = url; } finally { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); } } document.addEventListener(\'click\', async function(e) { if (e.defaultPrevented) return; const link = e.target.closest(\'a\'); if (!link || !link.href || link.hasAttribute(\'data-fst-no-spa\') || link.classList.contains(\'no-spa\') || link.target === \'_blank\' || link.hasAttribute(\'download\') || link.hostname !== window.location.hostname || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); const targetSelector = link.getAttribute(\'data-fst-target\') || \'body\'; const isHistoryOptOut = link.getAttribute(\'data-fst-history\') === \'false\'; await _fstNavigate(link.href, targetSelector, !isHistoryOptOut, link); }); window.addEventListener(\'popstate\', function(e) { if (e.state && e.state.fstHtml && e.state.fstTarget) { const targetElement = document.querySelector(e.state.fstTarget); if (targetElement) { document.dispatchEvent(new Event(\'fst:unload\')); if (e.state.fstBodyAttrs && e.state.fstTarget === \'body\') { const tmp = document.createElement(\'div\'); tmp.innerHTML = `<div ${e.state.fstBodyAttrs}></div>`; const newBody = tmp.firstChild; Array.from(document.body.attributes).forEach(attr => document.body.removeAttribute(attr.name)); Array.from(newBody.attributes).forEach(attr => document.body.setAttribute(attr.name, attr.value)); } targetElement.innerHTML = e.state.fstHtml; const scripts = targetElement.querySelectorAll(\'script\'); scripts.forEach(oldScript => { if (oldScript.id === \'fst-spa-agent\' || oldScript.hasAttribute(\'data-fst-ignore\')) return; const newScript = document.createElement(\'script\'); Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value)); newScript.appendChild(document.createTextNode(oldScript.innerHTML)); oldScript.parentNode.replaceChild(newScript, oldScript); }); document.dispatchEvent(new Event(\'fst:load\')); } else { window.location.reload(); } } else { window.location.reload(); } }); document.dispatchEvent(new Event(\'fst:load\')); document.addEventListener(\'submit\', async function(e) { if (e.defaultPrevented) return; const form = e.target; if (form.hasAttribute(\'data-fst-no-spa\') || form.classList.contains(\'no-spa\')) return; e.preventDefault(); const reqHeader = document.querySelector(\'script#fst-spa-agent\')?.getAttribute(\'data-req-header\') || \'X-FST-Request\'; const targetHeader = document.querySelector(\'script#fst-spa-agent\')?.getAttribute(\'data-target-header\') || \'X-FST-Target\'; const targetSelector = form.getAttribute(\'data-fst-target\') || \'body\'; const isHistoryOptOut = form.getAttribute(\'data-fst-history\') === \'false\'; const targetElement = document.querySelector(targetSelector); const indicator = _fstGetIndicatorClass(form); if (targetElement) targetElement.classList.add(...indicator.split(\' \')); try { const method = (form.getAttribute(\'method\') || \'GET\').toUpperCase(); const action = form.getAttribute(\'action\') || window.location.href; const formData = new FormData(form); const headers = { [reqHeader]: \'true\', [targetHeader]: targetSelector }; let fetchOptions = { method, headers }; let finalUrl = action; if (method === \'GET\') { const params = new URLSearchParams(formData); finalUrl = action.includes(\'?\') ? `${action}&${params.toString()}` : `${action}?${params.toString()}`; } else { fetchOptions.body = formData; } const response = await fetch(finalUrl, fetchOptions); const redirectUrl = response.headers.get(\'X-FST-Redirect\'); if (redirectUrl) { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); await _fstNavigate(redirectUrl, targetSelector, true); return; } if (response.redirected) { window.location.href = response.url; return; } if (!response.ok && response.status !== 400 && response.status !== 422) { const errorHtml = await response.text(); document.open(); document.write(errorHtml); document.close(); return; } const html = await response.text(); const newTitle = html.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i); if (newTitle) document.title = newTitle[1]; const bodyAttrs = response.headers.get(\'X-FST-Body-Attrs\'); if (bodyAttrs !== null && targetSelector === \'body\') { const parser = new DOMParser(); const doc = parser.parseFromString(`<div ${bodyAttrs}></div>`, \'text/html\'); const newBody = doc.body.firstChild; Array.from(document.body.attributes).forEach(attr => document.body.removeAttribute(attr.name)); Array.from(newBody.attributes).forEach(attr => document.body.setAttribute(attr.name, attr.value)); } if (!targetElement) throw new Error(\'Target not found\'); document.dispatchEvent(new Event(\'fst:unload\')); targetElement.innerHTML = html; if (!isHistoryOptOut && method === \'GET\') { window.history.pushState({ fstHtml: html, fstTarget: targetSelector, fstBodyAttrs: bodyAttrs }, \'\', finalUrl); } const scripts = targetElement.querySelectorAll(\'script\'); scripts.forEach(oldScript => { if (oldScript.id === \'fst-spa-agent\' || oldScript.hasAttribute(\'data-fst-ignore\')) return; const newScript = document.createElement(\'script\'); Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value)); newScript.appendChild(document.createTextNode(oldScript.innerHTML)); oldScript.parentNode.replaceChild(newScript, oldScript); }); document.dispatchEvent(new Event(\'fst:load\')); } catch (err) { window.location.reload(); } finally { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); } });');
 
 
 // FILE: core.php
@@ -36,7 +36,7 @@ if (session_status() === PHP_SESSION_NONE) {
     ]);
     session_start(); 
 }
-define('FST_VERSION', '0.1.0');
+define('FST_VERSION', '0.2.0');
 define('FST_DOCS_URL', 'https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v' . FST_VERSION . '.md');
 if (!defined('FST_ROOT_DIR')) {
     $root = __DIR__;
@@ -250,6 +250,24 @@ function fst_spa_page() {
 
 function fst_extract_html_fragment($html, $selector = 'body') {
     if (empty(trim($html))) return '';
+
+    
+    
+    
+    $singleton_tags = ['body', 'main'];
+    if (!str_starts_with($selector, '#') && !str_starts_with($selector, '.')) {
+        $tag = strtolower($selector);
+        if (in_array($tag, $singleton_tags)) {
+            
+            if (preg_match('/<' . $tag . '[^>]*>(.*?)<\/' . $tag . '>/is', $html, $m)) {
+                return $m[1];
+            }
+        }
+        
+    }
+
+    
+    
     libxml_use_internal_errors(true);
     $dom = new DOMDocument();
     $dom->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_NOERROR | LIBXML_NOWARNING | LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
@@ -265,11 +283,12 @@ function fst_extract_html_fragment($html, $selector = 'body') {
         if (!preg_match('/^[a-zA-Z0-9_\-]+$/', $class)) return $html; 
         $xpath_query = "//*[contains(concat(' ', normalize-space(@class), ' '), ' {$class} ')]";
     } else {
+        
         $allowed_tags = ['body', 'main', 'header', 'footer', 'div', 'section', 'article', 'nav', 'aside', 'span', 'p', 'form', 'table'];
         if (in_array(strtolower($selector), $allowed_tags)) {
             $xpath_query = '//' . strtolower($selector);
         } else {
-            return $html; 
+            return $html;
         }
     }
 
@@ -322,7 +341,7 @@ function _fst_sanitize_order_by($order_by, $connection = null) {
     return !empty($safe_parts) ? implode(', ', $safe_parts) : null;
 }
 
-function fst_db($mode, $sql, $params = [], $connection = null) {
+function _fst_get_pdo($connection = null) {
     global $fst_pdo_pool;
     if (!isset($fst_pdo_pool)) $fst_pdo_pool = [];
     
@@ -351,17 +370,42 @@ function fst_db($mode, $sql, $params = [], $connection = null) {
             
             $user = $db_config['username'] ?? null;
             $pass = $db_config['password'] ?? null;
-            $fst_pdo_pool[$conn_name] = new PDO($dsn, $user, $pass, [
+            $pdo_instance = new PDO($dsn, $user, $pass, [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES => false
             ]);
+            
+            
+            if ($driver === 'sqlite') {
+                $pdo_instance->exec('PRAGMA journal_mode = WAL;');
+                $pdo_instance->exec('PRAGMA busy_timeout = 5000;');
+                $pdo_instance->exec('PRAGMA foreign_keys = ON;');
+            }
+            
+            $fst_pdo_pool[$conn_name] = $pdo_instance;
         } catch (PDOException $e) {
             fst_abort(500, "Database Connection Failed [{$conn_name}]: " . (fst_is_safe_to_debug() ? $e->getMessage() : 'Error.'));
         }
     }
     
-    $pdo = $fst_pdo_pool[$conn_name];
+    return $fst_pdo_pool[$conn_name];
+}
+
+function fst_db_begin($connection = null) {
+    return _fst_get_pdo($connection)->beginTransaction();
+}
+
+function fst_db_commit($connection = null) {
+    return _fst_get_pdo($connection)->commit();
+}
+
+function fst_db_rollback($connection = null) {
+    return _fst_get_pdo($connection)->rollBack();
+}
+
+function fst_db($mode, $sql, $params = [], $connection = null) {
+    $pdo = _fst_get_pdo($connection);
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     $normalizedSql = strtoupper(trim($sql));
@@ -564,7 +608,12 @@ function fst_group($prefix, $callback, $middleware = []) {
     $parent_prefix = fst_app('route_prefix');
     $parent_middleware = fst_app('group_middleware') ?? [];
     
-    $fst_route_prefix = rtrim($parent_prefix, '/') . '/' . trim($prefix, '/');
+    $trimmed_prefix = trim($prefix, '/');
+    if ($trimmed_prefix === '') {
+        $fst_route_prefix = $parent_prefix;
+    } else {
+        $fst_route_prefix = rtrim($parent_prefix, '/') . '/' . $trimmed_prefix;
+    }
     fst_app('route_prefix', $fst_route_prefix);
     
     if (!is_array($middleware)) $middleware = [$middleware];
@@ -720,6 +769,7 @@ function fst_run() {
     }
     
     $output = ob_get_clean();
+    if ($output === false) $output = ''; 
 
     
     $spa_mode = fst_config('spa.enabled', false);
@@ -764,7 +814,8 @@ function fst_run() {
         $script_id = fst_config('spa.script_id', 'fst-spa-agent');
         $req_header = fst_config('spa.header_request', 'X-FST-Request');
         $target_header = fst_config('spa.header_target', 'X-FST-Target');
-        $inject_id = $script_id ? 'id="'.$script_id.'" data-req-header="'.$req_header.'" data-target-header="'.$target_header.'"' : '';
+        $indicator_class = fst_config('spa.indicator_class', 'fst-loading');
+        $inject_id = $script_id ? 'id="'.$script_id.'" data-req-header="'.$req_header.'" data-target-header="'.$target_header.'" data-indicator-class="'.$indicator_class.'"' : '';
         $script_tag = "<script {$inject_id}>\n" . (defined('FST_SPA_JS_CODE') ? FST_SPA_JS_CODE : '') . "\n</script>";
         
         if (stripos($output, '</body>') !== false) {
@@ -944,6 +995,10 @@ function fst_view($path, $data = []) {
     if (!$__fst_file || !$__fst_root || !str_starts_with($__fst_file, $__fst_root)) {
         fst_abort(500, "Invalid view path.");
     }
+    $ext = strtolower(pathinfo($__fst_file, PATHINFO_EXTENSION));
+    if (!in_array($ext, ['php', 'html', 'htm'])) {
+        fst_abort(403, "Invalid view extension. Only php, html, and htm are allowed.");
+    }
     $shared = fst_app('shared_view_data') ?? [];
     extract($shared, EXTR_SKIP);
     extract($data, EXTR_SKIP);
@@ -1093,11 +1148,28 @@ function fst_handle_installation() {
     $is_cli = php_sapi_name() === 'cli';
     $is_submit = $is_cli || $_SERVER['REQUEST_METHOD'] === 'POST';
     
+    if ($is_cli) {
+        global $argv;
+        
+        if (!isset($argv[1]) || $argv[1] !== 'init') {
+            echo "FullStuck.php is not initialized.\n";
+            echo "Run: php fullstuck.php init [options]\n\n";
+            echo "Options:\n";
+            echo "  --db=sqlite|mysql|pgsql (default: sqlite)\n";
+            echo "  --admin-pass=YOUR_PASS (default: admin)\n";
+            echo "  --admin-url=/YOUR_URL (default: /stuck)\n";
+            echo "  --spa=yes|no (default: yes)\n";
+            echo "  --scaffold=yes|no (default: yes)\n";
+            echo "  --htaccess=yes|no (default: no)\n";
+            exit(1);
+        }
+        $is_submit = true;
+    }
+
     if ($is_submit) {
         try {
             $input_data = [];
             if ($is_cli) {
-                global $argv;
                 foreach ($argv as $arg) {
                     if (preg_match('/^--([^=]+)=(.*)$/', $arg, $m)) {
                         $input_data[str_replace('-', '_', $m[1])] = $m[2];
@@ -1109,7 +1181,210 @@ function fst_handle_installation() {
                 $input_data['enable_spa'] = ($input_data['spa'] ?? 'yes') === 'yes' ? '1' : '0';
                 $input_data['generate_starter'] = ($input_data['scaffold'] ?? 'yes') === 'yes' ? '1' : '0';
                 $input_data['download_docs'] = '1';
-                $input_data['server_type'] = 'other';
+                $input_data['server_type'] = ($input_data['htaccess'] ?? 'no') === 'yes' ? 'apache_litespeed' : 'other';
+            } else {
+                $input_data = $_POST;
+            }
+
+            $driver = $input_data['driver'] ?? 'sqlite';
+            $server_type = $input_data['server_type'] ?? 'apache_litespeed';
+            
+            if ($driver !== 'none') {
+                $h = $input_data['db_host'] ?? 'localhost';
+                $n = $input_data['db_name'] ?? '';
+                $u = $input_data['db_user'] ?? ($driver === 'pgsql' ? 'postgres' : 'root');
+                $p = $input_data['db_pass'] ?? '';
+                $port = $input_data['db_port'] ?? ($driver === 'pgsql' ? '5432' : '3306');
+
+                if ($driver === 'mysql') { $dsn = "mysql:host={$h};port={$port};dbname={$n};charset=utf8mb4"; new PDO($dsn, $u, $p, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_TIMEOUT => 3]); }
+                elseif ($driver === 'pgsql') { $dsn = "pgsql:host={$h};port={$port};dbname={$n}"; new PDO($dsn, $u, $p, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_TIMEOUT => 3]); }
+                else { $path = FST_ROOT_DIR . '/' . ($input_data['db_path'] ?? 'database.sqlite'); $dir = dirname($path); if (!is_dir($dir) && !mkdir($dir, 0755, true)) throw new Exception("Failed to create folder '{$dir}'. Check permissions."); new PDO("sqlite:" . $path, null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]); }
+            }
+            
+            $config_data = [
+                "environment" => "development", 
+                "admin" => [
+                    "page_url" => $input_data['admin_url'] ?? '/stuck',
+                    "password" => password_hash($input_data['admin_pass'], PASSWORD_DEFAULT),
+                    "allowed_ips" => [] 
+                ],
+                "database" => [
+                    "default" => "main",
+                    "connections" => [
+                        "main" => [
+                            "driver" => $driver,
+                            "database_path" => $input_data['db_path'] ?? 'database.sqlite',
+                            "host" => $input_data['db_host'] ?? 'localhost',
+                            "port" => $input_data['db_port'] ?? ($driver === 'pgsql' ? '5432' : '3306'),
+                            "dbname" => $input_data['db_name'] ?? '',
+                            "username" => $input_data['db_user'] ?? ($driver === 'pgsql' ? 'postgres' : 'root'),
+                            "password" => $input_data['db_pass'] ?? ''
+                        ]
+                    ]
+                ],
+                "routing" => [
+                    "base_path" => "/",
+                    "require" => [],
+                    "public_folders" => ["assets", "uploads", "storage/public"],
+                    "routes_file" => ["router.php"],
+                    "error_handlers" => ["404" => "views/errors/404.php", "403" => "Sorry, you do not have permission.", "405" => "Method not allowed.", "500" => "views/errors/500.php"]
+                ],
+                "spa" => [
+                    
+                    "enabled" => isset($input_data['enable_spa']) && $input_data['enable_spa'] === '1',
+                    "default_target" => "body",
+                    "header_request" => "X-FST-Request",
+                    "header_target" => "X-FST-Target",
+                    "indicator_class" => "fst-loading"
+                ]
+            ];
+            
+            if (file_put_contents(FST_CONFIG_FILE, json_encode($config_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) === false) throw new Exception("Failed to write `fullstuck.json`. Check folder permissions.");
+            
+            $htaccess_content = null;
+            if ($server_type === 'apache_litespeed') {
+                $htaccess_code = implode("\n", [
+                    '# 1. Nonaktifkan fitur "Index of" dan "MultiViews"',
+                    'Options -Indexes -MultiViews',
+                    '',
+                    '# Blokir akses ke file hidden (dotfiles)',
+                    '<FilesMatch "^\.">',
+                    '    Require all denied',
+                    '</FilesMatch>',
+                    '',
+                    '<IfModule mod_rewrite.c>',
+                    '    RewriteEngine On',
+                    '    RewriteBase /',
+                    '    ',
+                    '    # 2. Aturan "Rakus" (Kirim SEMUA ke fullstuck.php)',
+                    '    RewriteRule ^(.*)$ fullstuck.php [L]',
+                    '</IfModule>'
+                ]);
+                if (file_put_contents(FST_ROOT_DIR . '/.htaccess', $htaccess_code) === false) $htaccess_content = $htaccess_code;
+            }
+
+            
+            if (isset($input_data['download_docs']) && $input_data['download_docs'] === '1') {
+                $docs_content = @file_get_contents(FST_DOCS_URL);
+                if ($docs_content) {
+                    $docs_filename = 'fullstuck_v' . FST_VERSION . '.md';
+                    @file_put_contents(FST_ROOT_DIR . '/' . $docs_filename, $docs_content);
+                }
+            }
+
+            
+            if (isset($input_data['generate_starter']) && $input_data['generate_starter'] === '1') {
+                @mkdir(FST_ROOT_DIR . '/assets', 0755, true);
+                @file_put_contents(FST_ROOT_DIR . '/assets/style.css', ':root {--bg-color:#f8fafc;--card-bg:rgba(255, 255, 255, 0.75);--text-main:#1e293b;--text-muted:#64748b;--primary:#4f46e5;--primary-hover:#4338ca;--danger:#ef4444;--success:#10b981;--border:rgba(255, 255, 255, 0.6);}* {box-sizing:border-box;}body {font-family:\'Outfit\', sans-serif;background:var(--bg-color);color:var(--text-main);margin:0;padding:2rem 1rem;display:flex;justify-content:center;align-items:flex-start;min-height:100vh;background-image:radial-gradient(circle at top right, #e0e7ff 0%, #f8fafc 60%);background-attachment:fixed;}.app-container {background:var(--card-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:28px;padding:2.5rem 2rem;width:100%;max-width:540px;box-shadow:0 20px 40px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6);transition:all 0.3s ease;}header {margin-bottom:2.5rem;text-align:center;}.logo-wrapper {display:inline-flex;align-items:center;gap:0.75rem;margin-bottom:0.5rem;}.logo-icon {font-size:2rem;background:linear-gradient(135deg, #6366f1, #a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 4px rgba(99,102,241,0.3));}header h1 {margin:0;font-weight:800;font-size:2.25rem;letter-spacing:-0.02em;color:var(--text-main);}header p {margin:0;color:var(--text-muted);font-size:1rem;font-weight:500;}.alert {padding:1rem 1.25rem;border-radius:14px;margin-bottom:2rem;font-size:0.95rem;font-weight:600;animation:slideDown 0.3s ease-out;}@keyframes slideDown {from { opacity:0; transform:translateY(-10px); }to { opacity:1; transform:translateY(0); }}.alert-msg { background:#d1fae5; color:#065f46; border:1px solid #a7f3d0; }.alert-error { background:#fee2e2; color:#991b1b; border:1px solid #fecaca; }.form-add {display:flex;flex-wrap:wrap;gap:0.75rem;margin-bottom:2.5rem;position:relative;}.form-add input[type="text"] {flex:1 1 100%;padding:1rem 1.25rem;border:2px solid transparent;border-radius:16px;font-size:1.05rem;font-family:inherit;outline:none;background:rgba(255,255,255,0.9);box-shadow:0 4px 6px rgba(0,0,0,0.02);transition:all 0.25s ease;}.form-add input:focus {border-color:#c7d2fe;box-shadow:0 0 0 4px rgba(99, 102, 241, 0.1);background:#fff;}input[type="file"] {flex:1;padding:0.5rem;background:transparent;border:2px dashed #c7d2fe;box-shadow:none;color:var(--text-muted);font-size:0.85rem;cursor:pointer;}input[type="file"]:focus {border-color:var(--primary);background:transparent;box-shadow:none;}input[type="file"]::file-selector-button {background:#e0e7ff;border:none;border-radius:8px;padding:0.4rem 0.8rem;color:var(--primary);font-weight:600;cursor:pointer;margin-right:0.5rem;transition:all 0.2s ease;}input[type="file"]::file-selector-button:hover {background:#c7d2fe;}button {cursor:pointer;border:none;font-family:inherit;border-radius:12px;font-weight:600;font-size:0.95rem;transition:all 0.2s cubic-bezier(0.4, 0, 0.2, 1);}.btn-primary {background:var(--primary);color:white;padding:0 1.5rem;border-radius:16px;box-shadow:0 4px 12px rgba(79, 70, 229, 0.25);}.btn-primary:hover {background:var(--primary-hover);transform:translateY(-2px);box-shadow:0 6px 16px rgba(79, 70, 229, 0.35);}.btn-primary:active {transform:translateY(0);}.todo-list {list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:1rem;}.empty-state {text-align:center;padding:3rem 1rem;color:var(--text-muted);}.empty-icon {font-size:3rem;margin-bottom:1rem;opacity:0.5;}.empty-state p {margin:0;font-weight:500;}.todo-item {display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;background:rgba(255,255,255,0.9);border-radius:16px;box-shadow:0 4px 6px rgba(0,0,0,0.02), 0 1px 3px rgba(0,0,0,0.02);transition:all 0.3s ease;border:1px solid rgba(0,0,0,0.02);}.todo-item:hover {transform:translateY(-3px);box-shadow:0 8px 15px rgba(0,0,0,0.05);border-color:rgba(99,102,241,0.1);}.todo-item.done {background:rgba(255,255,255,0.5);}.todo-item.done .task-text {text-decoration:line-through;color:#94a3b8;}.task-content {display:flex;flex-direction:column;gap:0.5rem;}.task-text {font-size:1.05rem;font-weight:500;word-break:break-word;padding-right:1rem;}.task-file {font-size:0.85rem;color:var(--primary);text-decoration:none;font-weight:500;display:inline-block;}.task-file:hover {text-decoration:underline;}.task-actions {display:flex;gap:0.5rem;}.task-actions form {margin:0;}.btn-success { background:#e0e7ff; color:var(--primary); padding:0.6rem 1rem;}.btn-success:hover { background:#c7d2fe; }.btn-danger { background:#fee2e2; color:var(--danger); padding:0.6rem 1rem;}.btn-danger:hover { background:#fecaca; }.fst-loading {opacity:0.6;pointer-events:none;transform:scale(0.98);}');
+
+                @mkdir(FST_ROOT_DIR . '/views', 0755, true);
+                $html_template = <<<HTML
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Placeholder Title</title><link rel="stylesheet" href="/assets/style.css"><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet"></head><body>
+<div class="app-container" id="app-content"><header><div class="logo-wrapper"><div class="logo-icon">🚀</div><h1>Tasks</h1></div><p>FullStuck.php Framework Showcase</p></header>
+<div class="alert alert-msg">Sukses!</div><div class="alert alert-error">Error!</div>
+<form class="form-add" action="/add" method="POST" enctype="multipart/form-data" data-fst-history="false"><input type="text" name="task" placeholder="What needs to be done?" required autocomplete="off"><input type="file" name="file" accept=".png,.jpg,.pdf,.txt"><button type="submit" class="btn-primary">Add</button></form>
+<ul class="todo-list"><li class="empty-state"><div class="empty-icon">📭</div><p>Belum ada task. Tambahkan sekarang!</p></li>
+<li class="todo-item"><div class="task-content"><span class="task-text">Sample Task</span><a class="task-file" href="#" target="_blank">📄 View File</a><img class="task-img" src="" alt="Attachment" style="max-height:80px;border-radius:8px;display:block;"></div>
+<div class="task-actions"><form class="form-toggle" action="/toggle/1" method="POST" data-fst-history="false"><button type="submit" class="btn-success">Done</button></form><form class="form-delete" action="/delete/1" method="POST" data-fst-history="false"><button type="submit" class="btn-danger">Del</button></form></div></li></ul></div>
+</body></html>
+HTML;
+                @file_put_contents(FST_ROOT_DIR . '/views/todo.html', $html_template);
+
+                $router_code = <<<PHP
+<?php
+// 1. Auto-Migrate Database (SQLite)
+fst_db('SCALAR', "CREATE TABLE IF NOT EXISTS todos (id INTEGER PRIMARY KEY AUTOINCREMENT, task TEXT NOT NULL, attachment TEXT, is_done INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+
+// 2. Global View Share & Middleware Demo
+fst_view_share('app_version', 'v0.2.0');
+function cek_auth(\$next) {
+    if (fst_input('token') !== '123' && !fst_session_get('logged_in')) {
+        fst_flash_set('error', 'Akses ditolak! Middleware memblokir request (gunakan ?token=123)');
+        return fst_redirect('/');
+    }
+    return \$next();
+}
+
+fst_group('/api', function() {
+    fst_get('/tasks', fn() => fst_json(['status' => 'success', 'data' => fst_db_select('todos', [])]));
+}, 'cek_auth');
+
+// 3. Tampilkan Halaman Utama
+fst_get('/', function() {
+    \$todos = fst_db_select('todos', [], ['order_by' => 'is_done ASC, created_at DESC']);
+    \$app_version = fst_app('shared_view_data')['app_version'] ?? '';
+    fst_template(FST_ROOT_DIR . '/views/todo.html', ['todos' => \$todos], [
+        "title" => '"Tasks - FullStuck Showcase (" . "' . \$app_version . '" . ")"',
+        "div.alert-msg" => ["@if" => 'fst_flash_has("msg")', "@text" => 'fst_flash_get("msg")'],
+        "div.alert-error" => ["@if" => 'fst_flash_has("error")', "@text" => 'fst_flash_get("error")'],
+        "form.form-add" => ["@append" => 'fst_csrf_field()'],
+        "li.todo-item" => [
+            "@foreach" => '\$todos as \$todo',
+            "[class]" => '\$todo["is_done"] ? "todo-item done" : "todo-item"',
+            "span.task-text" => '\$todo["task"]',
+            "a.task-file" => ["@if" => '!empty(\$todo["attachment"]) && !preg_match("/\.(png|jpg|jpeg|gif|webp)\$/i", \$todo["attachment"])', "[href]" => '"/" . \$todo["attachment"]', "@text" => '"📄 View " . strtoupper(pathinfo(\$todo["attachment"], PATHINFO_EXTENSION))'],
+            "img.task-img" => ["@if" => '!empty(\$todo["attachment"]) && preg_match("/\.(png|jpg|jpeg|gif|webp)\$/i", \$todo["attachment"])', "[src]" => '"/" . \$todo["attachment"]'],
+            "form.form-toggle" => ["[action]" => '"/toggle/" . \$todo["id"]', "@append" => 'fst_csrf_field()'],
+            "form.form-toggle button" => ["@text" => '\$todo["is_done"] ? "Undo" : "Done"'],
+            "form.form-delete" => ["[action]" => '"/delete/" . \$todo["id"]', "@append" => 'fst_csrf_field()']
+        ],
+        "li.empty-state" => ["@if" => 'empty(\$todos)']
+    ], FST_ROOT_DIR . '/build-template', true);
+});
+
+// 4. Tambah Task & Upload File
+fst_post('/add', function() {
+    fst_csrf_check();
+    \$val = fst_validate(fst_request(), ['task' => 'required|min:3']);
+    if (\$val['valid']) {
+        \$upload = !empty(\$_FILES['file']['name']) ? fst_upload('file', 'assets', ['max_size' => 2048, 'allowed_types' => ['png', 'jpg', 'txt', 'pdf']]) : null;
+        fst_db_insert('todos', ['task' => \$val['data']['task'], 'attachment' => \$upload['path'] ?? null]);
+        fst_flash_set('msg', 'Task berhasil ditambahkan!');
+    } else {
+        fst_flash_set('error', implode(', ', \$val['errors']['task']));
+    }
+    fst_redirect('/');
+});
+
+// 5. Toggle Status Task
+fst_post('/toggle/{id:i}', function(\$id) {
+    fst_csrf_check();
+    if (\$todo = fst_db_row('todos', ['id' => \$id])) fst_db_update('todos', ['is_done' => !\$todo['is_done']], ['id' => \$id]);
+    fst_redirect('/');
+});
+
+// 6. Hapus Task (Demonstrasi Database Transaction)
+fst_post('/delete/{id:i}', function(\$id) {
+    fst_csrf_check();
+    try {
+        fst_db_begin();
+        if ((\$todo = fst_db_row('todos', ['id' => \$id])) && !empty(\$todo['attachment'])) @unlink(FST_ROOT_DIR . '/' . \$todo['attachment']);
+        fst_db_delete('todos', ['id' => \$id]);
+        fst_db_commit();
+        fst_flash_set('msg', 'Task & attachment dihapus!');
+    } catch (Exception \$e) {
+        fst_db_rollback();
+        fst_flash_set('error', 'Gagal menghapus task!');
+    }
+    fst_redirect('/');
+});
+PHP;
+                @file_put_contents(FST_ROOT_DIR . '/router.php', $router_code);
+            }
+
+            if ($is_cli) {
+                foreach ($argv as $arg) {
+                    if (preg_match('/^--([^=]+)=(.*)$/', $arg, $m)) {
+                        $input_data[str_replace('-', '_', $m[1])] = $m[2];
+                    }
+                }
+                $input_data['driver'] = $input_data['db'] ?? 'sqlite';
+                $input_data['admin_url'] = $input_data['admin_url'] ?? '/stuck';
+                $input_data['admin_pass'] = $input_data['admin_pass'] ?? 'admin';
+                $input_data['enable_spa'] = ($input_data['spa'] ?? 'yes') === 'yes' ? '1' : '0';
+                $input_data['generate_starter'] = ($input_data['scaffold'] ?? 'yes') === 'yes' ? '1' : '0';
+                $input_data['download_docs'] = '1';
+                $input_data['server_type'] = ($input_data['htaccess'] ?? 'no') === 'yes' ? 'apache_litespeed' : 'other';
             } else {
                 $input_data = $_POST;
             }
@@ -1597,7 +1872,6 @@ HTML;
     function fst_admin_show_monitor() {
         fst_admin_check_auth();
         $fst_config = fst_app('config');
-        $fst_pdo = fst_app('pdo');
 
         $update_banner = '';
         $remote_data = fst_admin_get_remote_info();
@@ -1653,32 +1927,18 @@ HTML;
 
         
         $db_status = '';
-        $db_driver = $fst_config['database']['driver'] ?? 'none';
+        $default_conn = $fst_config['database']['default'] ?? 'main';
+        $db_driver = $fst_config['database']['connections'][$default_conn]['driver'] ?? 'none';
         
         if ($db_driver === 'none') {
             $db_status = '<span style="color:orange;">⚠ Not Configured</span>';
         } else {
-            if ($fst_pdo === null) {
-                try {
-                    _fst_connect_db();
-                    $fst_pdo = fst_app('pdo');
-                } catch (Exception $e) {
-                    
-                }
-            }
-
-            if ($fst_pdo) { 
-                try {
-                    $stmt = $fst_pdo->query("SELECT 1");
-                    $stmt->fetch();
-                    $db_status = '<span style="color:green;">✔ OK</span> (Driver: ' . $db_driver . ')';
-                } catch (Exception $e) {
-                    $db_status = '<span style="color:red;">❌ FAILED</span>: ' . $e->getMessage();
-                    $errors[] = "Database connection test failed: " . $e->getMessage();
-                }
-            } else {
-                $db_status = '<span style="color:red;">❌ FAILED</span> (Could not initialize connection)';
-                $errors[] = "Database connection could not be established. Check 'fullstuck.json' or server logs.";
+            try {
+                fst_db('ROW', 'SELECT 1', [], $default_conn);
+                $db_status = '<span style="color:green;">✔ OK</span> (Driver: ' . $db_driver . ')';
+            } catch (Exception $e) {
+                $db_status = '<span style="color:red;">❌ FAILED</span>: ' . (fst_is_safe_to_debug() ? $e->getMessage() : 'Connection error.');
+                $errors[] = "Database connection test failed: " . $e->getMessage();
             }
         }
 
@@ -1736,7 +1996,7 @@ HTML;
         $admin_base = $fst_config['admin']['page_url'] ?? '/stuck';
         $csrf = fst_csrf_field();
         
-        $config_content = file_get_contents(FST_CONFIG_FILE);
+        $config_content = htmlspecialchars(file_get_contents(FST_CONFIG_FILE), ENT_QUOTES, 'UTF-8');
         
         $content = <<<HTML
 <p>Edit the raw JSON configuration below. Be careful with syntax!</p>
@@ -1902,11 +2162,12 @@ HTML;
         $function_groups = [
             'Core' => ['fst_abort', 'fst_run', 'fst_is_dev', 'fst_config', 'fst_extract_html_fragment', 'fst_app'],
 
-            'Database' => ['fst_db', 'fst_db_select', 'fst_db_row', 'fst_db_exists', 'fst_db_insert', 'fst_db_update', 'fst_db_delete', 'fst_db_quote_ident', '_fst_sanitize_order_by'],
+            'Database' => ['fst_db', 'fst_db_begin', 'fst_db_commit', 'fst_db_rollback', 'fst_db_select', 'fst_db_row', 'fst_db_exists', 'fst_db_insert', 'fst_db_update', 'fst_db_delete', 'fst_db_quote_ident', '_fst_sanitize_order_by'],
             'Views' => [
                 'fst_view',
                 'fst_partial',
-                'fst_serve_static_file'
+                'fst_serve_static_file',
+                'fst_template'
             ],
             'Request' => ['fst_uri', 'fst_method', 'fst_input', 'fst_request', 'fst_file', 'fst_is_spa', 'fst_spa_target'],
             'Routing' => ['fst_route', 'fst_get', 'fst_post', 'fst_put', 'fst_patch', 'fst_delete', 'fst_any', 'fst_group'],
@@ -2237,6 +2498,269 @@ HTML;
         fst_redirect($admin_base . '/plugins');
     }
 
+}
+
+// FILE: template.php
+function fst_template(string $templatePath, array $data, array $rules, string $cacheDir = __DIR__ . '/build-template', bool $forceRebuild = false): void {
+    if (!file_exists($templatePath)) {
+        throw new \RuntimeException("Template not found: {$templatePath}");
+    }
+
+    if (!file_exists($cacheDir)) {
+        mkdir($cacheDir, 0755, true);
+    }
+    
+    $cacheFile = $cacheDir . '/' . basename($templatePath) . '.php';
+
+    
+    if ($forceRebuild || !file_exists($cacheFile) || filemtime($templatePath) > filemtime($cacheFile)) {
+        
+        $dom = new DOMDocument();
+        libxml_use_internal_errors(true);
+        $html = file_get_contents($templatePath);
+        if ($html) {
+            
+            $dom->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        }
+        libxml_clear_errors();
+        
+        $xpath = new DOMXPath($dom);
+        $replacements = [];
+        $markerCount = 0;
+        
+        
+        $getMarker = function() use (&$markerCount) {
+            $markerCount++;
+            return "@@__FST_MARKER_{$markerCount}__@@";
+        };
+
+        $css2xpath = function(string $selector): string {
+            $selector = trim($selector);
+            
+            
+            if (str_starts_with($selector, '//') || str_starts_with($selector, './/')) {
+                return $selector;
+            }
+            
+            
+            if (strpos($selector, ':') !== false || strpos($selector, '+') !== false || strpos($selector, '~') !== false) {
+                return './/FST_BLACKLISTED_NODE';
+            }
+            
+            $paths = [];
+            foreach (explode(',', $selector) as $sel) {
+                $sel = trim($sel);
+                $sel = preg_replace('/\s*>\s*/', '/', $sel); 
+                $sel = preg_replace('/\s+/', '//', $sel); 
+                $sel = preg_replace('/#([\w\-]+)/', '[@id="$1"]', $sel); 
+                $sel = preg_replace('/\.([\w\-]+)/', '[contains(concat(" ", normalize-space(@class), " "), " $1 ")]', $sel); 
+                
+                
+                $sel = preg_replace('/\[([\w\-]+)=([\'"]?.*?[\'"]?)\]/', '[@$1=$2]', $sel);
+                
+                $sel = preg_replace('/\[([\w\-]+)\]/', '[@$1]', $sel);
+                
+                $sel = preg_replace('/(^|\/|\|)(\[)/', '$1*$2', $sel);
+                
+                
+                if (!str_starts_with($sel, '/') && !str_starts_with($sel, '.')) {
+                    $sel = './/' . $sel;
+                }
+                
+                $paths[] = $sel;
+            }
+            return implode(' | ', $paths);
+        };
+
+        
+        $applyRules = function(array $currentRules, ?DOMNode $context = null) use (&$applyRules, $xpath, &$replacements, $getMarker, $dom, $css2xpath) {
+            foreach ($currentRules as $key => $value) {
+                
+                
+                if (str_starts_with($key, '[') && str_ends_with($key, ']')) {
+                    if ($context instanceof DOMElement) {
+                        $attrName = substr($key, 1, -1);
+                        if ($value === '@remove') {
+                            $context->removeAttribute($attrName);
+                        } else {
+                            $marker = $getMarker();
+                            $context->setAttribute($attrName, $marker);
+                            $replacements[$marker] = "<?= htmlspecialchars({$value} ?? '', ENT_QUOTES, 'UTF-8') ?>";
+                        }
+                    }
+                    continue;
+                }
+
+                
+                if (str_starts_with($key, '@')) {
+                    continue;
+                }
+
+                
+                $isSingleSelection = false;
+                if (str_starts_with($key, '^')) {
+                    $isSingleSelection = true;
+                    $key = substr($key, 1);
+                }
+
+                $xpathSel = $css2xpath($key);
+                $nodes = $context ? $xpath->query($xpathSel, $context) : $xpath->query($xpathSel);
+                
+                if ($nodes === false || $nodes->length === 0) continue;
+
+                $targetNodes = [];
+                if ($isSingleSelection) {
+                    $targetNodes[] = $nodes->item(0);
+                } else {
+                    foreach ($nodes as $n) $targetNodes[] = $n;
+                }
+
+                
+                if (is_string($value)) {
+                    if ($value === '@remove') {
+                        foreach ($targetNodes as $node) {
+                            $node->parentNode->removeChild($node);
+                        }
+                        continue;
+                    }
+
+                    foreach ($targetNodes as $node) {
+                        $marker = $getMarker();
+                        $node->nodeValue = $marker;
+                        $replacements[$marker] = "<?= htmlspecialchars({$value} ?? '', ENT_QUOTES, 'UTF-8') ?>";
+                    }
+                } 
+                
+                elseif (is_array($value)) {
+                    
+                    if (isset($value['@if'])) {
+                        foreach ($targetNodes as $node) {
+                            $startMarker = $getMarker();
+                            $endMarker = $getMarker();
+                            
+                            $replacements[$startMarker] = "<?php if ({$value['@if']}): ?>";
+                            $replacements[$endMarker] = "<?php endif; ?>";
+                            
+                            $startTextNode = $dom->createTextNode($startMarker);
+                            $endTextNode = $dom->createTextNode($endMarker);
+                            
+                            $node->parentNode->insertBefore($startTextNode, $node);
+                            if ($node->nextSibling) {
+                                $node->parentNode->insertBefore($endTextNode, $node->nextSibling);
+                            } else {
+                                $node->parentNode->appendChild($endTextNode);
+                            }
+                        }
+                        unset($value['@if']);
+                    }
+
+                    if (isset($value['@text'])) {
+                        
+                        foreach ($targetNodes as $node) {
+                            $marker = $getMarker();
+                            $node->nodeValue = $marker;
+                            $replacements[$marker] = "<?= htmlspecialchars({$value['@text']} ?? '', ENT_QUOTES, 'UTF-8') ?>";
+                        }
+                        unset($value['@text']);
+                    }
+
+                    if (isset($value['@html'])) {
+                        
+                        foreach ($targetNodes as $node) {
+                            $marker = $getMarker();
+                            $node->nodeValue = $marker;
+                            $replacements[$marker] = "<?= {$value['@html']} ?? '' ?>";
+                        }
+                        unset($value['@html']);
+                    }
+
+                    if (isset($value['@append'])) {
+                        
+                        foreach ($targetNodes as $node) {
+                            $marker = $getMarker();
+                            $replacements[$marker] = "<?= {$value['@append']} ?? '' ?>";
+                            $node->appendChild($dom->createTextNode($marker));
+                        }
+                        unset($value['@append']);
+                    }
+
+                    if (isset($value['@prepend'])) {
+                        
+                        foreach ($targetNodes as $node) {
+                            $marker = $getMarker();
+                            $replacements[$marker] = "<?= {$value['@prepend']} ?? '' ?>";
+                            $node->insertBefore($dom->createTextNode($marker), $node->firstChild);
+                        }
+                        unset($value['@prepend']);
+                    }
+
+                    if (isset($value['@foreach'])) {
+                        
+                        $templateNode = $nodes->item(0);
+                        $container = $templateNode->parentNode;
+                        
+                        $foreachStr = $value['@foreach'];
+                        unset($value['@foreach']); 
+                        
+                        $startMarker = $getMarker();
+                        $endMarker = $getMarker();
+                        
+                        $replacements[$startMarker] = "<?php foreach ({$foreachStr}): ?>";
+                        $replacements[$endMarker] = "<?php endforeach; ?>";
+                        
+                        
+                        $container->insertBefore($dom->createTextNode($startMarker), $templateNode);
+                        if ($templateNode->nextSibling) {
+                            $container->insertBefore($dom->createTextNode($endMarker), $templateNode->nextSibling);
+                        } else {
+                            $container->appendChild($dom->createTextNode($endMarker));
+                        }
+                        
+                        
+                        for ($i = 1; $i < $nodes->length; $i++) {
+                            $nodeToRemove = $nodes->item($i);
+                            if ($nodeToRemove->parentNode) {
+                                $nodeToRemove->parentNode->removeChild($nodeToRemove);
+                            }
+                        }
+                        
+                        
+                        if (!empty($value)) {
+                            $applyRules($value, $templateNode);
+                        }
+                        
+                    } else {
+                        
+                        if (!empty($value)) {
+                            foreach ($targetNodes as $node) {
+                                $applyRules($value, $node);
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        
+        $applyRules($rules);
+        
+        $htmlOut = $dom->saveHTML();
+        
+        $htmlOut = str_replace('<?xml encoding="utf-8" ?>', '', $htmlOut);
+        
+        
+        foreach ($replacements as $marker => $phpCode) {
+            $htmlOut = str_replace($marker, $phpCode, $htmlOut);
+        }
+        
+        file_put_contents($cacheFile, $htmlOut);
+    }
+
+    
+    $shared_data = function_exists('fst_app') ? (fst_app('shared_view_data') ?? []) : [];
+    $data = array_merge($shared_data, $data);
+    extract($data, EXTR_SKIP);
+    require $cacheFile;
 }
 
 // FILE: bootstrap.php

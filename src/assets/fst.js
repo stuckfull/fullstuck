@@ -1,76 +1,82 @@
-document.addEventListener('click', async function(e) {
-    if (e.defaultPrevented) return;
-    const link = e.target.closest('a');
-    if (!link || !link.href || link.hasAttribute('data-no-spa') || link.classList.contains('no-spa') || link.target === '_blank' || link.hasAttribute('download') || link.hostname !== window.location.hostname || e.ctrlKey || e.metaKey || e.shiftKey) return;
-    e.preventDefault();
+/* Helper: SPA Navigate — fetch URL with SPA headers and inject to DOM */
+function _fstGetIndicatorClass(triggerElement) {
+    return (triggerElement && triggerElement.getAttribute("data-fst-indicator")) || document.querySelector("script#fst-spa-agent")?.getAttribute("data-indicator-class") || "fst-loading";
+}
 
-    /* Ambil selector target dan opsi history */
+async function _fstNavigate(url, targetSelector, pushHistory, triggerElement = null) {
     const reqHeader = document.querySelector('script#fst-spa-agent')?.getAttribute('data-req-header') || 'X-FST-Request';
     const targetHeader = document.querySelector('script#fst-spa-agent')?.getAttribute('data-target-header') || 'X-FST-Target';
-    const targetSelector = link.getAttribute('data-fst-target') || 'body';
-    const isHistoryOptOut = link.getAttribute('data-fst-history') === 'false';
-
-    /* Tambahkan class 'fst-loading' ke elemen targetSelector */
     const targetElement = document.querySelector(targetSelector);
-    if (targetElement) targetElement.classList.add('fst-loading');
+    const indicator = _fstGetIndicatorClass(triggerElement);
+    if (targetElement) targetElement.classList.add(...indicator.split(' '));
 
     try {
         const headers = { [reqHeader]: 'true', [targetHeader]: targetSelector };
-        const response = await fetch(link.href, { headers });
-        const redirectUrl = response.headers.get('X-FST-Redirect');
-        if (redirectUrl) { window.location.href = redirectUrl; return; }
-        if (!response.ok) { window.location.href = link.href; return; }
+        const response = await fetch(url, { headers });
+
+        if (!response.ok) {
+            const errorHtml = await response.text();
+            document.open();
+            document.write(errorHtml);
+            document.close();
+            return;
+        }
 
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('text/html')) {
-            window.location.href = link.href;
+            window.location.href = url;
             return;
         }
 
         const html = await response.text();
         const newTitle = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
         if (newTitle) document.title = newTitle[1];
-        
+
         const bodyAttrs = response.headers.get('X-FST-Body-Attrs');
         if (bodyAttrs !== null && targetSelector === 'body') {
-            const tmp = document.createElement('div');
-            tmp.innerHTML = `<div ${bodyAttrs}></div>`;
-            const newBody = tmp.firstChild;
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(`<div ${bodyAttrs}></div>`, 'text/html');
+            const newBody = doc.body.firstChild;
             Array.from(document.body.attributes).forEach(attr => document.body.removeAttribute(attr.name));
             Array.from(newBody.attributes).forEach(attr => document.body.setAttribute(attr.name, attr.value));
         }
 
         if (!targetElement) throw new Error('Target not found');
 
-        /* Dispatch event 'fst:unload' ke document */
         document.dispatchEvent(new Event('fst:unload'));
-
-        /* Ganti innerHTML targetElement dengan html dari response */
         targetElement.innerHTML = html;
 
-        /* Jika isHistoryOptOut false, jalankan history.pushState menyimpan stateObj: { fstHtml: html, fstTarget: targetSelector } */
-        if (!isHistoryOptOut) {
-            window.history.pushState({ fstHtml: html, fstTarget: targetSelector, fstBodyAttrs: bodyAttrs }, '', link.href);
+        if (pushHistory) {
+            window.history.pushState({ fstHtml: html, fstTarget: targetSelector, fstBodyAttrs: bodyAttrs }, '', url);
         }
 
-        /* Eksekusi ulang tag <script> (skip fst-spa-agent dan data-spa-ignore) */
         const scripts = targetElement.querySelectorAll('script');
         scripts.forEach(oldScript => {
-            if (oldScript.id === 'fst-spa-agent' || oldScript.hasAttribute('data-spa-ignore')) return;
+            if (oldScript.id === 'fst-spa-agent' || oldScript.hasAttribute('data-fst-ignore')) return;
             const newScript = document.createElement('script');
             Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
             newScript.appendChild(document.createTextNode(oldScript.innerHTML));
             oldScript.parentNode.replaceChild(newScript, oldScript);
         });
 
-        /* Dispatch event 'fst:load' ke document */
         document.dispatchEvent(new Event('fst:load'));
     } catch (err) {
-        window.location.href = link.href;
+        window.location.href = url;
     } finally {
-        /* Hapus class 'fst-loading' dari elemen targetSelector */
-        if (targetElement) targetElement.classList.remove('fst-loading');
+        if (targetElement) targetElement.classList.remove(...indicator.split(' '));
     }
+}
+
+document.addEventListener('click', async function(e) {
+    if (e.defaultPrevented) return;
+    const link = e.target.closest('a');
+    if (!link || !link.href || link.hasAttribute('data-fst-no-spa') || link.classList.contains('no-spa') || link.target === '_blank' || link.hasAttribute('download') || link.hostname !== window.location.hostname || e.ctrlKey || e.metaKey || e.shiftKey) return;
+    e.preventDefault();
+
+    const targetSelector = link.getAttribute('data-fst-target') || 'body';
+    const isHistoryOptOut = link.getAttribute('data-fst-history') === 'false';
+
+    await _fstNavigate(link.href, targetSelector, !isHistoryOptOut, link);
 });
 
 window.addEventListener('popstate', function(e) {
@@ -89,10 +95,10 @@ window.addEventListener('popstate', function(e) {
                 Array.from(newBody.attributes).forEach(attr => document.body.setAttribute(attr.name, attr.value));
             }
             targetElement.innerHTML = e.state.fstHtml;
-            /* 3. Eksekusi ulang script (skip fst-spa-agent dan data-spa-ignore) */
+            /* 3. Eksekusi ulang script (skip fst-spa-agent dan data-fst-ignore) */
             const scripts = targetElement.querySelectorAll('script');
             scripts.forEach(oldScript => {
-                if (oldScript.id === 'fst-spa-agent' || oldScript.hasAttribute('data-spa-ignore')) return;
+                if (oldScript.id === 'fst-spa-agent' || oldScript.hasAttribute('data-fst-ignore')) return;
                 const newScript = document.createElement('script');
                 Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
                 newScript.appendChild(document.createTextNode(oldScript.innerHTML));
@@ -116,7 +122,7 @@ document.dispatchEvent(new Event('fst:load'));
 document.addEventListener('submit', async function(e) {
     if (e.defaultPrevented) return;
     const form = e.target;
-    if (form.hasAttribute('data-no-spa') || form.classList.contains('no-spa')) return;
+    if (form.hasAttribute('data-fst-no-spa') || form.classList.contains('no-spa')) return;
     
     e.preventDefault();
     
@@ -125,8 +131,8 @@ document.addEventListener('submit', async function(e) {
     const targetSelector = form.getAttribute('data-fst-target') || 'body';
     const isHistoryOptOut = form.getAttribute('data-fst-history') === 'false';
     const targetElement = document.querySelector(targetSelector);
-    
-    if (targetElement) targetElement.classList.add('fst-loading');
+    const indicator = _fstGetIndicatorClass(form);
+    if (targetElement) targetElement.classList.add(...indicator.split(' '));
     
     try {
         const method = (form.getAttribute('method') || 'GET').toUpperCase();
@@ -148,16 +154,26 @@ document.addEventListener('submit', async function(e) {
         }
         
         const response = await fetch(finalUrl, fetchOptions);
+
+        /* SPA-Aware Redirect: server kirim header ini alih-alih 302 Location */
         const redirectUrl = response.headers.get('X-FST-Redirect');
-        if (redirectUrl) { window.location.href = redirectUrl; return; }
+        if (redirectUrl) {
+            if (targetElement) targetElement.classList.remove(...indicator.split(' '));
+            await _fstNavigate(redirectUrl, targetSelector, true);
+            return;
+        }
         
+        /* Fallback: jika developer bypass fst_redirect() dan pakai header() manual */
         if (response.redirected) {
             window.location.href = response.url;
             return;
         }
-        
+
         if (!response.ok && response.status !== 400 && response.status !== 422) {
-            window.location.href = finalUrl;
+            const errorHtml = await response.text();
+            document.open();
+            document.write(errorHtml);
+            document.close();
             return;
         }
         
@@ -167,9 +183,9 @@ document.addEventListener('submit', async function(e) {
         
         const bodyAttrs = response.headers.get('X-FST-Body-Attrs');
         if (bodyAttrs !== null && targetSelector === 'body') {
-            const tmp = document.createElement('div');
-            tmp.innerHTML = `<div ${bodyAttrs}></div>`;
-            const newBody = tmp.firstChild;
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(`<div ${bodyAttrs}></div>`, 'text/html');
+            const newBody = doc.body.firstChild;
             Array.from(document.body.attributes).forEach(attr => document.body.removeAttribute(attr.name));
             Array.from(newBody.attributes).forEach(attr => document.body.setAttribute(attr.name, attr.value));
         }
@@ -182,10 +198,20 @@ document.addEventListener('submit', async function(e) {
             window.history.pushState({ fstHtml: html, fstTarget: targetSelector, fstBodyAttrs: bodyAttrs }, '', finalUrl);
         }
         
+        /* Eksekusi ulang tag <script> (skip fst-spa-agent dan data-fst-ignore) */
+        const scripts = targetElement.querySelectorAll('script');
+        scripts.forEach(oldScript => {
+            if (oldScript.id === 'fst-spa-agent' || oldScript.hasAttribute('data-fst-ignore')) return;
+            const newScript = document.createElement('script');
+            Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+            newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+            oldScript.parentNode.replaceChild(newScript, oldScript);
+        });
+        
         document.dispatchEvent(new Event('fst:load'));
     } catch (err) {
         window.location.reload();
     } finally {
-        if (targetElement) targetElement.classList.remove('fst-loading');
+        if (targetElement) targetElement.classList.remove(...indicator.split(' '));
     }
 });

@@ -14,6 +14,7 @@ Di dunia ini, pengembangan source code framework dilakukan secara modular agar m
 - **`http.php`**: Menangani URI, method, payload (`$_GET`/`$_POST`), CSRF Protection, mekanisme Session/Flash, validasi input (`fst_validate`), dan File Upload.
 - **`view.php`**: Engine rendering HTML (`fst_view`, `fst_partial`) dan manajemen sajian file aset statik dengan *cache headers*.
 - **`utility.php`**: Fungsi pembantu umum dan debugging (`fst_dump`, `fst_dd`, `fst_app`).
+- **`template.php`**: Engine templating berbasis DOM Manipulation untuk merender HTML secara aman tanpa menyisipkan tag PHP.
 - **`install.php`**: GUI Setup Wizard otomatis untuk inisialisasi proyek dan pembuatan `fullstuck.json`.
 - **`admin.php`**: Dashboard `/stuck`. Berisi monitoring sistem, editor konfigurasi, scanner rute, dan manajemen plugin.
 - **`bootstrap.php`**: Penggabung instruksi rute pengguna, *Auto-Discovery* plugin dari `fst-plugins/`, dan eksekusi akhir `fst_run()`.
@@ -40,7 +41,7 @@ php src/compiler-fullstuck.php
 
 ## 3. Peta Sistem & Lokasi File
 
-Berikut adalah struktur direktori resmi FullStuck.php v0.1.0:
+Berikut adalah struktur direktori resmi FullStuck.php v0.2.0:
 
 ```text
 / (Project Root)
@@ -53,7 +54,7 @@ Berikut adalah struktur direktori resmi FullStuck.php v0.1.0:
 ├── version.json                # Registry versi dan hash integritas.
 ├── docs/                       # Dokumentasi resmi
 │   ├── ARCHITECTURE.md         # Penjelasan arsitektur (Dokumen ini).
-│   ├── v0.1.0.md               # Referensi API & Fitur lengkap.
+│   ├── v0.2.0.md               # Referensi API & Fitur lengkap.
 │   └── PLUGIN_DEVELOPMENT.md   # Panduan membuat plugin.
 ├── src/                        # [DUNIA 1] Source code modular (Edit kode di sini).
 └── store/                      # Repository plugin resmi (Local Store).

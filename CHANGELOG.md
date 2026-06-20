@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Core**: Added CLI Installer support `php fullstuck.php init [args]` for headless setup and scaffolding (e.g., `--db=sqlite --scaffold=yes --htaccess=yes`).
+- **Database**: Automatically inject high-performance PRAGMA settings (`journal_mode=WAL`, `busy_timeout=5000`, `foreign_keys=ON`) for SQLite connections to enable robust concurrency and prevent "database is locked" errors.
+- **Database**: Added `fst_db_begin()`, `fst_db_commit()`, and `fst_db_rollback()` helpers for safe and easy PDO transaction management.
+- **Installer**: Upgraded the default auto-scaffolding template to a fully functional interactive "To-Do List" application. This showcase directly demonstrates SPA form submissions, `fst_template()` directives, and SQLite auto-migration out-of-the-box.
+
+### Fixed
+- **SPA**: Fixed critical DX issue where 500 Internal Server Errors were swallowed during SPA form submissions/navigations and forced a GET redirect to the original URL (resulting in 404). Unsuccessful responses now correctly render the error HTML directly into the DOM (via `document.open()`) to preserve the stack trace.
+- **SPA**: Fixed `X-FST-Redirect` handler in both link click and form submit doing hard reload instead of SPA navigation. Redirect now triggers `_fstNavigate()` for seamless PRG (Post/Redirect/Get) without page reload.
+- **SPA**: Restored hard reload fallback using `document.open()` to preserve POST method stack traces on 500 errors.
+- **Template**: Fixed `fst_template()` not inheriting global variables registered via `fst_view_share()`. Shared data is now merged automatically just like `fst_view()`.
+- **Router**: Fixed `fst_group('')` with empty prefix producing double-slash paths (`//add`) that resulted in 404 errors.
+
+### Docs
+- **API Reference**: Added explicit return types to the entire API Cheat Sheet (Database, Security, HTTP, Session, etc) to improve DX and eliminate guesswork.
+- **CSRF**: Added explicit documentation that the CSRF field name must be `_token` when using static `.html` forms.
+- **Template**: Added `@text` directive to DSL API reference (was implemented but undocumented).
+- **Security**: Fixed XSS vulnerability in Admin Configuration Editor by escaping raw JSON output.
+- **Security**: Fixed potential XSS execution in SPA `X-FST-Body-Attrs` injection by replacing `innerHTML` with `DOMParser`.
+- **Security**: Hardened `fst_view()` with an extension whitelist (`php`, `html`, `htm`) to prevent sensitive data exposure via path traversal.
+- **Admin**: Removed dead `_fst_connect_db()` call in System Monitor that caused fatal errors on first load.
+- **Admin**: Fixed database driver configuration path check in System Monitor.
+- **Core**: Synchronized `FST_VERSION` to `0.2.0` to match the compiled output, fixing remote OTA comparisons and docs URLs.
+- **SPA**: Fixed missing inline `<script>` re-execution when processing `fst.js` SPA form submissions.
+- **SPA**: Implemented regex fast-path for singleton tags (`body`, `main`) during HTML extraction to prevent double `DOMDocument` parsing corruption.
+- **Router**: Added buffer safety check in `fst_run()` to prevent blank pages if an exception handler flushes the output buffer early.
+
 ## [v0.1.0] - 2026-05-15
 
 ### Added

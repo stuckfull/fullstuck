@@ -17,6 +17,10 @@ function fst_view($path, $data = []) {
     if (!$__fst_file || !$__fst_root || !str_starts_with($__fst_file, $__fst_root)) {
         fst_abort(500, "Invalid view path.");
     }
+    $ext = strtolower(pathinfo($__fst_file, PATHINFO_EXTENSION));
+    if (!in_array($ext, ['php', 'html', 'htm'])) {
+        fst_abort(403, "Invalid view extension. Only php, html, and htm are allowed.");
+    }
     $shared = fst_app('shared_view_data') ?? [];
     extract($shared, EXTR_SKIP);
     extract($data, EXTR_SKIP);

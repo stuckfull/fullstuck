@@ -2,7 +2,8 @@
     "environment": "development",
     "admin": {
         "page_url": "/stuck",
-        "password": "$2y$12$QCgb6FklY0z23LGjdRn7ieRUF0b4oXaW5AQ91oai8fi7RFDhPF57a"
+        "password": "$2y$12$QCgb6FklY0z23LGjdRn7ieRUF0b4oXaW5AQ91oai8fi7RFDhPF57a",
+        "allowed_ips": []
     },
     "database": {
         "default": "main",

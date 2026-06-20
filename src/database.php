@@ -30,7 +30,7 @@ function _fst_sanitize_order_by($order_by, $connection = null) {
     return !empty($safe_parts) ? implode(', ', $safe_parts) : null;
 }
 
-function fst_db($mode, $sql, $params = [], $connection = null) {
+function _fst_get_pdo($connection = null) {
     global $fst_pdo_pool;
     if (!isset($fst_pdo_pool)) $fst_pdo_pool = [];
     
@@ -59,17 +59,42 @@ function fst_db($mode, $sql, $params = [], $connection = null) {
             
             $user = $db_config['username'] ?? null;
             $pass = $db_config['password'] ?? null;
-            $fst_pdo_pool[$conn_name] = new PDO($dsn, $user, $pass, [
+            $pdo_instance = new PDO($dsn, $user, $pass, [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES => false
             ]);
+            
+            // Injeksi PRAGMA performa tinggi khusus SQLite
+            if ($driver === 'sqlite') {
+                $pdo_instance->exec('PRAGMA journal_mode = WAL;');
+                $pdo_instance->exec('PRAGMA busy_timeout = 5000;');
+                $pdo_instance->exec('PRAGMA foreign_keys = ON;');
+            }
+            
+            $fst_pdo_pool[$conn_name] = $pdo_instance;
         } catch (PDOException $e) {
             fst_abort(500, "Database Connection Failed [{$conn_name}]: " . (fst_is_safe_to_debug() ? $e->getMessage() : 'Error.'));
         }
     }
     
-    $pdo = $fst_pdo_pool[$conn_name];
+    return $fst_pdo_pool[$conn_name];
+}
+
+function fst_db_begin($connection = null) {
+    return _fst_get_pdo($connection)->beginTransaction();
+}
+
+function fst_db_commit($connection = null) {
+    return _fst_get_pdo($connection)->commit();
+}
+
+function fst_db_rollback($connection = null) {
+    return _fst_get_pdo($connection)->rollBack();
+}
+
+function fst_db($mode, $sql, $params = [], $connection = null) {
+    $pdo = _fst_get_pdo($connection);
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     $normalizedSql = strtoupper(trim($sql));

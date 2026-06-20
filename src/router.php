@@ -93,7 +93,12 @@ function fst_group($prefix, $callback, $middleware = []) {
     $parent_prefix = fst_app('route_prefix');
     $parent_middleware = fst_app('group_middleware') ?? [];
     
-    $fst_route_prefix = rtrim($parent_prefix, '/') . '/' . trim($prefix, '/');
+    $trimmed_prefix = trim($prefix, '/');
+    if ($trimmed_prefix === '') {
+        $fst_route_prefix = $parent_prefix;
+    } else {
+        $fst_route_prefix = rtrim($parent_prefix, '/') . '/' . $trimmed_prefix;
+    }
     fst_app('route_prefix', $fst_route_prefix);
     
     if (!is_array($middleware)) $middleware = [$middleware];
@@ -249,6 +254,7 @@ function fst_run() {
     }
     
     $output = ob_get_clean();
+    if ($output === false) $output = ''; // Guard: buffer sudah di-flush oleh exception handler
 
     // Evaluasi Opsi SPA
     $spa_mode = fst_config('spa.enabled', false);
@@ -293,7 +299,8 @@ function fst_run() {
         $script_id = fst_config('spa.script_id', 'fst-spa-agent');
         $req_header = fst_config('spa.header_request', 'X-FST-Request');
         $target_header = fst_config('spa.header_target', 'X-FST-Target');
-        $inject_id = $script_id ? 'id="'.$script_id.'" data-req-header="'.$req_header.'" data-target-header="'.$target_header.'"' : '';
+        $indicator_class = fst_config('spa.indicator_class', 'fst-loading');
+        $inject_id = $script_id ? 'id="'.$script_id.'" data-req-header="'.$req_header.'" data-target-header="'.$target_header.'" data-indicator-class="'.$indicator_class.'"' : '';
         $script_tag = "<script {$inject_id}>\n" . (defined('FST_SPA_JS_CODE') ? FST_SPA_JS_CODE : '') . "\n</script>";
         
         if (stripos($output, '</body>') !== false) {
