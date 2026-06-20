@@ -19,19 +19,21 @@ Kami percaya masa depan *coding* adalah kolaborasi dengan AI. Dokumentasi FullSt
 
 ---
 
-## 🛠️ Contoh Kode (Hello World)
+## 🛠️ Contoh Kode (DOM Templating v0.2.0)
 
 ```php
 // router.php
 fst_get('/', function() {
-    return fst_view('welcome.php', ['name' => 'World']);
+    $data = ['name' => 'World'];
+    $rules = ['h1 span' => '$name'];
+    return fst_template('views/welcome.html', $data, $rules);
 });
 ```
 
 ```html
-<!-- views/welcome.php -->
-<h1>Hello, <?= e($name) ?>!</h1>
-<p>Dijalankan dengan FullStuck v0.1.0</p>
+<!-- views/welcome.html -->
+<h1>Hello, <span>Placeholder</span>!</h1>
+<p>Dijalankan dengan FullStuck v0.2.0</p>
 ```
 
 ---
@@ -42,7 +44,8 @@ Silakan pilih versi dokumentasi yang sesuai dengan proyek Anda:
 
 | Versi | Status | Link Dokumentasi |
 |---|---|---|
-| **v0.1.0** | **Stable (Latest)** | 📖 **[Lihat Dokumentasi v0.1.0](v0.1.0.md)** |
+| **v0.2.0** | **Stable (Latest)** | 📖 **[Lihat Dokumentasi v0.2.0](v0.2.0.md)** |
+| **v0.1.0** | **Legacy** | 📖 **[Lihat Dokumentasi v0.1.0](v0.1.0.md)** |
 
 ---
 
