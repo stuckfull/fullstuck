@@ -51,7 +51,7 @@ Silakan pilih versi dokumentasi yang sesuai dengan proyek Anda:
 
 ## 📅 Riwayat Perubahan (Changelog)
 
-Untuk melihat daftar lengkap fitur baru, perbaikan bug, dan perubahan versi, silakan baca file **[CHANGELOG.md](../CHANGELOG.md)** yang berada di *root* repository.
+Untuk melihat daftar lengkap fitur baru, perbaikan bug, dan perubahan versi, silakan baca file **[CHANGELOG.md](https://github.com/milio48/fullstuck/blob/main/CHANGELOG.md)** yang berada di *root* repository.
 
 ---
 
