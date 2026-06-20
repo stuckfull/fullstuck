@@ -9,6 +9,14 @@ async function _fstNavigate(url, targetSelector, pushHistory) {
         const headers = { [reqHeader]: 'true', [targetHeader]: targetSelector };
         const response = await fetch(url, { headers });
 
+        if (!response.ok) {
+            const errorHtml = await response.text();
+            document.open();
+            document.write(errorHtml);
+            document.close();
+            return;
+        }
+
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('text/html')) {
             window.location.href = url;
@@ -153,6 +161,14 @@ document.addEventListener('submit', async function(e) {
         /* Fallback: jika developer bypass fst_redirect() dan pakai header() manual */
         if (response.redirected) {
             window.location.href = response.url;
+            return;
+        }
+
+        if (!response.ok && response.status !== 400 && response.status !== 422) {
+            const errorHtml = await response.text();
+            document.open();
+            document.write(errorHtml);
+            document.close();
             return;
         }
         
