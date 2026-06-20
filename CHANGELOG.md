@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Template**: Added `@text` directive to DSL API reference (was implemented but undocumented).
 
 ### Fixed
+- **SPA**: Fixed critical DX issue where 500 Internal Server Errors were swallowed during SPA form submissions/navigations and forced a GET redirect to the original URL (resulting in 404). Unsuccessful responses now correctly render the error HTML directly into the DOM to preserve the stack trace.
+- **Template**: Fixed `fst_template()` not inheriting global variables registered via `fst_view_share()`. Shared data is now merged automatically just like `fst_view()`.
 - **Security**: Fixed XSS vulnerability in Admin Configuration Editor by escaping raw JSON output.
 - **Security**: Fixed potential XSS execution in SPA `X-FST-Body-Attrs` injection by replacing `innerHTML` with `DOMParser`.
 - **Security**: Hardened `fst_view()` with an extension whitelist (`php`, `html`, `htm`) to prevent sensitive data exposure via path traversal.

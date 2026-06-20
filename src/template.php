@@ -266,6 +266,8 @@ function fst_template(string $templatePath, array $data, array $rules, string $c
     }
 
     // Render file cache (Output)
+    $shared_data = function_exists('fst_app') ? (fst_app('shared_view_data') ?? []) : [];
+    $data = array_merge($shared_data, $data);
     extract($data, EXTR_SKIP);
     require $cacheFile;
 }

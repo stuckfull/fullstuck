@@ -8,7 +8,6 @@ async function _fstNavigate(url, targetSelector, pushHistory) {
     try {
         const headers = { [reqHeader]: 'true', [targetHeader]: targetSelector };
         const response = await fetch(url, { headers });
-        if (!response.ok) { window.location.href = url; return; }
 
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('text/html')) {
@@ -154,11 +153,6 @@ document.addEventListener('submit', async function(e) {
         /* Fallback: jika developer bypass fst_redirect() dan pakai header() manual */
         if (response.redirected) {
             window.location.href = response.url;
-            return;
-        }
-        
-        if (!response.ok && response.status !== 400 && response.status !== 422) {
-            window.location.href = finalUrl;
             return;
         }
         
