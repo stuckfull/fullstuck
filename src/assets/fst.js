@@ -1,9 +1,14 @@
 /* Helper: SPA Navigate — fetch URL with SPA headers and inject to DOM */
-async function _fstNavigate(url, targetSelector, pushHistory) {
+function _fstGetIndicatorClass(triggerElement) {
+    return (triggerElement && triggerElement.getAttribute("data-fst-indicator")) || document.querySelector("script#fst-spa-agent")?.getAttribute("data-indicator-class") || "fst-loading";
+}
+
+async function _fstNavigate(url, targetSelector, pushHistory, triggerElement = null) {
     const reqHeader = document.querySelector('script#fst-spa-agent')?.getAttribute('data-req-header') || 'X-FST-Request';
     const targetHeader = document.querySelector('script#fst-spa-agent')?.getAttribute('data-target-header') || 'X-FST-Target';
     const targetElement = document.querySelector(targetSelector);
-    if (targetElement) targetElement.classList.add('fst-loading');
+    const indicator = _fstGetIndicatorClass(triggerElement);
+    if (targetElement) targetElement.classList.add(...indicator.split(' '));
 
     try {
         const headers = { [reqHeader]: 'true', [targetHeader]: targetSelector };
@@ -58,7 +63,7 @@ async function _fstNavigate(url, targetSelector, pushHistory) {
     } catch (err) {
         window.location.href = url;
     } finally {
-        if (targetElement) targetElement.classList.remove('fst-loading');
+        if (targetElement) targetElement.classList.remove(...indicator.split(' '));
     }
 }
 
@@ -71,7 +76,7 @@ document.addEventListener('click', async function(e) {
     const targetSelector = link.getAttribute('data-fst-target') || 'body';
     const isHistoryOptOut = link.getAttribute('data-fst-history') === 'false';
 
-    await _fstNavigate(link.href, targetSelector, !isHistoryOptOut);
+    await _fstNavigate(link.href, targetSelector, !isHistoryOptOut, link);
 });
 
 window.addEventListener('popstate', function(e) {
@@ -126,8 +131,8 @@ document.addEventListener('submit', async function(e) {
     const targetSelector = form.getAttribute('data-fst-target') || 'body';
     const isHistoryOptOut = form.getAttribute('data-fst-history') === 'false';
     const targetElement = document.querySelector(targetSelector);
-    
-    if (targetElement) targetElement.classList.add('fst-loading');
+    const indicator = _fstGetIndicatorClass(form);
+    if (targetElement) targetElement.classList.add(...indicator.split(' '));
     
     try {
         const method = (form.getAttribute('method') || 'GET').toUpperCase();
@@ -153,7 +158,7 @@ document.addEventListener('submit', async function(e) {
         /* SPA-Aware Redirect: server kirim header ini alih-alih 302 Location */
         const redirectUrl = response.headers.get('X-FST-Redirect');
         if (redirectUrl) {
-            if (targetElement) targetElement.classList.remove('fst-loading');
+            if (targetElement) targetElement.classList.remove(...indicator.split(' '));
             await _fstNavigate(redirectUrl, targetSelector, true);
             return;
         }
@@ -207,6 +212,6 @@ document.addEventListener('submit', async function(e) {
     } catch (err) {
         window.location.reload();
     } finally {
-        if (targetElement) targetElement.classList.remove('fst-loading');
+        if (targetElement) targetElement.classList.remove(...indicator.split(' '));
     }
 });
