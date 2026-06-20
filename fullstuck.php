@@ -3,7 +3,7 @@
  * 🚀 FULLSTUCK.PHP - The Zero-Config, AI-Friendly Framework
  * 🔗 Repository: https://github.com/milio48/fullstuck
  * 📚 Raw Docs: https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v0.2.0.md
- * 💡 Version: 0.2.0 | FST_HASH: fd2ad43bda7913a93f4227bc5fed36b39cb7b384beb6d41ec0f220f52dd1cca4
+ * 💡 Version: 0.2.0 | FST_HASH: 89414ee24d83826d7f8536e6be90c6e2d7a8f8de5ecaf7572f5a120a2735fc27
  *
  * 🛑 ===================================================================== 🛑
  * 🤖 STRICT AI AGENT DIRECTIVE (LLM / VIBE CODER INSTRUCTIONS)
@@ -370,11 +370,20 @@ function _fst_get_pdo($connection = null) {
             
             $user = $db_config['username'] ?? null;
             $pass = $db_config['password'] ?? null;
-            $fst_pdo_pool[$conn_name] = new PDO($dsn, $user, $pass, [
+            $pdo_instance = new PDO($dsn, $user, $pass, [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES => false
             ]);
+            
+            
+            if ($driver === 'sqlite') {
+                $pdo_instance->exec('PRAGMA journal_mode = WAL;');
+                $pdo_instance->exec('PRAGMA busy_timeout = 5000;');
+                $pdo_instance->exec('PRAGMA foreign_keys = ON;');
+            }
+            
+            $fst_pdo_pool[$conn_name] = $pdo_instance;
         } catch (PDOException $e) {
             fst_abort(500, "Database Connection Failed [{$conn_name}]: " . (fst_is_safe_to_debug() ? $e->getMessage() : 'Error.'));
         }

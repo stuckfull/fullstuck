@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Database**: Automatically inject high-performance PRAGMA settings (`journal_mode=WAL`, `busy_timeout=5000`, `foreign_keys=ON`) for SQLite connections to enable robust concurrency and prevent "database is locked" errors.
 - **Database**: Added `fst_db_begin()`, `fst_db_commit()`, and `fst_db_rollback()` helpers for safe and easy PDO transaction management.
 - **View**: Added `fst_template` for ultra-minimalist declarative HTML DOM templating without inline PHP tags.
 
