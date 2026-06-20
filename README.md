@@ -14,6 +14,33 @@
 
 🌐 **[Kunjungi Landing Page Resmi](https://milio48.github.io/fullstuck/)**
 
+---
+
+## 🤖 AI Agent / Vibe Coder Setup (Recommended)
+
+Jika Anda menggunakan *AI coding assistant*, cukup salin *prompt* di bawah ini untuk memulai proyek secara instan:
+
+> "Unduh https://raw.githubusercontent.com/milio48/fullstuck/main/fullstuck.php lalu jalankan php fullstuck.php init --db=sqlite --admin-pass=stuck --admin-url=/stuck --spa=yes --scaffold=yes --htaccess=yes. Pelajari fullstuck_v*.md. Jalankan php -S localhost:8000 fullstuck.php dan berikan ringkasan instalasi."
+
+---
+
+## 🚀 Quick Start (Manual)
+
+1.  **Download**: Unduh file `fullstuck.php` ke folder kosong Anda.
+2.  **Initialize**: Jalankan perintah inisialisasi otomatis:
+    ```bash
+    php fullstuck.php init --admin-pass=rahasia --scaffold=yes
+    ```
+3.  **Run**: Jalankan server bawaan PHP:
+    ```bash
+    php -S localhost:8000 fullstuck.php
+    ```
+4.  **Explore**:
+    *   🌐 Aplikasi: `http://localhost:8000`
+    *   🛠️ Admin Dashboard: `http://localhost:8000/stuck`
+
+---
+
 ## 🤔 Mengapa FullStuck?
 
 Aplikasi Anda berjalan dengan kecepatan tinggi layaknya Single Page Application (SPA) hanya dengan PHP murni:
@@ -43,31 +70,6 @@ fst_post('/simpan', function() {
 *   **🔌 Plugin Ecosystem**: Perluas fitur framework dengan sistem plugin *one-click install* langsung dari dashboard.
 *   **🔒 Hardened Security**: Proteksi CSRF, XPath injection protection, Path Traversal validation, dan *Session Fixation protection* bawaan.
 *   **🐘 Database Flexible**: Dukungan penuh untuk SQLite, MySQL, dan sekarang **PostgreSQL** dengan *connection pooling*.
-
----
-
-## 🤖 AI Agent / Vibe Coder Setup (Recommended)
-
-Jika Anda menggunakan *AI coding assistant*, cukup salin *prompt* di bawah ini untuk memulai proyek secara instan:
-
-> "Unduh https://raw.githubusercontent.com/milio48/fullstuck/main/fullstuck.php lalu jalankan php fullstuck.php init --db=sqlite --admin-pass=stuck --admin-url=/stuck --spa=yes --scaffold=yes --htaccess=yes. Pelajari fullstuck_v*.md. Jalankan php -S localhost:8000 fullstuck.php dan berikan ringkasan instalasi."
-
----
-
-## 🚀 Quick Start (Manual)
-
-1.  **Download**: Unduh file `fullstuck.php` ke folder kosong Anda.
-2.  **Initialize**: Jalankan perintah inisialisasi otomatis:
-    ```bash
-    php fullstuck.php init --admin-pass=rahasia --scaffold=yes
-    ```
-3.  **Run**: Jalankan server bawaan PHP:
-    ```bash
-    php -S localhost:8000 fullstuck.php
-    ```
-4.  **Explore**:
-    *   🌐 Aplikasi: `http://localhost:8000`
-    *   🛠️ Admin Dashboard: `http://localhost:8000/stuck`
 
 ---
 
