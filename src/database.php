@@ -30,7 +30,7 @@ function _fst_sanitize_order_by($order_by, $connection = null) {
     return !empty($safe_parts) ? implode(', ', $safe_parts) : null;
 }
 
-function fst_db($mode, $sql, $params = [], $connection = null) {
+function _fst_get_pdo($connection = null) {
     global $fst_pdo_pool;
     if (!isset($fst_pdo_pool)) $fst_pdo_pool = [];
     
@@ -69,7 +69,23 @@ function fst_db($mode, $sql, $params = [], $connection = null) {
         }
     }
     
-    $pdo = $fst_pdo_pool[$conn_name];
+    return $fst_pdo_pool[$conn_name];
+}
+
+function fst_db_begin($connection = null) {
+    return _fst_get_pdo($connection)->beginTransaction();
+}
+
+function fst_db_commit($connection = null) {
+    return _fst_get_pdo($connection)->commit();
+}
+
+function fst_db_rollback($connection = null) {
+    return _fst_get_pdo($connection)->rollBack();
+}
+
+function fst_db($mode, $sql, $params = [], $connection = null) {
+    $pdo = _fst_get_pdo($connection);
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     $normalizedSql = strtoupper(trim($sql));

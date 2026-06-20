@@ -3,7 +3,7 @@
  * 🚀 FULLSTUCK.PHP - The Zero-Config, AI-Friendly Framework
  * 🔗 Repository: https://github.com/milio48/fullstuck
  * 📚 Raw Docs: https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v0.2.0.md
- * 💡 Version: 0.2.0 | FST_HASH: caef4931d718b10bb132e7fd13815a515a502fd7d490ced4d46fc980277914f4
+ * 💡 Version: 0.2.0 | FST_HASH: fd2ad43bda7913a93f4227bc5fed36b39cb7b384beb6d41ec0f220f52dd1cca4
  *
  * 🛑 ===================================================================== 🛑
  * 🤖 STRICT AI AGENT DIRECTIVE (LLM / VIBE CODER INSTRUCTIONS)
@@ -341,7 +341,7 @@ function _fst_sanitize_order_by($order_by, $connection = null) {
     return !empty($safe_parts) ? implode(', ', $safe_parts) : null;
 }
 
-function fst_db($mode, $sql, $params = [], $connection = null) {
+function _fst_get_pdo($connection = null) {
     global $fst_pdo_pool;
     if (!isset($fst_pdo_pool)) $fst_pdo_pool = [];
     
@@ -380,7 +380,23 @@ function fst_db($mode, $sql, $params = [], $connection = null) {
         }
     }
     
-    $pdo = $fst_pdo_pool[$conn_name];
+    return $fst_pdo_pool[$conn_name];
+}
+
+function fst_db_begin($connection = null) {
+    return _fst_get_pdo($connection)->beginTransaction();
+}
+
+function fst_db_commit($connection = null) {
+    return _fst_get_pdo($connection)->commit();
+}
+
+function fst_db_rollback($connection = null) {
+    return _fst_get_pdo($connection)->rollBack();
+}
+
+function fst_db($mode, $sql, $params = [], $connection = null) {
+    $pdo = _fst_get_pdo($connection);
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     $normalizedSql = strtoupper(trim($sql));
@@ -1916,7 +1932,7 @@ HTML;
         $function_groups = [
             'Core' => ['fst_abort', 'fst_run', 'fst_is_dev', 'fst_config', 'fst_extract_html_fragment', 'fst_app'],
 
-            'Database' => ['fst_db', 'fst_db_select', 'fst_db_row', 'fst_db_exists', 'fst_db_insert', 'fst_db_update', 'fst_db_delete', 'fst_db_quote_ident', '_fst_sanitize_order_by'],
+            'Database' => ['fst_db', 'fst_db_begin', 'fst_db_commit', 'fst_db_rollback', 'fst_db_select', 'fst_db_row', 'fst_db_exists', 'fst_db_insert', 'fst_db_update', 'fst_db_delete', 'fst_db_quote_ident', '_fst_sanitize_order_by'],
             'Views' => [
                 'fst_view',
                 'fst_partial',
