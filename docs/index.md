@@ -49,6 +49,12 @@ Silakan pilih versi dokumentasi yang sesuai dengan proyek Anda:
 
 ---
 
+## 📅 Riwayat Perubahan (Changelog)
+
+Untuk melihat daftar lengkap fitur baru, perbaikan bug, dan perubahan versi, silakan baca file **[CHANGELOG.md](../CHANGELOG.md)** yang berada di *root* repository.
+
+---
+
 ## 🏗️ Referensi Lainnya
 
 - 🏗️ **[Arsitektur Framework](ARCHITECTURE.md)**: Memahami konsep modularitas dan proses kompilasi.
