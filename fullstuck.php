@@ -3,7 +3,7 @@
  * 🚀 FULLSTUCK.PHP - The Zero-Config, AI-Friendly Framework
  * 🔗 Repository: https://github.com/milio48/fullstuck
  * 📚 Raw Docs: https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v0.2.0.md
- * 💡 Version: 0.2.0 | FST_HASH: f723a87930464ac53fe097153f1e0b6bbb24b315db08d99ccccf1e0cd8958834
+ * 💡 Version: 0.2.0 | FST_HASH: a82c88c46e4c860fd178b15a907b883db7acf0c22d0a445469bc6def9ce81b1a
  *
  * 🛑 ===================================================================== 🛑
  * 🤖 STRICT AI AGENT DIRECTIVE (LLM / VIBE CODER INSTRUCTIONS)
@@ -1170,27 +1170,6 @@ function fst_validate($data, $rules) {
 }
 
 // FILE: install.php
-function fst_handle_installation() {
-    $error_message = null;
-    $is_cli = php_sapi_name() === 'cli';
-    $is_submit = $is_cli || $_SERVER['REQUEST_METHOD'] === 'POST';
-    
-    if ($is_cli) {
-        global $argv;
-        
-        if (!isset($argv[1]) || $argv[1] !== 'init') {
-            echo "FullStuck.php is not initialized.\n";
-            echo "Run: php fullstuck.php init [options]\n\n";
-            echo "Options:\n";
-            echo "  --db=sqlite|mysql|pgsql (default: sqlite)\n";
-            echo "  --admin-pass=YOUR_PASS (default: admin)\n";
-            echo "  --admin-url=/YOUR_URL (default: /stuck)\n";
-            echo "  --spa=yes|no (default: yes)\n";
-            echo "  --scaffold=yes|no (default: yes)\n";
-            echo "  --htaccess=yes|no (default: no)\n";
-            exit(1);
-        }
-<?php
 function fst_handle_installation() {
     $error_message = null;
     $is_cli = php_sapi_name() === 'cli';

@@ -19,27 +19,6 @@ function fst_handle_installation() {
             echo "  --htaccess=yes|no (default: no)\n";
             exit(1);
         }
-<?php
-function fst_handle_installation() {
-    $error_message = null;
-    $is_cli = php_sapi_name() === 'cli';
-    $is_submit = $is_cli || $_SERVER['REQUEST_METHOD'] === 'POST';
-    
-    if ($is_cli) {
-        global $argv;
-        // Wajibkan argumen "init" untuk CLI
-        if (!isset($argv[1]) || $argv[1] !== 'init') {
-            echo "FullStuck.php is not initialized.\n";
-            echo "Run: php fullstuck.php init [options]\n\n";
-            echo "Options:\n";
-            echo "  --db=sqlite|mysql|pgsql (default: sqlite)\n";
-            echo "  --admin-pass=YOUR_PASS (default: admin)\n";
-            echo "  --admin-url=/YOUR_URL (default: /stuck)\n";
-            echo "  --spa=yes|no (default: yes)\n";
-            echo "  --scaffold=yes|no (default: yes)\n";
-            echo "  --htaccess=yes|no (default: no)\n";
-            exit(1);
-        }
         $is_submit = true;
     }
 
