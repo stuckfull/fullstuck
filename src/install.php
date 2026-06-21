@@ -369,7 +369,7 @@ PHP;
 <body>
     <h1>🚀 Welcome to FullStuck!</h1>
     <p>Your AI-Friendly Micro Framework is running perfectly.</p>
-    <p><a href="{$input_data['admin_url']}" data-no-spa>Go to Admin Dashboard</a></p>
+    <p><a href="{$input_data['admin_url']}" data-fst-no-spa>Go to Admin Dashboard</a></p>
 </body>
 </html>
 HTML;
