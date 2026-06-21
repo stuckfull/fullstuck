@@ -22,6 +22,19 @@ async function _fstNavigate(url, targetSelector, pushHistory, triggerElement = n
             return;
         }
 
+        /* SPA-Aware Redirect */
+        const redirectUrl = response.headers.get('X-FST-Redirect');
+        if (redirectUrl) {
+            if (targetElement) targetElement.classList.remove(...indicator.split(' '));
+            await _fstNavigate(redirectUrl, targetSelector, pushHistory);
+            return;
+        }
+
+        if (response.redirected) {
+            window.location.href = response.url;
+            return;
+        }
+
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('text/html')) {
             window.location.href = url;

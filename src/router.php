@@ -192,11 +192,10 @@ function _fst_match_static_routes() {
                         // Eksekusi middleware, kirim fungsi next ke dalamnya
                         $result = call_user_func($mw, $next_wrapper);
                         
-                        // --- MAGIC FULLSTUCK (BACKWARD COMPATIBILITY) ---
-                        // Jika user pakai gaya lama (me-return false untuk stop)
-                        // Jika middleware mengembalikan false secara eksplisit, hentikan.
+                        // --- MAGIC FULLSTUCK (BACKWARD COMPATIBILITY & SECURITY) ---
+                        // Jika middleware mengembalikan false secara eksplisit, hentikan dan tolak akses.
                         if ($result === false) {
-                            return false;
+                            fst_abort(403, 'Forbidden by Middleware');
                         }
                         
                         // STRICT MODE: Jika middleware tidak memanggil $next() dan hanya mengembalikan null (lupa return), lemparkan error 500!
