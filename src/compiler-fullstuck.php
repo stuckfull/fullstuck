@@ -15,7 +15,7 @@ $fst_js_code = preg_replace('!/\*.*?\*/!s', '', $fst_js_code);
 // Hapus komentar single-line (hati-hati agar tidak menghapus URL)
 $fst_js_code = preg_replace('/\n\s*\/\/.*$/m', '', $fst_js_code); // Hanya hapus yang dimulai dengan // di awal baris/setelah whitespace
 $fst_js_code = preg_replace('/\s+/', ' ', $fst_js_code); // Basic minification
-$fst_js_code = addslashes(trim($fst_js_code));
+$fst_js_code = str_replace(["\\", "'"], ["\\\\", "\\'"], trim($fst_js_code));
 
 // Urutan file sangat penting agar dependensi fungsi terpenuhi
 $files = [
