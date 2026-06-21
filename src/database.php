@@ -118,8 +118,8 @@ function fst_db($mode, $sql, $params = [], $connection = null) {
     }
     
     return match(strtoupper($mode)) { 
-        'ROW' => $stmt->fetch(), 
-        'SCALAR', 'ONE' => $stmt->fetchColumn(), 
+        'ROW' => ($r = $stmt->fetch()) !== false ? $r : null, 
+        'SCALAR', 'ONE' => ($r = $stmt->fetchColumn()) !== false ? $r : null, 
         'ALL' => $stmt->fetchAll(), 
         default => $stmt->fetchAll() 
     };

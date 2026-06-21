@@ -108,7 +108,8 @@ function fst_upload($key, $folder, $options = []) {
             $finfo = finfo_open(FILEINFO_MIME_TYPE);
             $actual_mime = finfo_file($finfo, $tmp_name);
             finfo_close($finfo);
-            if (strpos($actual_mime, 'php') !== false || $actual_mime === 'text/x-php') {
+            $blocked_mimes = ['application/x-httpd-php', 'application/x-httpd-php-source', 'application/php', 'text/x-php', 'text/php'];
+            if (in_array(strtolower($actual_mime), $blocked_mimes)) {
                 return ['success' => false, 'error' => "Security Error: Malicious file signature detected.", 'path' => null];
             }
             if (!empty($options['allowed_mimes']) && !in_array($actual_mime, $options['allowed_mimes'])) {

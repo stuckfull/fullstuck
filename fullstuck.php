@@ -3,7 +3,7 @@
  * 🚀 FULLSTUCK.PHP - The Zero-Config, AI-Friendly Framework
  * 🔗 Repository: https://github.com/milio48/fullstuck
  * 📚 Raw Docs: https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v0.2.0.md
- * 💡 Version: 0.2.0 | FST_HASH: 0d0395d8cf0fe246045946cb86874c91aa6cd34f223f33b71f9fe6e72ceac0d6
+ * 💡 Version: 0.2.0 | FST_HASH: 6c5732f944806964d7524c1306216b0b4f906a2a4b0938b28672c7b1d609c86f
  *
  * 🛑 ===================================================================== 🛑
  * 🤖 STRICT AI AGENT DIRECTIVE (LLM / VIBE CODER INSTRUCTIONS)
@@ -210,7 +210,11 @@ function fst_is_dev() {
 
 function _fst_interpolate_env($val) {
     if (is_string($val) && strpos($val, '${') !== false) {
-        return preg_replace_callback('/\$\{([A-Za-z0-9_]+)\}/', fn($m) => getenv($m[1]) !== false ? getenv($m[1]) : '', $val);
+        return preg_replace_callback('/\$\{([A-Za-z0-9_]+)\}/', function($m) {
+            $env = getenv($m[1]);
+            if ($env === false) fst_abort(500, "Configuration Error: Environment variable '{$m[1]}' is missing.");
+            return $env;
+        }, $val);
     }
     if (is_array($val)) {
         foreach ($val as $k => $v) $val[$k] = _fst_interpolate_env($v);
@@ -441,8 +445,8 @@ function fst_db($mode, $sql, $params = [], $connection = null) {
     }
     
     return match(strtoupper($mode)) { 
-        'ROW' => $stmt->fetch(), 
-        'SCALAR', 'ONE' => $stmt->fetchColumn(), 
+        'ROW' => ($r = $stmt->fetch()) !== false ? $r : null, 
+        'SCALAR', 'ONE' => ($r = $stmt->fetchColumn()) !== false ? $r : null, 
         'ALL' => $stmt->fetchAll(), 
         default => $stmt->fetchAll() 
     };
@@ -960,7 +964,8 @@ function fst_upload($key, $folder, $options = []) {
             $finfo = finfo_open(FILEINFO_MIME_TYPE);
             $actual_mime = finfo_file($finfo, $tmp_name);
             finfo_close($finfo);
-            if (strpos($actual_mime, 'php') !== false || $actual_mime === 'text/x-php') {
+            $blocked_mimes = ['application/x-httpd-php', 'application/x-httpd-php-source', 'application/php', 'text/x-php', 'text/php'];
+            if (in_array(strtolower($actual_mime), $blocked_mimes)) {
                 return ['success' => false, 'error' => "Security Error: Malicious file signature detected.", 'path' => null];
             }
             if (!empty($options['allowed_mimes']) && !in_array($actual_mime, $options['allowed_mimes'])) {
@@ -1165,6 +1170,27 @@ function fst_validate($data, $rules) {
 }
 
 // FILE: install.php
+function fst_handle_installation() {
+    $error_message = null;
+    $is_cli = php_sapi_name() === 'cli';
+    $is_submit = $is_cli || $_SERVER['REQUEST_METHOD'] === 'POST';
+    
+    if ($is_cli) {
+        global $argv;
+        
+        if (!isset($argv[1]) || $argv[1] !== 'init') {
+            echo "FullStuck.php is not initialized.\n";
+            echo "Run: php fullstuck.php init [options]\n\n";
+            echo "Options:\n";
+            echo "  --db=sqlite|mysql|pgsql (default: sqlite)\n";
+            echo "  --admin-pass=YOUR_PASS (default: admin)\n";
+            echo "  --admin-url=/YOUR_URL (default: /stuck)\n";
+            echo "  --spa=yes|no (default: yes)\n";
+            echo "  --scaffold=yes|no (default: yes)\n";
+            echo "  --htaccess=yes|no (default: no)\n";
+            exit(1);
+        }
+<?php
 function fst_handle_installation() {
     $error_message = null;
     $is_cli = php_sapi_name() === 'cli';

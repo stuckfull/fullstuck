@@ -186,7 +186,11 @@ function fst_is_dev() {
 
 function _fst_interpolate_env($val) {
     if (is_string($val) && strpos($val, '${') !== false) {
-        return preg_replace_callback('/\$\{([A-Za-z0-9_]+)\}/', fn($m) => getenv($m[1]) !== false ? getenv($m[1]) : '', $val);
+        return preg_replace_callback('/\$\{([A-Za-z0-9_]+)\}/', function($m) {
+            $env = getenv($m[1]);
+            if ($env === false) fst_abort(500, "Configuration Error: Environment variable '{$m[1]}' is missing.");
+            return $env;
+        }, $val);
     }
     if (is_array($val)) {
         foreach ($val as $k => $v) $val[$k] = _fst_interpolate_env($v);

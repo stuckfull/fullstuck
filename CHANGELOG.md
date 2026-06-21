@@ -26,6 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Router**: Fixed security gap where a middleware returning `false` resulted in a blank page (status 200). Now it correctly aborts with a 403 Forbidden.
 - **SPA**: Fixed navigation bug where clicking standard `<a>` links ignored server-side `X-FST-Redirect` headers, resulting in blank pages.
 - **SPA**: Enhanced `fst_extract_html_fragment()` to support complex CSS selectors (`.class > div`, `[attr="value"]`) securely via dynamic XPath conversion, replacing the old strict whitelist.
+- **Database**: Fixed `fst_db('ROW')` and `fst_db_row()` returning `false` instead of `null` when no data is found to respect type safety.
+- **HTTP**: Hardened `fst_upload()` MIME type validation by replacing loose `strpos` with strict matching against a malicious signature whitelist.
+- **CLI**: Removed redundant CLI `$argv` parsing loop inside `fst_handle_installation()`.
+- **Core**: Fixed silent failure in `_fst_interpolate_env()` by explicitly throwing an error when an expected environment variable is missing.
 
 ### Docs
 - **API Reference**: Added explicit return types to the entire API Cheat Sheet (Database, Security, HTTP, Session, etc) to improve DX and eliminate guesswork.
@@ -40,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **SPA**: Fixed missing inline `<script>` re-execution when processing `fst.js` SPA form submissions.
 - **SPA**: Implemented regex fast-path for singleton tags (`body`, `main`) during HTML extraction to prevent double `DOMDocument` parsing corruption.
 - **Router**: Added buffer safety check in `fst_run()` to prevent blank pages if an exception handler flushes the output buffer early.
+- **Docs**: Massively updated `docs/v0.2.0.md` to resolve AI feedback regarding undocumented features, broken examples, false contradictions, and API limitations.
 
 ## [v0.1.0] - 2026-05-15
 
