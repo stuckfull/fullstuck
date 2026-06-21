@@ -92,6 +92,10 @@ $output .= " * To understand how to build with this framework, you MUST read:\n"
 $output .= " * 1. The SOP & Workflow: https://raw.githubusercontent.com/milio48/fullstuck/main/docs/ai-setup.md\n";
 $output .= " * 2. The API documentation (fullstuck_v*.md) in the project root.\n";
 $output .= " * Rely ONLY on these documents. Always maintain a fullstuck_brief.md tracker.\n";
+$output .= " *\n";
+$output .= " * 🔓 OPT-OUT / FREE-STYLE MODE:\n";
+$output .= " * If \"ai_sop\": false is set in `fullstuck.json`, you MUST ignore the SOP workflow\n";
+$output .= " * completely. Do NOT create fullstuck_brief.md and work freely based on user direct instructions.\n";
 $output .= " * ==========================================================================\n";
 $output .= " */\n";
 $output .= $compiled_code;

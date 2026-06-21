@@ -59,6 +59,7 @@ function fst_handle_installation() {
             
             $config_data = [
                 "environment" => "development", 
+                "ai_sop" => true,
                 "admin" => [
                     "page_url" => $input_data['admin_url'] ?? '/stuck',
                     "password" => password_hash($input_data['admin_pass'], PASSWORD_DEFAULT),
@@ -225,136 +226,6 @@ fst_post('/delete/{id:i}', function(\$id) {
     fst_redirect('/');
 });
 PHP;
-                @file_put_contents(FST_ROOT_DIR . '/router.php', $router_code);
-            }
-
-            if ($is_cli) {
-                foreach ($argv as $arg) {
-                    if (preg_match('/^--([^=]+)=(.*)$/', $arg, $m)) {
-                        $input_data[str_replace('-', '_', $m[1])] = $m[2];
-                    }
-                }
-                $input_data['driver'] = $input_data['db'] ?? 'sqlite';
-                $input_data['admin_url'] = $input_data['admin_url'] ?? '/stuck';
-                $input_data['admin_pass'] = $input_data['admin_pass'] ?? 'admin';
-                $input_data['enable_spa'] = ($input_data['spa'] ?? 'yes') === 'yes' ? '1' : '0';
-                $input_data['generate_starter'] = ($input_data['scaffold'] ?? 'yes') === 'yes' ? '1' : '0';
-                $input_data['download_docs'] = '1';
-                $input_data['server_type'] = ($input_data['htaccess'] ?? 'no') === 'yes' ? 'apache_litespeed' : 'other';
-            } else {
-                $input_data = $_POST;
-            }
-
-            $driver = $input_data['driver'] ?? 'sqlite';
-            $server_type = $input_data['server_type'] ?? 'apache_litespeed';
-            
-            if ($driver !== 'none') {
-                $h = $input_data['db_host'] ?? 'localhost';
-                $n = $input_data['db_name'] ?? '';
-                $u = $input_data['db_user'] ?? ($driver === 'pgsql' ? 'postgres' : 'root');
-                $p = $input_data['db_pass'] ?? '';
-                $port = $input_data['db_port'] ?? ($driver === 'pgsql' ? '5432' : '3306');
-
-                if ($driver === 'mysql') { $dsn = "mysql:host={$h};port={$port};dbname={$n};charset=utf8mb4"; new PDO($dsn, $u, $p, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_TIMEOUT => 3]); }
-                elseif ($driver === 'pgsql') { $dsn = "pgsql:host={$h};port={$port};dbname={$n}"; new PDO($dsn, $u, $p, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_TIMEOUT => 3]); }
-                else { $path = FST_ROOT_DIR . '/' . ($input_data['db_path'] ?? 'database.sqlite'); $dir = dirname($path); if (!is_dir($dir) && !mkdir($dir, 0755, true)) throw new Exception("Failed to create folder '{$dir}'. Check permissions."); new PDO("sqlite:" . $path, null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]); }
-            }
-            
-            $config_data = [
-                "environment" => "development", 
-                "admin" => [
-                    "page_url" => $input_data['admin_url'] ?? '/stuck',
-                    "password" => password_hash($input_data['admin_pass'], PASSWORD_DEFAULT),
-                    "allowed_ips" => [] // Kosong berarti diizinkan semua
-                ],
-                "database" => [
-                    "default" => "main",
-                    "connections" => [
-                        "main" => [
-                            "driver" => $driver,
-                            "database_path" => $input_data['db_path'] ?? 'database.sqlite',
-                            "host" => $input_data['db_host'] ?? 'localhost',
-                            "port" => $input_data['db_port'] ?? ($driver === 'pgsql' ? '5432' : '3306'),
-                            "dbname" => $input_data['db_name'] ?? '',
-                            "username" => $input_data['db_user'] ?? ($driver === 'pgsql' ? 'postgres' : 'root'),
-                            "password" => $input_data['db_pass'] ?? ''
-                        ]
-                    ]
-                ],
-                "routing" => [
-                    "base_path" => "/",
-                    "require" => [],
-                    "public_folders" => ["assets", "uploads", "storage/public"],
-                    "routes_file" => ["router.php"],
-                    "error_handlers" => ["404" => "views/errors/404.php", "403" => "Sorry, you do not have permission.", "405" => "Method not allowed.", "500" => "views/errors/500.php"]
-                ],
-                "spa" => [
-                    // enabled bisa berisi true, false, atau "manual"
-                    "enabled" => isset($input_data['enable_spa']) && $input_data['enable_spa'] === '1',
-                    "default_target" => "body",
-                    "header_request" => "X-FST-Request",
-                    "header_target" => "X-FST-Target",
-                    "indicator_class" => "fst-loading"
-                ]
-            ];
-            
-            if (file_put_contents(FST_CONFIG_FILE, json_encode($config_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) === false) throw new Exception("Failed to write `fullstuck.json`. Check folder permissions.");
-            
-            $htaccess_content = null;
-            if ($server_type === 'apache_litespeed') {
-                $htaccess_code = implode("\n", [
-                    '# 1. Nonaktifkan fitur "Index of" dan "MultiViews"',
-                    'Options -Indexes -MultiViews',
-                    '',
-                    '# Blokir akses ke file hidden (dotfiles)',
-                    '<FilesMatch "^\.">',
-                    '    Require all denied',
-                    '</FilesMatch>',
-                    '',
-                    '<IfModule mod_rewrite.c>',
-                    '    RewriteEngine On',
-                    '    RewriteBase /',
-                    '    ',
-                    '    # 2. Aturan "Rakus" (Kirim SEMUA ke fullstuck.php)',
-                    '    RewriteRule ^(.*)$ fullstuck.php [L]',
-                    '</IfModule>'
-                ]);
-                if (file_put_contents(FST_ROOT_DIR . '/.htaccess', $htaccess_code) === false) $htaccess_content = $htaccess_code;
-            }
-
-            // Download Documentation for AI if requested
-            if (isset($input_data['download_docs']) && $input_data['download_docs'] === '1') {
-                $docs_content = @file_get_contents(FST_DOCS_URL);
-                if ($docs_content) {
-                    $docs_filename = 'fullstuck_v' . FST_VERSION . '.md';
-                    @file_put_contents(FST_ROOT_DIR . '/' . $docs_filename, $docs_content);
-                }
-            }
-
-            // Auto-Scaffolding Starter Project
-            if (isset($input_data['generate_starter']) && $input_data['generate_starter'] === '1') {
-                @mkdir(FST_ROOT_DIR . '/assets', 0755, true);
-                @file_put_contents(FST_ROOT_DIR . '/assets/style.css', "body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; text-align: center; margin-top: 50px; background: #f8f9fa; color: #333; } a { color: #007bff; text-decoration: none; } a:hover { text-decoration: underline; }");
-
-                @mkdir(FST_ROOT_DIR . '/views', 0755, true);
-                $html_template = <<<HTML
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title><?= e(\$title ?? 'FullStuck') ?></title>
-    <link rel="stylesheet" href="/assets/style.css">
-</head>
-<body>
-    <h1>🚀 Welcome to FullStuck!</h1>
-    <p>Your AI-Friendly Micro Framework is running perfectly.</p>
-    <p><a href="{$input_data['admin_url']}" data-fst-no-spa>Go to Admin Dashboard</a></p>
-</body>
-</html>
-HTML;
-                @file_put_contents(FST_ROOT_DIR . '/views/home.php', $html_template);
-
-                $router_code = "<?php\n\n// Welcome to FullStuck.php!\nfst_get('/', function() {\n    fst_view('views/home.php', ['title' => 'Hello FullStuck!']);\n});\n";
                 @file_put_contents(FST_ROOT_DIR . '/router.php', $router_code);
             }
 

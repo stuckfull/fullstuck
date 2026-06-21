@@ -3,7 +3,7 @@
  * 🚀 FULLSTUCK.PHP - The Zero-Config, AI-Friendly Framework
  * 🔗 Repository: https://github.com/milio48/fullstuck
  * 📚 Raw Docs: https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v0.2.0.md
- * 💡 Version: 0.2.0 | FST_HASH: 51c3f4fe79158ef4c78453b12a580705de33f78a69fab9bef34e0ed22836fbdc
+ * 💡 Version: 0.2.0 | FST_HASH: 94f4d6747e0fc3b8f6e8b3aaff4009e4654b24f56d30306f6c7c53ff1ff29bc0
  *
  * 🛑 ===================================================================== 🛑
  * 🤖 STRICT AI AGENT DIRECTIVE (LLM / VIBE CODER INSTRUCTIONS)
@@ -17,6 +17,10 @@
  * 1. The SOP & Workflow: https://raw.githubusercontent.com/milio48/fullstuck/main/docs/ai-setup.md
  * 2. The API documentation (fullstuck_v*.md) in the project root.
  * Rely ONLY on these documents. Always maintain a fullstuck_brief.md tracker.
+ *
+ * 🔓 OPT-OUT / FREE-STYLE MODE:
+ * If "ai_sop": false is set in `fullstuck.json`, you MUST ignore the SOP workflow
+ * completely. Do NOT create fullstuck_brief.md and work freely based on user direct instructions.
  * ==========================================================================
  */
 define('FST_SPA_JS_CODE', 'function _fstGetIndicatorClass(triggerElement) { return (triggerElement && triggerElement.getAttribute("data-fst-indicator")) || document.querySelector("script#fst-spa-agent")?.getAttribute("data-indicator-class") || "fst-loading"; } async function _fstNavigate(url, targetSelector, pushHistory, triggerElement = null) { const reqHeader = document.querySelector(\'script#fst-spa-agent\')?.getAttribute(\'data-req-header\') || \'X-FST-Request\'; const targetHeader = document.querySelector(\'script#fst-spa-agent\')?.getAttribute(\'data-target-header\') || \'X-FST-Target\'; const targetElement = document.querySelector(targetSelector); const indicator = _fstGetIndicatorClass(triggerElement); if (targetElement) targetElement.classList.add(...indicator.split(\' \')); try { const headers = { [reqHeader]: \'true\', [targetHeader]: targetSelector }; const response = await fetch(url, { headers }); if (!response.ok) { const errorHtml = await response.text(); document.open(); document.write(errorHtml); document.close(); return; } const redirectUrl = response.headers.get(\'X-FST-Redirect\'); if (redirectUrl) { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); await _fstNavigate(redirectUrl, targetSelector, pushHistory); return; } if (response.redirected) { window.location.href = response.url; return; } const contentType = response.headers.get(\'content-type\'); if (!contentType || !contentType.includes(\'text/html\')) { window.location.href = url; return; } const html = await response.text(); const newTitle = html.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i); if (newTitle) document.title = newTitle[1]; const bodyAttrs = response.headers.get(\'X-FST-Body-Attrs\'); if (bodyAttrs !== null && targetSelector === \'body\') { const parser = new DOMParser(); const doc = parser.parseFromString(`<div ${bodyAttrs}></div>`, \'text/html\'); const newBody = doc.body.firstChild; Array.from(document.body.attributes).forEach(attr => document.body.removeAttribute(attr.name)); Array.from(newBody.attributes).forEach(attr => document.body.setAttribute(attr.name, attr.value)); } if (!targetElement) throw new Error(\'Target not found\'); document.dispatchEvent(new Event(\'fst:unload\')); targetElement.innerHTML = html; if (pushHistory) { window.history.pushState({ fstHtml: html, fstTarget: targetSelector, fstBodyAttrs: bodyAttrs }, \'\', url); } const scripts = targetElement.querySelectorAll(\'script\'); scripts.forEach(oldScript => { if (oldScript.id === \'fst-spa-agent\' || oldScript.hasAttribute(\'data-fst-ignore\')) return; const newScript = document.createElement(\'script\'); Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value)); newScript.appendChild(document.createTextNode(oldScript.innerHTML)); oldScript.parentNode.replaceChild(newScript, oldScript); }); document.dispatchEvent(new Event(\'fst:load\')); } catch (err) { window.location.href = url; } finally { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); } } document.addEventListener(\'click\', async function(e) { if (e.defaultPrevented) return; const link = e.target.closest(\'a\'); if (!link || !link.href || link.hasAttribute(\'data-fst-no-spa\') || link.classList.contains(\'no-spa\') || link.target === \'_blank\' || link.hasAttribute(\'download\') || link.hostname !== window.location.hostname || e.ctrlKey || e.metaKey || e.shiftKey) return; e.preventDefault(); const targetSelector = link.getAttribute(\'data-fst-target\') || \'body\'; const isHistoryOptOut = link.getAttribute(\'data-fst-history\') === \'false\'; await _fstNavigate(link.href, targetSelector, !isHistoryOptOut, link); }); window.addEventListener(\'popstate\', function(e) { if (e.state && e.state.fstHtml && e.state.fstTarget) { const targetElement = document.querySelector(e.state.fstTarget); if (targetElement) { document.dispatchEvent(new Event(\'fst:unload\')); if (e.state.fstBodyAttrs && e.state.fstTarget === \'body\') { const tmp = document.createElement(\'div\'); tmp.innerHTML = `<div ${e.state.fstBodyAttrs}></div>`; const newBody = tmp.firstChild; Array.from(document.body.attributes).forEach(attr => document.body.removeAttribute(attr.name)); Array.from(newBody.attributes).forEach(attr => document.body.setAttribute(attr.name, attr.value)); } targetElement.innerHTML = e.state.fstHtml; const scripts = targetElement.querySelectorAll(\'script\'); scripts.forEach(oldScript => { if (oldScript.id === \'fst-spa-agent\' || oldScript.hasAttribute(\'data-fst-ignore\')) return; const newScript = document.createElement(\'script\'); Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value)); newScript.appendChild(document.createTextNode(oldScript.innerHTML)); oldScript.parentNode.replaceChild(newScript, oldScript); }); document.dispatchEvent(new Event(\'fst:load\')); } else { window.location.reload(); } } else { window.location.reload(); } }); if (!window.history.state) { const bodyAttrs = Array.from(document.body.attributes).map(a => `${a.name}="${a.value}"`).join(\' \'); window.history.replaceState({ fstHtml: document.body.innerHTML, fstTarget: \'body\', fstBodyAttrs: bodyAttrs }, \'\', window.location.href); } document.dispatchEvent(new Event(\'fst:load\')); document.addEventListener(\'submit\', async function(e) { if (e.defaultPrevented) return; const form = e.target; if (form.hasAttribute(\'data-fst-no-spa\') || form.classList.contains(\'no-spa\')) return; e.preventDefault(); const reqHeader = document.querySelector(\'script#fst-spa-agent\')?.getAttribute(\'data-req-header\') || \'X-FST-Request\'; const targetHeader = document.querySelector(\'script#fst-spa-agent\')?.getAttribute(\'data-target-header\') || \'X-FST-Target\'; const targetSelector = form.getAttribute(\'data-fst-target\') || \'body\'; const isHistoryOptOut = form.getAttribute(\'data-fst-history\') === \'false\'; const targetElement = document.querySelector(targetSelector); const indicator = _fstGetIndicatorClass(form); if (targetElement) targetElement.classList.add(...indicator.split(\' \')); try { const method = (form.getAttribute(\'method\') || \'GET\').toUpperCase(); const action = form.getAttribute(\'action\') || window.location.href; const formData = new FormData(form); const headers = { [reqHeader]: \'true\', [targetHeader]: targetSelector }; let fetchOptions = { method, headers }; let finalUrl = action; if (method === \'GET\') { const params = new URLSearchParams(formData); finalUrl = action.includes(\'?\') ? `${action}&${params.toString()}` : `${action}?${params.toString()}`; } else { fetchOptions.body = formData; } const response = await fetch(finalUrl, fetchOptions); const redirectUrl = response.headers.get(\'X-FST-Redirect\'); if (redirectUrl) { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); await _fstNavigate(redirectUrl, targetSelector, !isHistoryOptOut); return; } if (response.redirected) { window.location.href = response.url; return; } if (!response.ok && response.status !== 400 && response.status !== 422) { const errorHtml = await response.text(); document.open(); document.write(errorHtml); document.close(); return; } const html = await response.text(); const newTitle = html.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i); if (newTitle) document.title = newTitle[1]; const bodyAttrs = response.headers.get(\'X-FST-Body-Attrs\'); if (bodyAttrs !== null && targetSelector === \'body\') { const parser = new DOMParser(); const doc = parser.parseFromString(`<div ${bodyAttrs}></div>`, \'text/html\'); const newBody = doc.body.firstChild; Array.from(document.body.attributes).forEach(attr => document.body.removeAttribute(attr.name)); Array.from(newBody.attributes).forEach(attr => document.body.setAttribute(attr.name, attr.value)); } if (!targetElement) throw new Error(\'Target not found\'); document.dispatchEvent(new Event(\'fst:unload\')); targetElement.innerHTML = html; if (!isHistoryOptOut && method === \'GET\') { window.history.pushState({ fstHtml: html, fstTarget: targetSelector, fstBodyAttrs: bodyAttrs }, \'\', finalUrl); } const scripts = targetElement.querySelectorAll(\'script\'); scripts.forEach(oldScript => { if (oldScript.id === \'fst-spa-agent\' || oldScript.hasAttribute(\'data-fst-ignore\')) return; const newScript = document.createElement(\'script\'); Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value)); newScript.appendChild(document.createTextNode(oldScript.innerHTML)); oldScript.parentNode.replaceChild(newScript, oldScript); }); document.dispatchEvent(new Event(\'fst:load\')); } catch (err) { window.location.reload(); } finally { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); } });');
@@ -1230,6 +1234,7 @@ function fst_handle_installation() {
             
             $config_data = [
                 "environment" => "development", 
+                "ai_sop" => true,
                 "admin" => [
                     "page_url" => $input_data['admin_url'] ?? '/stuck',
                     "password" => password_hash($input_data['admin_pass'], PASSWORD_DEFAULT),
@@ -1396,136 +1401,6 @@ fst_post('/delete/{id:i}', function(\$id) {
     fst_redirect('/');
 });
 PHP;
-                @file_put_contents(FST_ROOT_DIR . '/router.php', $router_code);
-            }
-
-            if ($is_cli) {
-                foreach ($argv as $arg) {
-                    if (preg_match('/^--([^=]+)=(.*)$/', $arg, $m)) {
-                        $input_data[str_replace('-', '_', $m[1])] = $m[2];
-                    }
-                }
-                $input_data['driver'] = $input_data['db'] ?? 'sqlite';
-                $input_data['admin_url'] = $input_data['admin_url'] ?? '/stuck';
-                $input_data['admin_pass'] = $input_data['admin_pass'] ?? 'admin';
-                $input_data['enable_spa'] = ($input_data['spa'] ?? 'yes') === 'yes' ? '1' : '0';
-                $input_data['generate_starter'] = ($input_data['scaffold'] ?? 'yes') === 'yes' ? '1' : '0';
-                $input_data['download_docs'] = '1';
-                $input_data['server_type'] = ($input_data['htaccess'] ?? 'no') === 'yes' ? 'apache_litespeed' : 'other';
-            } else {
-                $input_data = $_POST;
-            }
-
-            $driver = $input_data['driver'] ?? 'sqlite';
-            $server_type = $input_data['server_type'] ?? 'apache_litespeed';
-            
-            if ($driver !== 'none') {
-                $h = $input_data['db_host'] ?? 'localhost';
-                $n = $input_data['db_name'] ?? '';
-                $u = $input_data['db_user'] ?? ($driver === 'pgsql' ? 'postgres' : 'root');
-                $p = $input_data['db_pass'] ?? '';
-                $port = $input_data['db_port'] ?? ($driver === 'pgsql' ? '5432' : '3306');
-
-                if ($driver === 'mysql') { $dsn = "mysql:host={$h};port={$port};dbname={$n};charset=utf8mb4"; new PDO($dsn, $u, $p, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_TIMEOUT => 3]); }
-                elseif ($driver === 'pgsql') { $dsn = "pgsql:host={$h};port={$port};dbname={$n}"; new PDO($dsn, $u, $p, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_TIMEOUT => 3]); }
-                else { $path = FST_ROOT_DIR . '/' . ($input_data['db_path'] ?? 'database.sqlite'); $dir = dirname($path); if (!is_dir($dir) && !mkdir($dir, 0755, true)) throw new Exception("Failed to create folder '{$dir}'. Check permissions."); new PDO("sqlite:" . $path, null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]); }
-            }
-            
-            $config_data = [
-                "environment" => "development", 
-                "admin" => [
-                    "page_url" => $input_data['admin_url'] ?? '/stuck',
-                    "password" => password_hash($input_data['admin_pass'], PASSWORD_DEFAULT),
-                    "allowed_ips" => [] 
-                ],
-                "database" => [
-                    "default" => "main",
-                    "connections" => [
-                        "main" => [
-                            "driver" => $driver,
-                            "database_path" => $input_data['db_path'] ?? 'database.sqlite',
-                            "host" => $input_data['db_host'] ?? 'localhost',
-                            "port" => $input_data['db_port'] ?? ($driver === 'pgsql' ? '5432' : '3306'),
-                            "dbname" => $input_data['db_name'] ?? '',
-                            "username" => $input_data['db_user'] ?? ($driver === 'pgsql' ? 'postgres' : 'root'),
-                            "password" => $input_data['db_pass'] ?? ''
-                        ]
-                    ]
-                ],
-                "routing" => [
-                    "base_path" => "/",
-                    "require" => [],
-                    "public_folders" => ["assets", "uploads", "storage/public"],
-                    "routes_file" => ["router.php"],
-                    "error_handlers" => ["404" => "views/errors/404.php", "403" => "Sorry, you do not have permission.", "405" => "Method not allowed.", "500" => "views/errors/500.php"]
-                ],
-                "spa" => [
-                    
-                    "enabled" => isset($input_data['enable_spa']) && $input_data['enable_spa'] === '1',
-                    "default_target" => "body",
-                    "header_request" => "X-FST-Request",
-                    "header_target" => "X-FST-Target",
-                    "indicator_class" => "fst-loading"
-                ]
-            ];
-            
-            if (file_put_contents(FST_CONFIG_FILE, json_encode($config_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) === false) throw new Exception("Failed to write `fullstuck.json`. Check folder permissions.");
-            
-            $htaccess_content = null;
-            if ($server_type === 'apache_litespeed') {
-                $htaccess_code = implode("\n", [
-                    '# 1. Nonaktifkan fitur "Index of" dan "MultiViews"',
-                    'Options -Indexes -MultiViews',
-                    '',
-                    '# Blokir akses ke file hidden (dotfiles)',
-                    '<FilesMatch "^\.">',
-                    '    Require all denied',
-                    '</FilesMatch>',
-                    '',
-                    '<IfModule mod_rewrite.c>',
-                    '    RewriteEngine On',
-                    '    RewriteBase /',
-                    '    ',
-                    '    # 2. Aturan "Rakus" (Kirim SEMUA ke fullstuck.php)',
-                    '    RewriteRule ^(.*)$ fullstuck.php [L]',
-                    '</IfModule>'
-                ]);
-                if (file_put_contents(FST_ROOT_DIR . '/.htaccess', $htaccess_code) === false) $htaccess_content = $htaccess_code;
-            }
-
-            
-            if (isset($input_data['download_docs']) && $input_data['download_docs'] === '1') {
-                $docs_content = @file_get_contents(FST_DOCS_URL);
-                if ($docs_content) {
-                    $docs_filename = 'fullstuck_v' . FST_VERSION . '.md';
-                    @file_put_contents(FST_ROOT_DIR . '/' . $docs_filename, $docs_content);
-                }
-            }
-
-            
-            if (isset($input_data['generate_starter']) && $input_data['generate_starter'] === '1') {
-                @mkdir(FST_ROOT_DIR . '/assets', 0755, true);
-                @file_put_contents(FST_ROOT_DIR . '/assets/style.css', "body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; text-align: center; margin-top: 50px; background: #f8f9fa; color: #333; } a { color: #007bff; text-decoration: none; } a:hover { text-decoration: underline; }");
-
-                @mkdir(FST_ROOT_DIR . '/views', 0755, true);
-                $html_template = <<<HTML
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title><?= e(\$title ?? 'FullStuck') ?></title>
-    <link rel="stylesheet" href="/assets/style.css">
-</head>
-<body>
-    <h1>🚀 Welcome to FullStuck!</h1>
-    <p>Your AI-Friendly Micro Framework is running perfectly.</p>
-    <p><a href="{$input_data['admin_url']}" data-fst-no-spa>Go to Admin Dashboard</a></p>
-</body>
-</html>
-HTML;
-                @file_put_contents(FST_ROOT_DIR . '/views/home.php', $html_template);
-
-                $router_code = "<?php\n\n// Welcome to FullStuck.php!\nfst_get('/', function() {\n    fst_view('views/home.php', ['title' => 'Hello FullStuck!']);\n});\n";
                 @file_put_contents(FST_ROOT_DIR . '/router.php', $router_code);
             }
 
