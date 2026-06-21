@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Template**: Fixed `fst_template()` default `$cacheDir` targeting `__DIR__` (inside core) to `FST_ROOT_DIR/view-cache`.
 - **Router**: Fixed security gap where a middleware returning `false` resulted in a blank page (status 200). Now it correctly aborts with a 403 Forbidden.
 - **SPA**: Fixed navigation bug where clicking standard `<a>` links ignored server-side `X-FST-Redirect` headers, resulting in blank pages.
+- **SPA**: Enhanced `fst_extract_html_fragment()` to support complex CSS selectors (`.class > div`, `[attr="value"]`) securely via dynamic XPath conversion, replacing the old strict whitelist.
 
 ### Docs
 - **API Reference**: Added explicit return types to the entire API Cheat Sheet (Database, Security, HTTP, Session, etc) to improve DX and eliminate guesswork.

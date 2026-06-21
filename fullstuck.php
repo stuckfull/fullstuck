@@ -3,7 +3,7 @@
  * 🚀 FULLSTUCK.PHP - The Zero-Config, AI-Friendly Framework
  * 🔗 Repository: https://github.com/milio48/fullstuck
  * 📚 Raw Docs: https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v0.2.0.md
- * 💡 Version: 0.2.0 | FST_HASH: 11987b63858ac0db4ec46c1d221219cd3599e4fc7ea432507daf92abc01964a7
+ * 💡 Version: 0.2.0 | FST_HASH: 0d0395d8cf0fe246045946cb86874c91aa6cd34f223f33b71f9fe6e72ceac0d6
  *
  * 🛑 ===================================================================== 🛑
  * 🤖 STRICT AI AGENT DIRECTIVE (LLM / VIBE CODER INSTRUCTIONS)
@@ -275,23 +275,34 @@ function fst_extract_html_fragment($html, $selector = 'body') {
     libxml_clear_errors();
 
     
-    if (str_starts_with($selector, '#')) {
-        $id = substr($selector, 1);
-        if (!preg_match('/^[a-zA-Z0-9_\-]+$/', $id)) return $html; 
-        $xpath_query = "//*[@id='{$id}']";
-    } elseif (str_starts_with($selector, '.')) {
-        $class = substr($selector, 1);
-        if (!preg_match('/^[a-zA-Z0-9_\-]+$/', $class)) return $html; 
-        $xpath_query = "//*[contains(concat(' ', normalize-space(@class), ' '), ' {$class} ')]";
-    } else {
-        
-        $allowed_tags = ['body', 'main', 'header', 'footer', 'div', 'section', 'article', 'nav', 'aside', 'span', 'p', 'form', 'table'];
-        if (in_array(strtolower($selector), $allowed_tags)) {
-            $xpath_query = '//' . strtolower($selector);
-        } else {
-            return $html;
-        }
+    
+    if (strpos($selector, ':') !== false || strpos($selector, '+') !== false || strpos($selector, '~') !== false) {
+        return $html; 
     }
+
+    $paths = [];
+    foreach (explode(',', $selector) as $sel) {
+        $sel = trim($sel);
+        $sel = preg_replace('/\s*>\s*/', '/', $sel); 
+        $sel = preg_replace('/\s+/', '//', $sel); 
+        $sel = preg_replace('/#([\w\-]+)/', '[@id="$1"]', $sel); 
+        $sel = preg_replace('/\.([\w\-]+)/', '[contains(concat(" ", normalize-space(@class), " "), " $1 ")]', $sel); 
+        
+        
+        $sel = preg_replace('/\[([\w\-]+)=([\'"]?.*?[\'"]?)\]/', '[@$1=$2]', $sel);
+        
+        $sel = preg_replace('/\[([\w\-]+)\]/', '[@$1]', $sel);
+        
+        $sel = preg_replace('/(^|\/|\|)(\[)/', '$1*$2', $sel);
+        
+        
+        if (!str_starts_with($sel, '/')) {
+            $sel = '//' . $sel;
+        }
+        
+        $paths[] = $sel;
+    }
+    $xpath_query = implode(' | ', $paths);
 
     $xpath = new DOMXPath($dom);
     $nodes = $xpath->query($xpath_query);

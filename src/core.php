@@ -250,24 +250,35 @@ function fst_extract_html_fragment($html, $selector = 'body') {
     $dom->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_NOERROR | LIBXML_NOWARNING | LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
     libxml_clear_errors();
 
-    // [PATCH] Mencegah XPath Injection dengan Strict Regex & Whitelist
-    if (str_starts_with($selector, '#')) {
-        $id = substr($selector, 1);
-        if (!preg_match('/^[a-zA-Z0-9_\-]+$/', $id)) return $html; // Fallback jika format ID tidak valid
-        $xpath_query = "//*[@id='{$id}']";
-    } elseif (str_starts_with($selector, '.')) {
-        $class = substr($selector, 1);
-        if (!preg_match('/^[a-zA-Z0-9_\-]+$/', $class)) return $html; // Fallback jika format Class tidak valid
-        $xpath_query = "//*[contains(concat(' ', normalize-space(@class), ' '), ' {$class} ')]";
-    } else {
-        // Tag selector non-singleton (div, section, article, dsb.) — harus pakai DOMDocument
-        $allowed_tags = ['body', 'main', 'header', 'footer', 'div', 'section', 'article', 'nav', 'aside', 'span', 'p', 'form', 'table'];
-        if (in_array(strtolower($selector), $allowed_tags)) {
-            $xpath_query = '//' . strtolower($selector);
-        } else {
-            return $html;
-        }
+    // [PATCH] Konversi CSS Selector ke XPath secara dinamis dan aman
+    // Mencegah XPath Injection dengan memblokir karakter pseudo-class dan sibbling yang tidak didukung
+    if (strpos($selector, ':') !== false || strpos($selector, '+') !== false || strpos($selector, '~') !== false) {
+        return $html; 
     }
+
+    $paths = [];
+    foreach (explode(',', $selector) as $sel) {
+        $sel = trim($sel);
+        $sel = preg_replace('/\s*>\s*/', '/', $sel); // Child
+        $sel = preg_replace('/\s+/', '//', $sel); // Descendant
+        $sel = preg_replace('/#([\w\-]+)/', '[@id="$1"]', $sel); // ID
+        $sel = preg_replace('/\.([\w\-]+)/', '[contains(concat(" ", normalize-space(@class), " "), " $1 ")]', $sel); // Class
+        
+        // Convert CSS [attr="val"] to XPath [@attr="val"]
+        $sel = preg_replace('/\[([\w\-]+)=([\'"]?.*?[\'"]?)\]/', '[@$1=$2]', $sel);
+        // Convert [attr] to [@attr]
+        $sel = preg_replace('/\[([\w\-]+)\]/', '[@$1]', $sel);
+        // Handle tagless attributes by prepending *
+        $sel = preg_replace('/(^|\/|\|)(\[)/', '$1*$2', $sel);
+        
+        // Prepend absolute context if not already set
+        if (!str_starts_with($sel, '/')) {
+            $sel = '//' . $sel;
+        }
+        
+        $paths[] = $sel;
+    }
+    $xpath_query = implode(' | ', $paths);
 
     $xpath = new DOMXPath($dom);
     $nodes = $xpath->query($xpath_query);
