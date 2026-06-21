@@ -128,7 +128,16 @@ window.addEventListener('popstate', function(e) {
     }
 });
 
-/* Initial load event */
+/* Initial load state and event */
+if (!window.history.state) {
+    const bodyAttrs = Array.from(document.body.attributes).map(a => `${a.name}="${a.value}"`).join(' ');
+    window.history.replaceState({
+        fstHtml: document.body.innerHTML,
+        fstTarget: 'body',
+        fstBodyAttrs: bodyAttrs
+    }, '', window.location.href);
+}
+
 document.dispatchEvent(new Event('fst:load'));
 
 /* [PATCH] SPA Form Submit Interceptor */
@@ -172,7 +181,7 @@ document.addEventListener('submit', async function(e) {
         const redirectUrl = response.headers.get('X-FST-Redirect');
         if (redirectUrl) {
             if (targetElement) targetElement.classList.remove(...indicator.split(' '));
-            await _fstNavigate(redirectUrl, targetSelector, true);
+            await _fstNavigate(redirectUrl, targetSelector, !isHistoryOptOut);
             return;
         }
         

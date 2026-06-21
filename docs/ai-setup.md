@@ -9,7 +9,7 @@ AI bisa lupa ingatan jika chat ditutup. Anda **WAJIB** membuat file `fullstuck_b
 - Jika ada rencana fitur panjang, buat file lain, lalu beri *link* di `fullstuck_brief.md`.
 
 ## 🛡️ Aturan Keamanan & DX (Wajib Dibaca)
-- **Keamanan (Security):** Selalu gunakan `fst_esc()` saat mencetak variabel ke HTML. Selalu gunakan `fst_csrf_field()` di dalam form. Jangan pernah percaya pada *input* dari pengguna.
+- **Keamanan (Security):** Selalu gunakan `fst_escape()` atau `e()` saat mencetak variabel ke HTML. Selalu gunakan `fst_csrf_field()` di dalam form. Jangan pernah percaya pada *input* dari pengguna.
 - **Masalah Framework (DX):** Jika Anda merasa framework FullStuck ini membingungkan, sulit dipakai, lambat, atau Anda menemukan *bug*, beritahu pengguna! Suruh pengguna untuk segera membuka **Issue** atau mengirim **Pull Request (PR)** ke repositori GitHub FullStuck.
 
 ## ⚙️ Aturan Perilaku AI (Workflow Ethics)

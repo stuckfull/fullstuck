@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **SPA**: Fixed critical DX issue where 500 Internal Server Errors were swallowed during SPA form submissions/navigations and forced a GET redirect to the original URL (resulting in 404). Unsuccessful responses now correctly render the error HTML directly into the DOM (via `document.open()`) to preserve the stack trace.
 - **SPA**: Fixed `X-FST-Redirect` handler in both link click and form submit doing hard reload instead of SPA navigation. Redirect now triggers `_fstNavigate()` for seamless PRG (Post/Redirect/Get) without page reload.
 - **SPA**: Restored hard reload fallback using `document.open()` to preserve POST method stack traces on 500 errors.
+- **SPA**: Fixed back button reload glitch on the initial landing page by initializing history state on page load.
+- **SPA**: Fixed form redirect ignoring `data-fst-history="false"` history opt-out preferences.
+- **Template**: Fixed cache file path collisions in `fst_template()` by escaping absolute paths into flattened filenames (replacing `/`, `\`, and `:` with `__`) instead of using `basename()`.
+- **Template**: Fixed relative XPath selectors (`.//`) in `fst_template()` failing to match root elements by defaulting the context node to `$dom` when `$context` is null.
+- **Template**: Fixed PHP 8.4 deprecation warning by explicitly declaring `$cacheDir` as nullable (`?string $cacheDir = null`).
 - **Template**: Fixed `fst_template()` not inheriting global variables registered via `fst_view_share()`. Shared data is now merged automatically just like `fst_view()`.
 - **Router**: Fixed `fst_group('')` with empty prefix producing double-slash paths (`//add`) that resulted in 404 errors.
 - **Database**: Fixed `fst_db_insert`, `fst_db_update`, `fst_db_delete` to return scalar values (`last_id` / `affected_rows`) to strictly adhere to API documentation.

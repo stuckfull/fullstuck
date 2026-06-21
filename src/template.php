@@ -10,7 +10,7 @@
  * @param string $cacheDir Folder tujuan penyimpanan cache
  * @param bool $forceRebuild Paksa recompile mengabaikan cache
  */
-function fst_template(string $templatePath, array $data, array $rules, string $cacheDir = null, bool $forceRebuild = false): void {
+function fst_template(string $templatePath, array $data, array $rules, ?string $cacheDir = null, bool $forceRebuild = false): void {
     if ($cacheDir === null) {
         $cacheDir = defined('FST_ROOT_DIR') ? FST_ROOT_DIR . '/view-cache' : sys_get_temp_dir() . '/fst_view_cache';
     }
@@ -23,7 +23,10 @@ function fst_template(string $templatePath, array $data, array $rules, string $c
         mkdir($cacheDir, 0755, true);
     }
     
-    $cacheFile = $cacheDir . '/' . basename($templatePath) . '.php';
+    $base = defined('FST_ROOT_DIR') ? FST_ROOT_DIR : '';
+    $relative_path = str_replace([$base, '/', '\\', ':'], ['', '__', '__', ''], $templatePath);
+    $relative_path = ltrim($relative_path, '_');
+    $cacheFile = $cacheDir . '/' . $relative_path . '.php';
 
     // Cek validitas cache
     if ($forceRebuild || !file_exists($cacheFile) || filemtime($templatePath) > filemtime($cacheFile)) {
@@ -117,7 +120,7 @@ function fst_template(string $templatePath, array $data, array $rules, string $c
                 }
 
                 $xpathSel = $css2xpath($key);
-                $nodes = $context ? $xpath->query($xpathSel, $context) : $xpath->query($xpathSel);
+                $nodes = $xpath->query($xpathSel, $context ?? $dom);
                 
                 if ($nodes === false || $nodes->length === 0) continue;
 
