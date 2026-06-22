@@ -9,6 +9,9 @@ async function _fstNavigate(url, targetSelector, pushHistory, triggerElement = n
     const targetElement = document.querySelector(targetSelector);
     const indicator = _fstGetIndicatorClass(triggerElement);
     if (targetElement) targetElement.classList.add(...indicator.split(' '));
+    document.dispatchEvent(new CustomEvent('fst:loading', { 
+        detail: { url, targetSelector, triggerElement } 
+    }));
 
     try {
         const headers = { [reqHeader]: 'true', [targetHeader]: targetSelector };
@@ -174,6 +177,10 @@ document.addEventListener('submit', async function(e) {
         } else {
             fetchOptions.body = formData;
         }
+
+        document.dispatchEvent(new CustomEvent('fst:loading', { 
+            detail: { url: finalUrl, targetSelector, triggerElement: form } 
+        }));
         
         const response = await fetch(finalUrl, fetchOptions);
 
