@@ -5,10 +5,10 @@
 ## 🚀 1. Unduh & Inisialisasi
 - **Cek Dependensi (Windows):** Jika `php`/`git` belum ada, arahkan pengguna untuk memasangnya via Scoop (misal: `scoop install php git nodejs python tailwindcss`).
 - **Langkah Persiapan:**
-  1. **Unduh:** `curl -O https://raw.githubusercontent.com/milio48/fullstuck/main/fullstuck.php`
+  1. **Unduh:** `https://raw.githubusercontent.com/milio48/fullstuck/main/fullstuck.php`. Windows powershell, Other curl/wget.
   2. **Inisialisasi:** `php fullstuck.php init --db=sqlite --admin-pass=stuck --admin-url=/stuck --spa=yes --scaffold=yes --htaccess=yes` *(menghasilkan `fullstuck.json` & manual `fullstuck_v*.md`)*
   3. **Jalankan:** `php -S localhost:8000 fullstuck.php`
-  4 Laporkan hasil instalasi.
+  4. Laporkan hasil instalasi fullstuck.php
 
 ## 🔓 2. Kesepakatan Alur Kerja (Opt-Out Mode)
 Pada chat pertama, **WAJIB** tanyakan langsung ke pengguna:
