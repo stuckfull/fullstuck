@@ -95,3 +95,16 @@ Jika proyek sudah berjalan dan Anda ingin menambah fitur baru atau memperbaiki b
 1. **CSS:** Ingatkan pengguna untuk compile Tailwind CSS CDN ke produksi (misal menggunakan Tailwind CLI: `npx tailwindcss -o assets/css/style.css --minify`).
 2. **Server:** Pastikan file `.htaccess` terunggah agar rute dinamis tidak error 404.
 3. **Environment:** Ubah opsi `"environment"` dari `"development"` menjadi `"production"` di berkas `fullstuck.json` sebelum dilepas ke publik untuk menyembunyikan detail log kesalahan/trace di layar dan mengalihkan catatan error ke berkas `.fst-error.log`.
+4. **Pre-Deploy Checklist:** AI wajib mengingatkan/memverifikasi poin-poin berikut sebelum menyatakan siap rilis:
+   - [ ] Mengubah opsi `"environment"` ke `"production"` di `fullstuck.json`.
+   - [ ] Mengamankan/menghapus token/middleware demo (seperti `?token=123`) dari file `router.php`.
+   - [ ] Mengompilasi Tailwind CSS (jika menggunakan Tailwind CDN).
+   - [ ] Mengunggah berkas konfigurasi server `.htaccess`.
+   - [ ] Merotasi kata sandi panel admin default (`stuck`) pada konfigurasi `fullstuck.json`.
+
+## 🚨 5. Panduan Pemulihan Kesalahan (Error Recovery Playbook)
+Jika terjadi error selama pengembangan, ikuti langkah berikut:
+- **HTTP 500 (Internal Server Error):** Periksa berkas `.fst-error.log` di root. Jika terjadi kesalahan kompilasi view, periksa juga file PHP terkompilasi di dalam folder cache (default: `view-cache/`).
+- **Gagal Migrasi Basis Data:** Jangan lakukan `DROP TABLE` jika tabel sudah berisi data. Gunakan instruksi `ALTER TABLE` secara terukur.
+- **Cache Template Rusak/Korup:** Hapus seluruh isi folder `view-cache/` untuk memaksa sistem membangun ulang (rebuild) cache secara otomatis.
+- **SPA Error / Konflik Script:** Periksa apakah file `.htaccess` atau konfigurasi URL server sudah benar, dan gunakan atribut `data-fst-no-spa` untuk menonaktifkan SPA secara selektif pada tautan/form tertentu jika terjadi konflik script eksternal.

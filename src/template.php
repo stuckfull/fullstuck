@@ -28,8 +28,23 @@ function fst_template(string $templatePath, array $data, array $rules, ?string $
     $relative_path = ltrim($relative_path, '_');
     $cacheFile = $cacheDir . '/' . $relative_path . '.php';
 
+    $rules_hash = md5(serialize($rules));
+    $cache_valid = false;
+    if (!$forceRebuild && file_exists($cacheFile) && filemtime($templatePath) <= filemtime($cacheFile)) {
+        $fp = fopen($cacheFile, 'r');
+        if ($fp) {
+            $first_line = fgets($fp);
+            fclose($fp);
+            if (preg_match('/^\/\/\s*fst_rules_hash:\s*([a-f0-9]{32})/', trim(str_replace(['<?php', '?>'], '', $first_line)), $matches)) {
+                if ($matches[1] === $rules_hash) {
+                    $cache_valid = true;
+                }
+            }
+        }
+    }
+
     // Cek validitas cache
-    if ($forceRebuild || !file_exists($cacheFile) || filemtime($templatePath) > filemtime($cacheFile)) {
+    if (!$cache_valid) {
         
         $dom = new DOMDocument();
         libxml_use_internal_errors(true);
@@ -269,6 +284,7 @@ function fst_template(string $templatePath, array $data, array $rules, ?string $
             $htmlOut = str_replace($marker, $phpCode, $htmlOut);
         }
         
+        $htmlOut = "<?php // fst_rules_hash: {$rules_hash} ?>\n" . $htmlOut;
         file_put_contents($cacheFile, $htmlOut);
     }
 

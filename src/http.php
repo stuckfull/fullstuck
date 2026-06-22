@@ -104,10 +104,9 @@ function fst_upload($key, $folder, $options = []) {
             return ['success' => false, 'error' => "Extension `{$ext}` is not allowed.", 'path' => null];
         }
         
-        if (function_exists('finfo_open')) {
-            $finfo = finfo_open(FILEINFO_MIME_TYPE);
-            $actual_mime = finfo_file($finfo, $tmp_name);
-            finfo_close($finfo);
+        if (class_exists('finfo')) {
+            $finfo = new finfo(FILEINFO_MIME_TYPE);
+            $actual_mime = $finfo->file($tmp_name);
             $blocked_mimes = ['application/x-httpd-php', 'application/x-httpd-php-source', 'application/php', 'text/x-php', 'text/php'];
             if (in_array(strtolower($actual_mime), $blocked_mimes)) {
                 return ['success' => false, 'error' => "Security Error: Malicious file signature detected.", 'path' => null];
