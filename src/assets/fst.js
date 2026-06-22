@@ -76,6 +76,20 @@ async function _fstNavigate(url, targetSelector, pushHistory, triggerElement = n
         });
 
         document.dispatchEvent(new Event('fst:load'));
+
+        /* Handle scroll behavior (Reset scroll or Scroll to Anchor) */
+        if (window.location.hash) {
+            const targetAnchor = document.querySelector(window.location.hash);
+            if (targetAnchor) {
+                targetAnchor.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                if (targetSelector === 'body') window.scrollTo({ top: 0, behavior: 'instant' });
+                else targetElement.scrollTop = 0;
+            }
+        } else {
+            if (targetSelector === 'body') window.scrollTo({ top: 0, behavior: 'instant' });
+            else targetElement.scrollTop = 0;
+        }
     } catch (err) {
         window.location.href = url;
     } finally {
@@ -87,6 +101,13 @@ document.addEventListener('click', async function(e) {
     if (e.defaultPrevented) return;
     const link = e.target.closest('a');
     if (!link || !link.href || link.hasAttribute('data-fst-no-spa') || link.classList.contains('no-spa') || link.target === '_blank' || link.hasAttribute('download') || link.hostname !== window.location.hostname || e.ctrlKey || e.metaKey || e.shiftKey) return;
+
+    // Ignorasi hash link pada halaman yang sama
+    const href = link.getAttribute('href');
+    if (href && (href.startsWith('#') || (link.pathname === window.location.pathname && link.search === window.location.search && link.hash !== ''))) {
+        return;
+    }
+
     e.preventDefault();
 
     const targetSelector = link.getAttribute('data-fst-target') || 'body';
@@ -122,6 +143,14 @@ window.addEventListener('popstate', function(e) {
             });
             /* 4. Dispatch fst:load */
             document.dispatchEvent(new Event('fst:load'));
+
+            /* Handle scroll to anchor on history navigation */
+            if (window.location.hash) {
+                const targetAnchor = document.querySelector(window.location.hash);
+                if (targetAnchor) {
+                    targetAnchor.scrollIntoView({ behavior: 'smooth' });
+                }
+            }
         } else {
             window.location.reload();
         }
