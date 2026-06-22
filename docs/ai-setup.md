@@ -8,6 +8,7 @@
   1. **Unduh:** `curl -O https://raw.githubusercontent.com/milio48/fullstuck/main/fullstuck.php`
   2. **Inisialisasi:** `php fullstuck.php init --db=sqlite --admin-pass=stuck --admin-url=/stuck --spa=yes --scaffold=yes --htaccess=yes` *(menghasilkan `fullstuck.json` & manual `fullstuck_v*.md`)*
   3. **Jalankan:** `php -S localhost:8000 fullstuck.php`
+  4 Laporkan hasil instalasi.
 
 ## 🔓 2. Kesepakatan Alur Kerja (Opt-Out Mode)
 Pada chat pertama, **WAJIB** tanyakan langsung ke pengguna:

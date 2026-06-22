@@ -4,6 +4,14 @@ function _fstGetIndicatorClass(triggerElement) {
 }
 
 async function _fstNavigate(url, targetSelector, pushHistory, triggerElement = null) {
+    /* Save scroll position of the current page before navigation */
+    if (window.history.state) {
+        const currentState = window.history.state;
+        currentState.scrollX = window.scrollX;
+        currentState.scrollY = window.scrollY;
+        window.history.replaceState(currentState, '');
+    }
+
     const reqHeader = document.querySelector('script#fst-spa-agent')?.getAttribute('data-req-header') || 'X-FST-Request';
     const targetHeader = document.querySelector('script#fst-spa-agent')?.getAttribute('data-target-header') || 'X-FST-Target';
     const targetElement = document.querySelector(targetSelector);
@@ -78,17 +86,23 @@ async function _fstNavigate(url, targetSelector, pushHistory, triggerElement = n
         document.dispatchEvent(new Event('fst:load'));
 
         /* Handle scroll behavior (Reset scroll or Scroll to Anchor) */
-        if (window.location.hash) {
-            const targetAnchor = document.querySelector(window.location.hash);
-            if (targetAnchor) {
-                targetAnchor.scrollIntoView({ behavior: 'smooth' });
+        const globalScrollBehavior = document.querySelector('script#fst-spa-agent')?.getAttribute('data-scroll-behavior') || 'instant';
+        const scrollBehavior = triggerElement ? (triggerElement.getAttribute('data-fst-scroll') || globalScrollBehavior) : globalScrollBehavior;
+
+        if (scrollBehavior !== 'false') {
+            const behavior = scrollBehavior === 'smooth' ? 'smooth' : 'instant';
+            if (window.location.hash) {
+                const targetAnchor = document.querySelector(window.location.hash);
+                if (targetAnchor) {
+                    targetAnchor.scrollIntoView({ behavior: behavior });
+                } else {
+                    if (targetSelector === 'body') window.scrollTo({ top: 0, behavior: behavior });
+                    else targetElement.scrollTo({ top: 0, behavior: behavior });
+                }
             } else {
-                if (targetSelector === 'body') window.scrollTo({ top: 0, behavior: 'instant' });
-                else targetElement.scrollTop = 0;
+                if (targetSelector === 'body') window.scrollTo({ top: 0, behavior: behavior });
+                else targetElement.scrollTo({ top: 0, behavior: behavior });
             }
-        } else {
-            if (targetSelector === 'body') window.scrollTo({ top: 0, behavior: 'instant' });
-            else targetElement.scrollTop = 0;
         }
     } catch (err) {
         window.location.href = url;
@@ -144,8 +158,14 @@ window.addEventListener('popstate', function(e) {
             /* 4. Dispatch fst:load */
             document.dispatchEvent(new Event('fst:load'));
 
-            /* Handle scroll to anchor on history navigation */
-            if (window.location.hash) {
+            /* Restore scroll position or scroll to anchor on history navigation */
+            if (e.state.scrollX !== undefined && e.state.scrollY !== undefined) {
+                window.scrollTo({
+                    left: e.state.scrollX,
+                    top: e.state.scrollY,
+                    behavior: 'instant'
+                });
+            } else if (window.location.hash) {
                 const targetAnchor = document.querySelector(window.location.hash);
                 if (targetAnchor) {
                     targetAnchor.scrollIntoView({ behavior: 'smooth' });
