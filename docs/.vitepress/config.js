@@ -10,6 +10,7 @@ export default defineConfig({
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Dokumentasi v0.2.0', link: '/v0.2.0' },
+      { text: 'Cheatsheet AI', link: '/v0.2.0_cheatsheet' },
       { text: 'Panduan AI', link: '/ai-setup' },
       { text: 'Changelog', link: 'https://github.com/milio48/fullstuck/blob/main/CHANGELOG.md' }
     ],
@@ -19,6 +20,7 @@ export default defineConfig({
         items: [
           { text: 'Selamat Datang', link: '/' },
           { text: 'Dokumentasi v0.2.0 (Terbaru)', link: '/v0.2.0' },
+          { text: 'Cheatsheet AI (v0.2.0)', link: '/v0.2.0_cheatsheet' },
           { text: 'SOP & Panduan Setup AI', link: '/ai-setup' }
         ]
       },

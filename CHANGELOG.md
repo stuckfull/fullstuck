@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **DX**: Replaced the bloated full documentation file (`fullstuck_v*.md`) downloaded during `php fullstuck.php init` with a concise, AI-friendly cheatsheet (`fullstuck_cheatsheet.md`) containing all essential API references, database helpers, validation rules, ruleset DSL syntax, and SPA events in a token-efficient format.
+- **Docs**: Published the new cheatsheet as `docs/v0.2.0_cheatsheet.md` and integrated it into the VitePress configuration and documentation website.
+
 ### Fixed
 - **Template**: Fixed template compiler parser to correctly recognize CSS Attribute Selectors starting with `[` and ending with `]` (like `[data-fst="..."]`) at root level or when containing comparison operators, preventing them from being mistakenly intercepted as Attribute Modification Directives.
 
