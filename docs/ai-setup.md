@@ -6,7 +6,7 @@
 - **Cek Dependensi (Windows):** Jika `php`/`git` belum ada, arahkan pengguna untuk memasangnya via Scoop (misal: `scoop install php git nodejs python tailwindcss`).
 - **Langkah Persiapan:**
   1. **Unduh:** `https://raw.githubusercontent.com/milio48/fullstuck/main/fullstuck.php`. Windows powershell, Other curl/wget.
-  2. **Inisialisasi:** `php fullstuck.php init --db=sqlite --admin-pass=stuck --admin-url=/stuck --spa=yes --scaffold=yes --htaccess=yes` *(menghasilkan `fullstuck.json` & manual `fullstuck_v*.md`)*
+  2. **Inisialisasi:** `php fullstuck.php init --db=sqlite --admin-pass=stuck --admin-url=/stuck --spa=yes --scaffold=yes --htaccess=yes` *(menghasilkan `fullstuck.json` & `fullstuck_cheatsheet.md`)*
   3. **Jalankan:** `php -S localhost:8000 fullstuck.php`
   4. Laporkan hasil instalasi fullstuck.php
 
@@ -19,7 +19,7 @@ Pada chat pertama, **WAJIB** tanyakan langsung ke pengguna:
 
 ## 🤝 3. Aturan Ingatan AI (Hanya jika `"ai_sop": true`)
 - **Tracker:** Wajib buat `fullstuck_brief.md` di root sebagai memori utama & index navigasi.
-- **Header Tracker:** Baris pertama wajib tertulis: `"AI BARU: WAJIB BACA SOP DI https://raw.githubusercontent.com/milio48/fullstuck/main/docs/ai-setup.md DAN BACA API DI fullstuck_v*.md DULU!"`
+- **Header Tracker:** Baris pertama wajib tertulis: `"AI BARU: WAJIB BACA SOP DI https://raw.githubusercontent.com/milio48/fullstuck/main/docs/ai-setup.md DAN BACA API DI fullstuck_cheatsheet.md DULU!"`
 - **Batasan Ukuran:** Jika salah satu sub-bagian (section) di tracker melebihi **30 baris**, pindahkan detailnya ke berkas terpisah di dalam folder `docs/` dan tautkan di bagian Referensi Dokumen agar tracker tetap ringkas.
 - **Format Tracker:** Catat status secara ringkas. Rencana Rute bertindak sebagai To-Do list utama. Gunakan template berikut:
   ```markdown
@@ -88,7 +88,7 @@ Jika proyek sudah berjalan dan Anda ingin menambah fitur baru atau memperbaiki b
    - Hubungkan penanda data-fst: `'[data-fst=user_name]' => '$username'` *(selalu gunakan tanda kutip tunggal dan sertakan tanda `$` karena rules akan dikompilasi menjadi PHP mentah `<?=\$username?>` yang dieksekusi setelah array $data di-extract)*.
    - Untuk atribut khusus (gambar/tautan/input), gunakan kurung siku: `'[data-fst=avatar]' => ['[src]' => '$avatar_url']` *(juga dikompilasi menjadi PHP mentah)*.
    - Di dalam loop, pastikan selector anak ditulis bersarang (nested) di bawah aturan `@foreach` induknya agar pencarian XPath bersifat relatif.
-   - *Rujukan detail: Seluruh sintaks ruleset DSL (seperti `@if`, `@foreach`, `@append`, `@prepend`), cara validasi data form, dan upload berkas wajib dibaca langsung di `fullstuck_v*.md`.*
+   - *Rujukan detail: Seluruh sintaks ruleset DSL (seperti `@if`, `@foreach`, `@append`, `@prepend`), cara validasi data form, dan upload berkas wajib dibaca langsung di `fullstuck_cheatsheet.md`.*
 4. **Database & Migrasi:** Jika menambah kolom/tabel baru pada database berjalan, gunakan perintah SQL `ALTER TABLE` atau `CREATE TABLE IF NOT EXISTS` di file inisialisasi/controller. Dilarang melakukan drop tabel demi keamanan data.
 5. **Debugging & Errors:** Jika terjadi *ParseError* pada kompilasi view, periksa berkas PHP hasil kompilasi di dalam folder cache (default: `view-cache/`) untuk menganalisis kode yang salah. Jika terjadi runtime error di mode `"production"`, periksa log di `.fst-error.log`.
 

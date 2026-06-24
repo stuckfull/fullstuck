@@ -15,6 +15,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 define('FST_VERSION', '0.2.0');
 define('FST_DOCS_URL', 'https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v' . FST_VERSION . '.md');
+define('FST_CHEATSHEET_URL', 'https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v' . FST_VERSION . '_cheatsheet.md');
 if (!defined('FST_ROOT_DIR')) {
     $root = __DIR__;
     if (php_sapi_name() === 'cli-server') {

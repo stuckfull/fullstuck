@@ -6,6 +6,7 @@ $output_file = dirname(__DIR__) . '/fullstuck.php';
 
 define('FST_VERSION', '0.2.0');
 define('FST_DOCS_URL', 'https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v' . FST_VERSION . '.md');
+define('FST_CHEATSHEET_URL', 'https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v' . FST_VERSION . '_cheatsheet.md');
 
 // Minify fst.js
 $fst_js_path = $src_dir . '/assets/fst.js';
@@ -90,7 +91,7 @@ $output .= " * context overflow and hallucinations.\n";
 $output .= " *\n";
 $output .= " * To understand how to build with this framework, you MUST read:\n";
 $output .= " * 1. The SOP & Workflow: https://raw.githubusercontent.com/milio48/fullstuck/main/docs/ai-setup.md\n";
-$output .= " * 2. The API documentation (fullstuck_v*.md) in the project root.\n";
+$output .= " * 2. The API cheatsheet (fullstuck_cheatsheet.md) in the project root.\n";
 $output .= " * Rely ONLY on these documents. Always maintain a fullstuck_brief.md tracker.\n";
 $output .= " *\n";
 $output .= " * 🔓 OPT-OUT / FREE-STYLE MODE:\n";
