@@ -3,7 +3,7 @@
  * 🚀 FULLSTUCK.PHP - The Zero-Config, AI-Friendly Framework
  * 🔗 Repository: https://github.com/milio48/fullstuck
  * 📚 Raw Docs: https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v0.2.0.md
- * 💡 Version: 0.2.0 | FST_HASH: d05d1da51141d19003e74f1e9b2631146c898bc4fc0a75cc8621e0879aea77c3
+ * 💡 Version: 0.2.0 | FST_HASH: d6e520821ea2e82868ea0154d07ad2bbc58ca44e537d04976178a52fb7ff9286
  *
  * 🛑 ===================================================================== 🛑
  * 🤖 STRICT AI AGENT DIRECTIVE (LLM / VIBE CODER INSTRUCTIONS)
@@ -506,14 +506,12 @@ function fst_db_update($table, $data, $conditions = [], $options = []) {
     }
     $sql = "UPDATE {$t} SET " . implode(", ", $set);
     
-    if (!empty($conditions)) {
-        $where = [];
-        foreach ($conditions as $k => $v) {
-            $where[] = fst_db_quote_ident($k, $conn) . " = ?";
-            $params[] = $v;
-        }
-        $sql .= " WHERE " . implode(" AND ", $where);
+    $where = [];
+    foreach ($conditions as $k => $v) {
+        $where[] = fst_db_quote_ident($k, $conn) . " = ?";
+        $params[] = $v;
     }
+    $sql .= " WHERE " . implode(" AND ", $where);
     $res = fst_db('EXEC', $sql, $params, $conn);
     return $res['affected_rows'];
 }
@@ -2107,14 +2105,15 @@ HTML;
         $admin_base = $fst_config['admin']['page_url'] ?? '/stuck';
 
         $function_groups = [
-            'Core' => ['fst_abort', 'fst_run', 'fst_is_dev', 'fst_config', 'fst_extract_html_fragment', 'fst_app'],
+            'Core' => ['fst_abort', 'fst_run', 'fst_is_dev', 'fst_config', 'fst_extract_html_fragment', 'fst_app', 'fst_spa_page'],
 
             'Database' => ['fst_db', 'fst_db_begin', 'fst_db_commit', 'fst_db_rollback', 'fst_db_select', 'fst_db_row', 'fst_db_exists', 'fst_db_insert', 'fst_db_update', 'fst_db_delete', 'fst_db_quote_ident', '_fst_sanitize_order_by'],
             'Views' => [
                 'fst_view',
                 'fst_partial',
                 'fst_serve_static_file',
-                'fst_template'
+                'fst_template',
+                'fst_view_share'
             ],
             'Request' => ['fst_uri', 'fst_method', 'fst_input', 'fst_request', 'fst_file', 'fst_is_spa', 'fst_spa_target'],
             'Routing' => ['fst_route', 'fst_get', 'fst_post', 'fst_put', 'fst_patch', 'fst_delete', 'fst_any', 'fst_group'],

@@ -174,14 +174,12 @@ function fst_db_update($table, $data, $conditions = [], $options = []) {
     }
     $sql = "UPDATE {$t} SET " . implode(", ", $set);
     
-    if (!empty($conditions)) {
-        $where = [];
-        foreach ($conditions as $k => $v) {
-            $where[] = fst_db_quote_ident($k, $conn) . " = ?";
-            $params[] = $v;
-        }
-        $sql .= " WHERE " . implode(" AND ", $where);
+    $where = [];
+    foreach ($conditions as $k => $v) {
+        $where[] = fst_db_quote_ident($k, $conn) . " = ?";
+        $params[] = $v;
     }
+    $sql .= " WHERE " . implode(" AND ", $where);
     $res = fst_db('EXEC', $sql, $params, $conn);
     return $res['affected_rows'];
 }
