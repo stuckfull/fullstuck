@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Docs**: Published the new cheatsheet as `docs/v0.2.0_cheatsheet.md` and integrated it into the VitePress configuration and documentation website.
 
 ### Fixed
+- **SPA**: Fixed back/forward navigation bypassing server entirely — `popstate` now re-fetches from the backend instead of replaying stale cached HTML. This ensures middleware, auth checks, and controller hooks always execute on history navigation. Developers can opt-in to the old instant-cache behavior by adding `data-history-cache="true"` to the SPA agent script tag.
 - **Template**: Fixed template compiler parser to correctly recognize CSS Attribute Selectors starting with `[` and ending with `]` (like `[data-fst="..."]`) at root level or when containing comparison operators, preventing them from being mistakenly intercepted as Attribute Modification Directives.
 
 ## [v0.2.0] - 2026-06-23
@@ -77,7 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Security**: Hardened Error Handler with **Double-Layer Safety Net** via `fst_is_safe_to_debug()`.
 - **SPA**: Upgraded to support **Fragment Rendering** (target-specific swapping via class/ID selectors).
 - **SPA**: Added **Lifecycle Events** support (`fst:unload` and `fst:load`).
-- **SPA**: Implemented **Native History Caching** for instant back/forward navigation without re-fetching.
+- **SPA**: Implemented **Server Re-fetch on History Navigation** — back/forward triggers a fresh server request to guarantee data freshness and security.
 - **SPA**: Added opt-out capability via `data-no-spa` / `no-spa` and respect for `e.defaultPrevented`.
 - **Installer**: Added **Auto-Scaffolding** to generate starter project files (`router.php`, `views/`, `assets/`) during installation.
 - **Installer**: Added **Zero-Config SPA** toggle to the installation wizard.

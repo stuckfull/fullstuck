@@ -3,9 +3,10 @@ function _fstGetIndicatorClass(triggerElement) {
     return (triggerElement && triggerElement.getAttribute("data-fst-indicator")) || document.querySelector("script#fst-spa-agent")?.getAttribute("data-indicator-class") || "fst-loading";
 }
 
-async function _fstNavigate(url, targetSelector, pushHistory, triggerElement = null) {
+async function _fstNavigate(url, targetSelector, pushHistory, triggerElement = null, _isPopstate = false) {
     /* Save scroll position of the current page before navigation */
-    if (window.history.state) {
+    /* Skip for popstate — browser already switched history entries */
+    if (!_isPopstate && window.history.state) {
         const currentState = window.history.state;
         currentState.scrollX = window.scrollX;
         currentState.scrollY = window.scrollY;
@@ -19,9 +20,9 @@ async function _fstNavigate(url, targetSelector, pushHistory, triggerElement = n
     if (targetElement) targetElement.classList.add(...indicator.split(' '));
     const loadingEvent = new CustomEvent('fst:loading', { 
         detail: { url, targetSelector, triggerElement },
-        cancelable: true
+        cancelable: !_isPopstate
     });
-    if (!document.dispatchEvent(loadingEvent)) {
+    if (!_isPopstate && !document.dispatchEvent(loadingEvent)) {
         if (targetElement) targetElement.classList.remove(...indicator.split(' '));
         return;
     }
@@ -42,6 +43,7 @@ async function _fstNavigate(url, targetSelector, pushHistory, triggerElement = n
         const redirectUrl = response.headers.get('X-FST-Redirect');
         if (redirectUrl) {
             if (targetElement) targetElement.classList.remove(...indicator.split(' '));
+            if (_isPopstate) { window.location.href = redirectUrl; return; }
             await _fstNavigate(redirectUrl, targetSelector, pushHistory);
             return;
         }
@@ -76,7 +78,12 @@ async function _fstNavigate(url, targetSelector, pushHistory, triggerElement = n
         targetElement.innerHTML = html;
 
         if (pushHistory) {
-            window.history.pushState({ fstHtml: html, fstTarget: targetSelector, fstBodyAttrs: bodyAttrs }, '', url);
+            const cacheFlag = triggerElement ? triggerElement.getAttribute('data-fst-cache') : null;
+            const globalCache = document.querySelector('script#fst-spa-agent')?.getAttribute('data-history-cache') === 'true';
+            const fstCache = cacheFlag !== null ? cacheFlag === 'true' : globalCache;
+            window.history.pushState({ fstHtml: html, fstTarget: targetSelector, fstBodyAttrs: bodyAttrs, fstCache: fstCache }, '', url);
+        } else if (_isPopstate) {
+            window.history.replaceState({ fstHtml: html, fstTarget: targetSelector, fstBodyAttrs: bodyAttrs, fstCache: window.history.state?.fstCache ?? false }, '', url);
         }
 
         const scripts = targetElement.querySelectorAll('script');
@@ -91,22 +98,25 @@ async function _fstNavigate(url, targetSelector, pushHistory, triggerElement = n
         document.dispatchEvent(new Event('fst:load'));
 
         /* Handle scroll behavior (Reset scroll or Scroll to Anchor) */
-        const globalScrollBehavior = document.querySelector('script#fst-spa-agent')?.getAttribute('data-scroll-behavior') || 'instant';
-        const scrollBehavior = triggerElement ? (triggerElement.getAttribute('data-fst-scroll') || globalScrollBehavior) : globalScrollBehavior;
+        /* Skip for popstate — scroll restoration handled by popstate handler */
+        if (!_isPopstate) {
+            const globalScrollBehavior = document.querySelector('script#fst-spa-agent')?.getAttribute('data-scroll-behavior') || 'instant';
+            const scrollBehavior = triggerElement ? (triggerElement.getAttribute('data-fst-scroll') || globalScrollBehavior) : globalScrollBehavior;
 
-        if (scrollBehavior !== 'false') {
-            const behavior = scrollBehavior === 'smooth' ? 'smooth' : 'instant';
-            if (window.location.hash) {
-                const targetAnchor = document.querySelector(window.location.hash);
-                if (targetAnchor) {
-                    targetAnchor.scrollIntoView({ behavior: behavior });
+            if (scrollBehavior !== 'false') {
+                const behavior = scrollBehavior === 'smooth' ? 'smooth' : 'instant';
+                if (window.location.hash) {
+                    const targetAnchor = document.querySelector(window.location.hash);
+                    if (targetAnchor) {
+                        targetAnchor.scrollIntoView({ behavior: behavior });
+                    } else {
+                        if (targetSelector === 'body') window.scrollTo({ top: 0, behavior: behavior });
+                        else targetElement.scrollTo({ top: 0, behavior: behavior });
+                    }
                 } else {
                     if (targetSelector === 'body') window.scrollTo({ top: 0, behavior: behavior });
                     else targetElement.scrollTo({ top: 0, behavior: behavior });
                 }
-            } else {
-                if (targetSelector === 'body') window.scrollTo({ top: 0, behavior: behavior });
-                else targetElement.scrollTo({ top: 0, behavior: behavior });
             }
         }
     } catch (err) {
@@ -135,23 +145,25 @@ document.addEventListener('click', async function(e) {
     await _fstNavigate(link.href, targetSelector, !isHistoryOptOut, link);
 });
 
-window.addEventListener('popstate', function(e) {
-    /* Cek jika e.state && e.state.fstHtml && e.state.fstTarget tersedia */
-    if (e.state && e.state.fstHtml && e.state.fstTarget) {
-        const targetElement = document.querySelector(e.state.fstTarget);
+window.addEventListener('popstate', async function(e) {
+    const target = (e.state && e.state.fstTarget) || 'body';
+    const savedScrollX = e.state?.scrollX;
+    const savedScrollY = e.state?.scrollY;
+    const useCache = e.state?.fstCache ?? (document.querySelector('script#fst-spa-agent')?.getAttribute('data-history-cache') === 'true');
+
+    /* Mode Cache: replay HTML dari history.state (instant, tapi bisa stale) */
+    if (useCache && e.state && e.state.fstHtml) {
+        const targetElement = document.querySelector(target);
         if (targetElement) {
-            /* 1. Dispatch fst:unload */
             document.dispatchEvent(new Event('fst:unload'));
-            /* 2. Isi innerHTML dengan e.state.fstHtml */
-            if (e.state.fstBodyAttrs && e.state.fstTarget === 'body') {
-                const tmp = document.createElement('div');
-                tmp.innerHTML = `<div ${e.state.fstBodyAttrs}></div>`;
-                const newBody = tmp.firstChild;
+            if (e.state.fstBodyAttrs && target === 'body') {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(`<div ${e.state.fstBodyAttrs}></div>`, 'text/html');
+                const newBody = doc.body.firstChild;
                 Array.from(document.body.attributes).forEach(attr => document.body.removeAttribute(attr.name));
                 Array.from(newBody.attributes).forEach(attr => document.body.setAttribute(attr.name, attr.value));
             }
             targetElement.innerHTML = e.state.fstHtml;
-            /* 3. Eksekusi ulang script (skip fst-spa-agent dan data-fst-ignore) */
             const scripts = targetElement.querySelectorAll('script');
             scripts.forEach(oldScript => {
                 if (oldScript.id === 'fst-spa-agent' || oldScript.hasAttribute('data-fst-ignore')) return;
@@ -160,28 +172,22 @@ window.addEventListener('popstate', function(e) {
                 newScript.appendChild(document.createTextNode(oldScript.innerHTML));
                 oldScript.parentNode.replaceChild(newScript, oldScript);
             });
-            /* 4. Dispatch fst:load */
             document.dispatchEvent(new Event('fst:load'));
-
-            /* Restore scroll position or scroll to anchor on history navigation */
-            if (e.state.scrollX !== undefined && e.state.scrollY !== undefined) {
-                window.scrollTo({
-                    left: e.state.scrollX,
-                    top: e.state.scrollY,
-                    behavior: 'instant'
-                });
-            } else if (window.location.hash) {
-                const targetAnchor = document.querySelector(window.location.hash);
-                if (targetAnchor) {
-                    targetAnchor.scrollIntoView({ behavior: 'smooth' });
-                }
-            }
         } else {
             window.location.reload();
+            return;
         }
     } else {
-        /* Fallback jika state tidak ada */
-        window.location.reload();
+        /* Mode Re-fetch (default): fetch ulang dari server agar backend hooks selalu terpanggil */
+        await _fstNavigate(window.location.href, target, false, null, true);
+    }
+
+    /* Restore scroll position */
+    if (savedScrollX !== undefined && savedScrollY !== undefined) {
+        window.scrollTo({ left: savedScrollX, top: savedScrollY, behavior: 'instant' });
+    } else if (window.location.hash) {
+        const targetAnchor = document.querySelector(window.location.hash);
+        if (targetAnchor) targetAnchor.scrollIntoView({ behavior: 'smooth' });
     }
 });
 
@@ -283,7 +289,10 @@ document.addEventListener('submit', async function(e) {
         targetElement.innerHTML = html;
         
         if (!isHistoryOptOut && method === 'GET') {
-            window.history.pushState({ fstHtml: html, fstTarget: targetSelector, fstBodyAttrs: bodyAttrs }, '', finalUrl);
+            const cacheFlag = form.getAttribute('data-fst-cache');
+            const globalCache = document.querySelector('script#fst-spa-agent')?.getAttribute('data-history-cache') === 'true';
+            const fstCache = cacheFlag !== null ? cacheFlag === 'true' : globalCache;
+            window.history.pushState({ fstHtml: html, fstTarget: targetSelector, fstBodyAttrs: bodyAttrs, fstCache: fstCache }, '', finalUrl);
         }
         
         /* Eksekusi ulang tag <script> (skip fst-spa-agent dan data-fst-ignore) */
@@ -317,6 +326,7 @@ window.fst = {
                     return options.scroll !== undefined ? String(options.scroll) : null;
                 }
                 if (attr === 'data-fst-indicator') return options.indicator || null;
+                if (attr === 'data-fst-cache') return options.cache !== undefined ? String(options.cache) : null;
                 return null;
             }
         };
