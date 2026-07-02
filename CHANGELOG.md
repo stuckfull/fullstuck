@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.3.0] - 2026-07-03
+
+### Refactored
+- **Core**: Evolved FullStuck from a CMS/Admin structure to a minimal, high-performance Micro-Framework.
+- **Core**: Removed Admin Dashboard, Plugin Manager, and legacy CMS-specific codes.
+- **Core**: Removed `min_value` and `max_value` from `fst_validate()` to keep it minimalist.
+- **SPA**: Replaced `MutationObserver` based SPA logic with Event Delegation pattern for massive performance gains.
+- **SPA**: Renamed internal JS engine to `FST Agent`.
+- **Router**: Moved FST Agent JS serving to a dedicated route `/fst-agent.js` with 1-year aggressive caching, replacing the old inline script injection.
+
+### Added
+- **Core**: Introduced `fst_template_render()` for returning rendered DOM templates as string, enabling Nested Layouting.
+- **SPA**: Added Hybrid Front-End Routing API (`fst.set()`, `fst.group()`) to handle client-side logic alongside server-side fragments.
+- **SPA**: Standardized FST Agent HTML attributes (`data-fst-fragment`, `data-fst-normal-load`, `data-fst-no-history`, `data-fst-no-scroll`, `data-fst-indicator`, `data-fst-cache`).
+- **Core**: Introduced centralized JSON logging via `fst_log()` and `.fst.log`.
+
 ### Fixed
 - **Admin**: Fixed `fst_view_share` and `fst_spa_page` not being registered in the Scan Project function groups, causing them to appear as "Unknown".
 - **Database**: Removed redundant condition check in `fst_db_update()` (dead code after empty conditions validation).

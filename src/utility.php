@@ -1,10 +1,15 @@
 <?php
 function fst_dump(...$vars) {
-    $fst_config = fst_app('config');
     if (!fst_is_dev()) {
         return;
     }
+    $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1);
+    $caller = $trace[0] ?? null;
+    $file = $caller ? htmlspecialchars($caller['file']) : 'unknown';
+    $line = $caller ? $caller['line'] : 'unknown';
+    
     echo '<pre style="background-color: #1a1a1a; color: #f0f0f0; padding: 15px; border: 1px solid #444; margin: 10px; border-radius: 5px; text-align: left; overflow-x: auto; font-family: monospace; font-size: 13px; line-height: 1.5;">';
+    echo "<div style='color: #888; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 5px; font-size: 11px;'><strong>{$file}</strong>:{$line}</div>";
     foreach ($vars as $var) { var_dump($var); }
     echo '</pre>';
 }
@@ -34,53 +39,53 @@ function fst_validate($data, $rules) {
                 $rule_name = $rule;
             }
 
-            // Abaikan validasi lanjutan jika kosong dan tidak di-set required
+            // Ignore advanced validation if empty and not required
             if ($rule_name !== 'required' && ($value === null || trim((string)$value) === '')) {
                 continue;
             }
 
             if ($rule_name === 'required') {
                 if ($value === null || trim((string)$value) === '') {
-                    $errors[$field][] = "Bidang '{$field}' wajib diisi.";
+                    $errors[$field][] = "The field '{$field}' is required.";
                     $field_valid = false;
                 }
             } elseif ($rule_name === 'email') {
                 if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
-                    $errors[$field][] = "Bidang '{$field}' harus berupa email yang valid.";
+                    $errors[$field][] = "The field '{$field}' must be a valid email.";
                     $field_valid = false;
                 }
             } elseif ($rule_name === 'min') {
                 $min = (int)($params[0] ?? 0);
                 if (_fst_strlen((string)$value) < $min) {
-                    $errors[$field][] = "Bidang '{$field}' minimal {$min} karakter.";
+                    $errors[$field][] = "The field '{$field}' must be at least {$min} characters.";
                     $field_valid = false;
                 }
             } elseif ($rule_name === 'max') {
                 $max = (int)($params[0] ?? 0);
                 if (_fst_strlen((string)$value) > $max) {
-                    $errors[$field][] = "Bidang '{$field}' maksimal {$max} karakter.";
+                    $errors[$field][] = "The field '{$field}' must not exceed {$max} characters.";
                     $field_valid = false;
                 }
             } elseif ($rule_name === 'numeric') {
                 if (!is_numeric($value)) {
-                    $errors[$field][] = "Bidang '{$field}' harus berupa angka.";
+                    $errors[$field][] = "The field '{$field}' must be a number.";
                     $field_valid = false;
                 }
             } elseif ($rule_name === 'in') {
                 if (!in_array($value, $params)) {
-                    $errors[$field][] = "Bidang '{$field}' harus salah satu dari: " . implode(', ', $params) . ".";
+                    $errors[$field][] = "The field '{$field}' must be one of: " . implode(', ', $params) . ".";
                     $field_valid = false;
                 }
             } elseif ($rule_name === 'min_value') {
                 $min_val = (float)($params[0] ?? 0);
                 if (!is_numeric($value) || (float)$value < $min_val) {
-                    $errors[$field][] = "Bidang '{$field}' harus bernilai minimal {$min_val}.";
+                    $errors[$field][] = "The field '{$field}' must be at least {$min_val}.";
                     $field_valid = false;
                 }
             } elseif ($rule_name === 'max_value') {
                 $max_val = (float)($params[0] ?? 0);
                 if (!is_numeric($value) || (float)$value > $max_val) {
-                    $errors[$field][] = "Bidang '{$field}' harus bernilai maksimal {$max_val}.";
+                    $errors[$field][] = "The field '{$field}' must not exceed {$max_val}.";
                     $field_valid = false;
                 }
             }

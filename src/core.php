@@ -13,7 +13,7 @@ if (session_status() === PHP_SESSION_NONE) {
     ]);
     session_start(); 
 }
-define('FST_VERSION', '0.2.0');
+define('FST_VERSION', '0.3.0');
 define('FST_DOCS_URL', 'https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v' . FST_VERSION . '.md');
 define('FST_CHEATSHEET_URL', 'https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v' . FST_VERSION . '_cheatsheet.md');
 if (!defined('FST_ROOT_DIR')) {
@@ -64,11 +64,9 @@ function fst_app($key = null, $value = null) {
     return $state[$key] ?? null;
 }
 
+// fst_is_safe_to_debug deprecated in v0.3. Alias to fst_is_dev.
 function fst_is_safe_to_debug() {
-    if (!fst_is_dev()) return false; // [PATCH] Mencegah leak stack-trace di production behind proxy
-    $is_localhost = in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1']);
-    $is_admin_logged_in = !empty($_SESSION['fst_admin_logged_in']);
-    return $is_localhost || $is_admin_logged_in;
+    return fst_is_dev();
 }
 
 $config_content = @file_get_contents(FST_CONFIG_FILE);
@@ -90,6 +88,21 @@ if (fst_is_dev()) {
 }
 ini_set('display_errors', '0'); // Nonaktifkan display_errors asli agar digantikan oleh UI kita
 
+function fst_log($level, $message, $context = []) {
+    $log_entry = json_encode([
+        'timestamp' => date('c'),
+        'level' => strtoupper($level),
+        'message' => $message,
+        'context' => $context
+    ]) . "\n";
+    @file_put_contents(FST_ROOT_DIR . '/.fst.log', $log_entry, FILE_APPEND);
+    
+    // Also log to system error log for CLI or server monitoring
+    if (strtoupper($level) === 'ERROR' || strtoupper($level) === 'FATAL') {
+        error_log("[$level] $message");
+    }
+}
+
 function _fst_error_handler($errno, $errstr, $errfile, $errline) {
     if (!(error_reporting() & $errno)) return false;
     throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
@@ -99,13 +112,18 @@ function _fst_exception_handler($e) {
     while (ob_get_level() > 0) { ob_end_clean(); } // [PATCH] Bersihkan buffer HTML parsial
     http_response_code(500);
     
-    if (!fst_is_dev() || !fst_is_safe_to_debug()) {
-        $log_message = "[" . date('Y-m-d H:i:s') . "] " . get_class($e) . ": " . $e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine() . "\n";
-        @file_put_contents(FST_ROOT_DIR . '/.fst-error.log', $log_message, FILE_APPEND);
-        error_log($log_message); // Tetap lempar ke log server standar
-        
-        if (function_exists('fst_abort')) { fst_abort(500, "Internal Server Error. Please check .fst-error.log for details."); } 
-        else { die("Internal Server Error."); }
+    fst_log('error', $e->getMessage(), [
+        'class' => get_class($e),
+        'file' => $e->getFile(),
+        'line' => $e->getLine()
+    ]);
+    
+    if (!fst_is_dev()) {
+        if (function_exists('fst_abort')) { 
+            fst_abort(500, "Internal Server Error. Please check .fst.log for details."); 
+        } else { 
+            die("Internal Server Error."); 
+        }
     }
     
     // Mode Development: Tampilkan UI Cantik
@@ -182,7 +200,7 @@ register_shutdown_function('_fst_fatal_error_handler');
 
 function fst_is_dev() {
     $fst_config = fst_app('config');
-    return ($fst_config['environment'] ?? 'production') === 'development';
+    return !($fst_config['production'] ?? true);
 }
 
 function _fst_interpolate_env($val) {
@@ -214,20 +232,16 @@ function fst_config($key = null, $default = null) {
     return _fst_interpolate_env($val);
 }
 
-function fst_is_spa(): bool {
-    $header_name = fst_config('spa.header_request', 'X-FST-Request');
+function fst_is_fragment_request(): bool {
+    $header_name = fst_config('fragment.header_request', 'X-FST-Request');
     $req_header = 'HTTP_' . str_replace('-', '_', strtoupper($header_name));
     return isset($_SERVER[$req_header]);
 }
 
-function fst_spa_target(): string {
-    $header_name = fst_config('spa.header_target', 'X-FST-Target');
+function fst_fragment_target(): string {
+    $header_name = fst_config('fragment.header_target', 'X-FST-Target');
     $target_header = 'HTTP_' . str_replace('-', '_', strtoupper($header_name));
     return $_SERVER[$target_header] ?? 'body';
-}
-
-function fst_spa_page() {
-    fst_app('inject_spa_manual', true);
 }
 
 function fst_extract_html_fragment($html, $selector = 'body') {
@@ -297,10 +311,6 @@ function fst_extract_html_fragment($html, $selector = 'body') {
     return $html;
 }
 
-function fst_register_plugin($id, $config) {
-    $plugins = fst_app('plugins') ?? [];
-    $plugins[$id] = $config;
-    fst_app('plugins', $plugins);
-}
+
 
 ?>

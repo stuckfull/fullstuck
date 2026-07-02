@@ -1,8 +1,8 @@
 <div align="center">
   <h1>🚀 FullStuck.php</h1>
-  <p><b>The Zero-Config, AI-Friendly, Single-File PHP Framework</b></p>
+  <p><b>The Zero-Config, AI-Friendly, Single-File PHP Micro-Framework</b></p>
 
-  [![Version](https://img.shields.io/badge/version-0.2.0-green.svg)](docs/v0.2.0.md)
+  [![Version](https://img.shields.io/badge/version-0.3.0-green.svg)](docs/v0.3.0.md)
   [![PHP Version](https://img.shields.io/badge/PHP-%3E%3D%208.0-8892BF.svg)](https://php.net/)
   [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
   [![AI-Friendly](https://img.shields.io/badge/AI--Agent-Ready-orange.svg)](#-ai-agent--vibe-coder-setup)
@@ -10,7 +10,7 @@
 
 ---
 
-**FullStuck.php** adalah *micro-framework* yang mengembalikan kesederhanaan PHP. Seluruh *core engine* berada dalam **satu file tunggal**, memberikan Anda *routing* statis, *database* PDO (SQLite/PostgreSQL/MySQL), templating, dan keajaiban **Zero-Config SPA** tanpa butuh folder `vendor/` atau instalasi *Composer*.
+**FullStuck.php** adalah *micro-framework* yang mengembalikan kesederhanaan PHP. Seluruh *core engine* berada dalam **satu file tunggal**, memberikan Anda *routing* statis, *database* PDO (SQLite/PostgreSQL/MySQL), templating, dan keajaiban **Hybrid Fragment Routing** (FST Agent) tanpa butuh folder `vendor/` atau instalasi *Composer*. Di versi **v0.3.0**, framework ini telah direvolusi menjadi sangat ringan dengan menghilangkan sistem CMS bawaan dan lebih fokus sebagai fondasi *headless* atau *micro-services* yang sangat lincah.
 
 🌐 **[Kunjungi Landing Page Resmi](https://fullstuck.biz.id/)**
 
@@ -29,15 +29,14 @@ Install FullStuck.php : https://raw.githubusercontent.com/milio48/fullstuck/main
 1.  **Download**: Unduh file `fullstuck.php` ke folder kosong Anda.
 2.  **Initialize**: Jalankan perintah inisialisasi otomatis:
     ```bash
-    php fullstuck.php init --admin-pass=rahasia --scaffold=yes
+    php fullstuck.php init --scaffold=yes
     ```
 3.  **Run**: Jalankan server bawaan PHP:
     ```bash
     php -S localhost:8000 fullstuck.php
     ```
 4.  **Explore**:
-    *   🌐 Aplikasi: `http://localhost:8000`
-    *   🛠️ Admin Dashboard: `http://localhost:8000/stuck`
+    *   🌐 Aplikasi Anda berjalan di: `http://localhost:8000`
 
 ---
 
@@ -60,16 +59,14 @@ fst_post('/simpan', function() {
 });
 ```
 
-## ✨ Fitur Unggulan v0.2.0
+## ✨ Fitur Unggulan v0.3.0
 
 *   **📦 Single File Distribution**: Cukup satu file `fullstuck.php` untuk menjalankan seluruh aplikasi.
 *   **🎨 Procedural DOM Templating**: Engine templating `fst_template()` memisahkan murni HTML dan PHP. Tidak perlu `<br>` atau `echo` lagi di dalam HTML!
-*   **⚡ Zero-Config SPA**: Navigasi instan dengan *Fragment Rendering* dan *History Caching* tanpa menulis JavaScript. Cukup tambahkan atribut ajaib seperti `data-fst-target` atau `data-fst-indicator`!
+*   **⚡ Hybrid Front-End Routing (FST Agent)**: Navigasi instan dengan *Fragment Fetching* dari PHP atau atur rute spesifik Anda secara *client-side* menggunakan `fst.set()`!
 *   **🤖 AI-Native Design**: Struktur kode yang sangat ramah untuk asisten AI (Cursor, Windsurf, Cline) untuk memahami konteks proyek secara utuh.
-*   **🎛️ Built-in Admin Dashboard**: Panel administrasi modern (`/stuck`) untuk manajemen konfigurasi, *Integrity Monitor*, dan *Plugin Marketplace*.
-*   **🔌 Plugin Ecosystem**: Perluas fitur framework dengan sistem plugin *one-click install* langsung dari dashboard.
-*   **🔒 Hardened Security**: Proteksi CSRF, XPath injection protection, Path Traversal validation, dan *Session Fixation protection* bawaan.
-*   **🐘 Database Flexible**: Dukungan penuh untuk SQLite, MySQL, dan sekarang **PostgreSQL** dengan *connection pooling*.
+*   **🔒 Hardened Security**: Proteksi CSRF, perlindungan dari injeksi di templating, dan *Session Security* bawaan.
+*   **🐘 Database Flexible**: Dukungan penuh untuk SQLite, MySQL, dan **PostgreSQL** dengan *connection pooling*.
 
 ---
 
@@ -77,11 +74,11 @@ fst_post('/simpan', function() {
 
 Dokumentasi FullStuck bersifat **versioned single-file** agar memudahkan pencarian dan memberikan konteks penuh bagi AI:
 
-- 📖 **[Dokumentasi v0.2.0 (Terbaru)](docs/v0.2.0.md)**
+- 📖 **[Dokumentasi v0.3.0 (Terbaru)](docs/v0.3.0.md)**
+- 📖 **[Dokumentasi v0.2.0 (Legacy)](docs/v0.2.0.md)**
 - 📖 **[Dokumentasi v0.1.0 (Legacy)](docs/v0.1.0.md)**
 - 📋 **[Riwayat Perubahan (Changelog)](CHANGELOG.md)**
 - 🏗️ **[Arsitektur Framework](docs/ARCHITECTURE.md)**
-- 🔌 **[Panduan Pembuatan Plugin](docs/PLUGIN_DEVELOPMENT.md)**
 
 ---
 

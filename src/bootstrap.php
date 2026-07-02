@@ -13,13 +13,6 @@ if (php_sapi_name() !== 'cli' && strpos($_SERVER['REQUEST_URI'], 'fullstuck.php'
     ');
 }
 
-// 1. Load Plugins Terlebih Dahulu
-$plugin_dir = FST_ROOT_DIR . '/fst-plugins';
-if (is_dir($plugin_dir)) {
-    foreach (glob($plugin_dir . '/fst-*.php') as $plugin) {
-        require_once $plugin;
-    }
-}
 
 // 2. FST Procedural Auto-Require (Models, Helpers, dsb)
 $require_items = $fst_config['routing']['require'] ?? [];

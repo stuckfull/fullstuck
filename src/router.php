@@ -233,6 +233,19 @@ function fst_run() {
     $handled = false;
     
     $req = _fst_get_request_paths(); 
+    
+    // [PATCH] Serve FST Agent JS
+    if ($req['uri_path'] === '/fst-agent.js') {
+        $agent_mode = fst_config('agent_js', false);
+        if ($agent_mode === true || $agent_mode === '1') {
+            header('Content-Type: application/javascript');
+            // Cache strongly since it's framework code
+            header('Cache-Control: public, max-age=31536000, immutable');
+            echo defined('FST_AGENT_JS_CODE') ? FST_AGENT_JS_CODE : '';
+            exit(0);
+        }
+    }
+
     if (_fst_is_protected_file($req['absolute_path'])) {
         fst_abort(404);
         $handled = true;
@@ -255,25 +268,17 @@ function fst_run() {
     $output = ob_get_clean();
     if ($output === false) $output = ''; // Guard: buffer sudah di-flush oleh exception handler
 
-    // Evaluasi Opsi SPA
-    $spa_mode = fst_config('spa.enabled', false);
-    $should_inject_spa = false;
+    // Evaluasi Opsi Agent JS
+    $agent_mode = fst_config('agent_js', false);
+    $should_inject_agent = false;
 
-    if ($spa_mode === true || $spa_mode === '1') {
-        $should_inject_spa = true;
-    } elseif ($spa_mode === 'manual' && fst_app('inject_spa_manual') === true) {
-        $should_inject_spa = true;
+    if ($agent_mode === true || $agent_mode === '1') {
+        $should_inject_agent = true;
     }
 
-    // Bypass SPA untuk area Admin
-    $req = _fst_get_request_paths(); // Ambil ulang URI path
-    $admin_url = fst_config('admin.page_url', '/stuck');
-    if ($req['uri_path'] === $admin_url || str_starts_with($req['uri_path'], rtrim($admin_url, '/') . '/')) {
-        $should_inject_spa = false;
-    }
 
-    if (fst_is_spa()) {
-        $target = fst_spa_target();
+    if (fst_is_fragment_request()) {
+        $target = fst_fragment_target();
         
         // 1. Selamatkan tag <title> dari output asli sebelum dipotong
         $title_tag = '';
@@ -294,14 +299,14 @@ function fst_run() {
             $output = $title_tag . "\n" . $output;
         }
     } 
-    else if ($should_inject_spa) {
-        $script_id = fst_config('spa.script_id', 'fst-spa-agent');
-        $req_header = fst_config('spa.header_request', 'X-FST-Request');
-        $target_header = fst_config('spa.header_target', 'X-FST-Target');
-        $indicator_class = fst_config('spa.indicator_class', 'fst-loading');
-        $history_cache = fst_config('spa.history_cache', false) ? ' data-history-cache="true"' : '';
+    else if ($should_inject_agent) {
+        $script_id = fst_config('fragment.script_id', 'fst-agent');
+        $req_header = fst_config('fragment.header_request', 'X-FST-Request');
+        $target_header = fst_config('fragment.header_target', 'X-FST-Target');
+        $indicator_class = fst_config('fragment.indicator_class', 'fst-loading');
+        $history_cache = fst_config('fragment.history_cache', false) ? ' data-history-cache="true"' : '';
         $inject_id = $script_id ? 'id="'.$script_id.'" data-req-header="'.$req_header.'" data-target-header="'.$target_header.'" data-indicator-class="'.$indicator_class.'"'.$history_cache : '';
-        $script_tag = "<script {$inject_id}>\n" . (defined('FST_SPA_JS_CODE') ? FST_SPA_JS_CODE : '') . "\n</script>";
+        $script_tag = "<script src=\"/fst-agent.js\" {$inject_id}></script>";
         
         if (stripos($output, '</body>') !== false) {
             $output = str_ireplace('</body>', $script_tag . "\n</body>", $output);
