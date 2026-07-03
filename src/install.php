@@ -433,8 +433,7 @@ fst_any('/tasks/{id}/detail', 'fst_spa_fallback');
 fst_get('/api/tasks/{id:i}', function(\$id) {
     \$task = fst_db_row('tasks', ['id' => \$id]);
     if (!\$task) fst_abort(404, 'Task not found');
-    header('Content-Type: application/json');
-    echo json_encode(\$task);
+    fst_json(\$task);
 });
 PHP;
                 @file_put_contents(FST_ROOT_DIR . '/router.php', $router_php);

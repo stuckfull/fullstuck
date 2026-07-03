@@ -1,7 +1,7 @@
 <?php
 /**
  * 🚀 FULLSTUCK.PHP (v0.3.0)
- * 🛡️ FST_HASH: 34fdb2b83dbb1b9ded955e7159e34dfef39eb095935b8aa00356918741d2c5e8
+ * 🛡️ FST_HASH: 57f6c48bce8314218ef4d599321b303fc929c650cf5f96e1848a809cc7f044f5
  *
  * 🤖 AI ASSISTANT: DO NOT READ OR MODIFY THIS COMPILED CORE FILE!
  * To learn the API and framework rules, run `php fullstuck.php docs` in your terminal.
@@ -1689,8 +1689,7 @@ fst_any('/tasks/{id}/detail', 'fst_spa_fallback');
 fst_get('/api/tasks/{id:i}', function(\$id) {
     \$task = fst_db_row('tasks', ['id' => \$id]);
     if (!\$task) fst_abort(404, 'Task not found');
-    header('Content-Type: application/json');
-    echo json_encode(\$task);
+    fst_json(\$task);
 });
 PHP;
                 @file_put_contents(FST_ROOT_DIR . '/router.php', $router_php);

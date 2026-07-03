@@ -335,9 +335,9 @@ fst.go('/sebagian', { target: '#widget', history: false, scroll: 'smooth' });
 FST Agent memiliki sistem **MIME-Type Whitelist** internal. Ini memastikan kerangka kerja **TIDAK AKAN** menyuntikkan skrip `fst-agent.js` ke dalam *response* backend yang dideklarasikan secara spesifik (misalnya JSON).
 ```php
 fst_get('/api/data', function() {
-    header('Content-Type: application/json');
+    // fst_json otomatis set header Content-Type: application/json
     // FST-Agent otomatis mundur. Aman untuk dikonsumsi Frontend/Fetch!
-    echo json_encode(['status' => 'ok']);
+    fst_json(['status' => 'ok']);
 });
 ```
 Jika tidak ada deklarasi `Content-Type`, PHP secara *default* akan menganggap `text/html`, sehingga kerangka kerja akan kembali menyuntikkan skrip agen untuk kebutuhan navigasi.
