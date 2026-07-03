@@ -183,7 +183,7 @@ function _fst_exception_handler($e) {
         for ($i = $start; $i < $end; $i++) {
             $current_line = $i + 1;
             $line_content = htmlspecialchars($lines[$i]);
-            $highlight = ($current_line === $line) ? 'background-color: rgba(220, 53, 69, 0.4); border-left: 3px solid #dc3545;' : 'border-left: 3px solid transparent;';
+            $highlight = ($current_line === $line) ? 'background-color: rgba(239, 68, 68, 0.2); border-left: 3px solid var(--error);' : 'border-left: 3px solid transparent;';
             $code_snippet .= "<div style='{$highlight} padding: 2px 5px;'><strong>" . str_pad($current_line, 4, ' ', STR_PAD_LEFT) . " |</strong> {$line_content}</div>";
         }
     }
@@ -197,20 +197,31 @@ function _fst_exception_handler($e) {
         <meta charset="UTF-8">
         <title>Exception: {$message}</title>
         <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f8f9fa; color: #333; margin: 0; padding: 20px; }
-            .container { max-width: 1000px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-top: 8px solid #dc3545; }
-            h1 { color: #dc3545; margin-top: 0; font-size: 24px; word-break: break-all; line-height: 1.3;}
-            .badge { display: inline-block; background: #dc3545; color: white; padding: 4px 10px; border-radius: 4px; font-size: 13px; font-weight: bold; margin-bottom: 15px; text-transform: uppercase;}
-            .meta { background: #f1f3f5; padding: 15px; border-radius: 5px; margin-bottom: 20px; font-family: monospace; font-size: 14px; border: 1px solid #e9ecef;}
-            .meta strong { color: #555; display: inline-block; width: 60px;}
-            .code-preview { background: #272822; color: #f8f8f2; padding: 15px 0; border-radius: 5px; overflow-x: auto; font-family: "Courier New", Courier, monospace; font-size: 14px; line-height: 1.5; margin-bottom: 20px;}
+            :root {
+                --bg-main: #0b0f19;
+                --bg-surface: #172033;
+                --text-main: #f8fafc;
+                --text-muted: #94a3b8;
+                --primary: #6366f1;
+                --accent: #10b981;
+                --error: #ef4444;
+                --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                --font-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
+            }
+            body { font-family: var(--font-sans); background-color: var(--bg-main); color: var(--text-main); margin: 0; padding: 20px; }
+            .container { max-width: 1000px; margin: 0 auto; background: var(--bg-surface); padding: 30px; border-radius: 8px; border: 1px solid #24324f; border-top: 8px solid var(--error); }
+            h1 { color: var(--error); margin-top: 0; font-size: 24px; word-break: break-all; line-height: 1.3;}
+            .badge { display: inline-block; background: var(--error); color: white; padding: 4px 10px; border-radius: 4px; font-size: 13px; font-weight: bold; margin-bottom: 15px; text-transform: uppercase;}
+            .meta { background: var(--bg-main); padding: 15px; border-radius: 5px; margin-bottom: 20px; font-family: var(--font-mono); font-size: 14px; border: 1px solid #24324f;}
+            .meta strong { color: var(--text-muted); display: inline-block; width: 60px;}
+            .code-preview { background: var(--bg-main); color: var(--text-main); padding: 15px 0; border-radius: 5px; overflow-x: auto; font-family: var(--font-mono); font-size: 14px; line-height: 1.5; margin-bottom: 20px; border: 1px solid #24324f;}
             .code-preview div { white-space: pre; }
-            h3 { border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 30px; font-size: 18px;}
-            pre.trace { background: #f1f3f5; padding: 15px; border-radius: 5px; overflow-x: auto; font-size: 13px; line-height: 1.6; border: 1px solid #e9ecef;}
+            h3 { border-bottom: 1px solid #24324f; padding-bottom: 10px; margin-top: 30px; font-size: 18px;}
+            pre.trace { background: var(--bg-main); color: var(--text-muted); padding: 15px; border-radius: 5px; overflow-x: auto; font-family: var(--font-mono); font-size: 13px; line-height: 1.6; border: 1px solid #24324f;}
         </style>
     </head>
     <body>
-        <div class="container">
+        <div class="container fst-error-container">
             <span class="badge">{$class_name}</span>
             <h1>{$message}</h1>
             <div class="meta">

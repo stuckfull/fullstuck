@@ -5,10 +5,10 @@ $fst_config = fst_app('config');
 if (php_sapi_name() !== 'cli' && strpos($_SERVER['REQUEST_URI'], 'fullstuck.php') !== false) {
     http_response_code(500);
     die('
-        <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; border: 1px solid #ff4444; border-radius: 8px; background: #fff1f1; color: #333;">
-            <h2 style="color: #d32f2f; margin-top: 0;">🚨 Routing Misconfigured!</h2>
-            <p>Framework mendeteksi <code>fullstuck.php</code> di dalam URL. Ini menandakan URL Rewriting di web server Anda belum aktif.</p>
-            <p><strong>Solusi:</strong> Pastikan Anda menggunakan web server yang mendukung single-entry routing (Apache dengan .htaccess, Nginx, atau FrankenPHP). Silakan baca dokumentasi FullStuck bagian Deployment.</p>
+        <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; border: 1px solid #24324f; border-radius: 8px; background: #172033; color: #f8fafc;">
+            <h2 style="color: #ef4444; margin-top: 0;">🚨 Routing Misconfigured!</h2>
+            <p style="color: #94a3b8;">Framework mendeteksi <code>fullstuck.php</code> di dalam URL. Ini menandakan URL Rewriting di web server Anda belum aktif.</p>
+            <p style="color: #94a3b8;"><strong>Solusi:</strong> Pastikan Anda menggunakan web server yang mendukung single-entry routing (Apache dengan .htaccess, Nginx, atau FrankenPHP). Silakan baca dokumentasi FullStuck bagian Deployment.</p>
         </div>
     ');
 }

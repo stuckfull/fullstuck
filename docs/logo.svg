@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 120" width="200" height="120">
+  <style>
+    .letter {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 80px;
+      font-weight: 800;
+      letter-spacing: -2px;
+    }
+    .f { fill: #6366f1; } /* Electric Indigo */
+    .s { fill: #94a3b8; } /* Slate Text */
+    .t { fill: #f8fafc; } /* Crisp White */
+    .line { fill: #6366f1; }
+    .dot { fill: #10b981; } /* Cyber Mint */
+  </style>
+  
+  <g transform="translate(35, 85)">
+    <text x="0" y="0" class="letter f">f</text>
+    <text x="28" y="0" class="letter s">s</text>
+    <text x="68" y="0" class="letter t">t</text>
+    
+    <rect x="0" y="15" width="95" height="8" rx="4" class="line" />
+    
+    <circle cx="115" cy="19" r="8" class="dot" />
+  </g>
+</svg>

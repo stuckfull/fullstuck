@@ -8,8 +8,8 @@ function fst_dump(...$vars) {
     $file = $caller ? htmlspecialchars($caller['file']) : 'unknown';
     $line = $caller ? $caller['line'] : 'unknown';
     
-    echo '<pre style="background-color: #1a1a1a; color: #f0f0f0; padding: 15px; border: 1px solid #444; margin: 10px; border-radius: 5px; text-align: left; overflow-x: auto; font-family: monospace; font-size: 13px; line-height: 1.5;">';
-    echo "<div style='color: #888; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 5px; font-size: 11px;'><strong>{$file}</strong>:{$line}</div>";
+    echo '<pre style="background-color: var(--bg-main, #0b0f19); color: var(--text-main, #f8fafc); padding: 15px; border: 1px solid #24324f; margin: 10px; border-radius: 5px; text-align: left; overflow-x: auto; font-family: var(--font-mono, \'JetBrains Mono\', monospace); font-size: 13px; line-height: 1.5;">';
+    echo "<div style='color: var(--text-muted, #94a3b8); margin-bottom: 10px; border-bottom: 1px solid #24324f; padding-bottom: 5px; font-size: 11px;'><strong>{$file}</strong>:{$line}</div>";
     foreach ($vars as $var) { var_dump($var); }
     echo '</pre>';
 }

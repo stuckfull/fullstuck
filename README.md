@@ -2,10 +2,10 @@
   <h1>🚀 FullStuck.php</h1>
   <p><b>The Zero-Config, AI-Friendly, Single-File PHP Micro-Framework</b></p>
 
-  [![Version](https://img.shields.io/badge/version-0.3.0-green.svg)](docs/v0.3.0.md)
-  [![PHP Version](https://img.shields.io/badge/PHP-%3E%3D%208.0-8892BF.svg)](https://php.net/)
-  [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-  [![AI-Friendly](https://img.shields.io/badge/AI--Agent-Ready-orange.svg)](#-ai-agent--vibe-coder-setup)
+  ![Version](https://img.shields.io/badge/version-v0.3-6366f1?style=flat-square)
+  ![PHP](https://img.shields.io/badge/php-%3E%3D_8.2-8892BF?style=flat-square)
+  ![License](https://img.shields.io/badge/license-MIT-10b981?style=flat-square)
+  ![Architecture](https://img.shields.io/badge/architecture-single--file-orange?style=flat-square)
 </div>
 
 ---

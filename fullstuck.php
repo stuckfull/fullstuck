@@ -1,7 +1,7 @@
 <?php
 /**
  * 🚀 FULLSTUCK.PHP (v0.3.0)
- * 🛡️ FST_HASH: c4efab265954154f6d82ea79c340d79f95b58d8e6b05337c6e9b5b58566d853b
+ * 🛡️ FST_HASH: a1063409f14d99f99cf56045a2bdfb6013bcb12af528c6d96c88655cd1c09535
  *
  * 🤖 AI ASSISTANT: DO NOT READ OR MODIFY THIS COMPILED CORE FILE!
  * To learn the API and framework rules, run `php fullstuck.php docs` in your terminal.
@@ -194,7 +194,7 @@ function _fst_exception_handler($e) {
         for ($i = $start; $i < $end; $i++) {
             $current_line = $i + 1;
             $line_content = htmlspecialchars($lines[$i]);
-            $highlight = ($current_line === $line) ? 'background-color: rgba(220, 53, 69, 0.4); border-left: 3px solid #dc3545;' : 'border-left: 3px solid transparent;';
+            $highlight = ($current_line === $line) ? 'background-color: rgba(239, 68, 68, 0.2); border-left: 3px solid var(--error);' : 'border-left: 3px solid transparent;';
             $code_snippet .= "<div style='{$highlight} padding: 2px 5px;'><strong>" . str_pad($current_line, 4, ' ', STR_PAD_LEFT) . " |</strong> {$line_content}</div>";
         }
     }
@@ -208,20 +208,31 @@ function _fst_exception_handler($e) {
         <meta charset="UTF-8">
         <title>Exception: {$message}</title>
         <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f8f9fa; color: #333; margin: 0; padding: 20px; }
-            .container { max-width: 1000px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-top: 8px solid #dc3545; }
-            h1 { color: #dc3545; margin-top: 0; font-size: 24px; word-break: break-all; line-height: 1.3;}
-            .badge { display: inline-block; background: #dc3545; color: white; padding: 4px 10px; border-radius: 4px; font-size: 13px; font-weight: bold; margin-bottom: 15px; text-transform: uppercase;}
-            .meta { background: #f1f3f5; padding: 15px; border-radius: 5px; margin-bottom: 20px; font-family: monospace; font-size: 14px; border: 1px solid #e9ecef;}
-            .meta strong { color: #555; display: inline-block; width: 60px;}
-            .code-preview { background: #272822; color: #f8f8f2; padding: 15px 0; border-radius: 5px; overflow-x: auto; font-family: "Courier New", Courier, monospace; font-size: 14px; line-height: 1.5; margin-bottom: 20px;}
+            :root {
+                --bg-main: #0b0f19;
+                --bg-surface: #172033;
+                --text-main: #f8fafc;
+                --text-muted: #94a3b8;
+                --primary: #6366f1;
+                --accent: #10b981;
+                --error: #ef4444;
+                --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                --font-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
+            }
+            body { font-family: var(--font-sans); background-color: var(--bg-main); color: var(--text-main); margin: 0; padding: 20px; }
+            .container { max-width: 1000px; margin: 0 auto; background: var(--bg-surface); padding: 30px; border-radius: 8px; border: 1px solid #24324f; border-top: 8px solid var(--error); }
+            h1 { color: var(--error); margin-top: 0; font-size: 24px; word-break: break-all; line-height: 1.3;}
+            .badge { display: inline-block; background: var(--error); color: white; padding: 4px 10px; border-radius: 4px; font-size: 13px; font-weight: bold; margin-bottom: 15px; text-transform: uppercase;}
+            .meta { background: var(--bg-main); padding: 15px; border-radius: 5px; margin-bottom: 20px; font-family: var(--font-mono); font-size: 14px; border: 1px solid #24324f;}
+            .meta strong { color: var(--text-muted); display: inline-block; width: 60px;}
+            .code-preview { background: var(--bg-main); color: var(--text-main); padding: 15px 0; border-radius: 5px; overflow-x: auto; font-family: var(--font-mono); font-size: 14px; line-height: 1.5; margin-bottom: 20px; border: 1px solid #24324f;}
             .code-preview div { white-space: pre; }
-            h3 { border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 30px; font-size: 18px;}
-            pre.trace { background: #f1f3f5; padding: 15px; border-radius: 5px; overflow-x: auto; font-size: 13px; line-height: 1.6; border: 1px solid #e9ecef;}
+            h3 { border-bottom: 1px solid #24324f; padding-bottom: 10px; margin-top: 30px; font-size: 18px;}
+            pre.trace { background: var(--bg-main); color: var(--text-muted); padding: 15px; border-radius: 5px; overflow-x: auto; font-family: var(--font-mono); font-size: 13px; line-height: 1.6; border: 1px solid #24324f;}
         </style>
     </head>
     <body>
-        <div class="container">
+        <div class="container fst-error-container">
             <span class="badge">{$class_name}</span>
             <h1>{$message}</h1>
             <div class="meta">
@@ -1125,8 +1136,8 @@ function fst_dump(...$vars) {
     $file = $caller ? htmlspecialchars($caller['file']) : 'unknown';
     $line = $caller ? $caller['line'] : 'unknown';
     
-    echo '<pre style="background-color: #1a1a1a; color: #f0f0f0; padding: 15px; border: 1px solid #444; margin: 10px; border-radius: 5px; text-align: left; overflow-x: auto; font-family: monospace; font-size: 13px; line-height: 1.5;">';
-    echo "<div style='color: #888; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 5px; font-size: 11px;'><strong>{$file}</strong>:{$line}</div>";
+    echo '<pre style="background-color: var(--bg-main, #0b0f19); color: var(--text-main, #f8fafc); padding: 15px; border: 1px solid #24324f; margin: 10px; border-radius: 5px; text-align: left; overflow-x: auto; font-family: var(--font-mono, \'JetBrains Mono\', monospace); font-size: 13px; line-height: 1.5;">';
+    echo "<div style='color: var(--text-muted, #94a3b8); margin-bottom: 10px; border-bottom: 1px solid #24324f; padding-bottom: 5px; font-size: 11px;'><strong>{$file}</strong>:{$line}</div>";
     foreach ($vars as $var) { var_dump($var); }
     echo '</pre>';
 }
@@ -1221,6 +1232,16 @@ function fst_validate($data, $rules) {
 }
 
 // FILE: install.php
+function _fst_cli_output(string $status, string $message): void {
+    $colors = [
+        'success' => "\033[1;32m✓\033[0m \033[32m", 
+        'error'   => "\033[1;31m✗\033[0m \033[31m", 
+        'info'    => "\033[1;34mℹ\033[0m \033[36m", 
+    ];
+    $reset = "\033[0m\n";
+    echo ($colors[$status] ?? "") . $message . $reset;
+}
+
 function fst_handle_installation() {
     $is_cli = php_sapi_name() === 'cli';
     
@@ -1340,10 +1361,18 @@ function fst_handle_installation() {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome</title>
     <style>
-        body { font-family: system-ui, -apple-system, sans-serif; background: #0f172a; color: #f1f5f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .container { text-align: center; background: #1e293b; padding: 3rem; border-radius: 20px; border: 1px solid #334155; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transition: opacity 0.3s ease; }
-        h1 { color: #38bdf8; margin-bottom: 0.5rem; }
-        p { color: #94a3b8; }
+        :root {
+            --bg-main: #0b0f19;
+            --bg-surface: #172033;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #6366f1;
+            --font-sans: system-ui, -apple-system, sans-serif;
+        }
+        body { font-family: var(--font-sans); background: var(--bg-main); color: var(--text-main); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { text-align: center; background: var(--bg-surface); padding: 3rem; border-radius: 20px; border: 1px solid #24324f; border-top: 4px solid var(--primary); box-shadow: 0 10px 30px rgba(0,0,0,0.2); transition: opacity 0.3s ease; }
+        h1 { color: var(--primary); margin-bottom: 0.5rem; }
+        p { color: var(--text-muted); }
         .fst-loading { opacity: 0.5; pointer-events: none; cursor: wait; }
     </style>
 </head>
@@ -1372,10 +1401,10 @@ PHP;
                 @file_put_contents(FST_ROOT_DIR . '/router.php', $router_code);
             }
         }
-        echo "FullStuck initialized successfully!\n";
+        _fst_cli_output('success', 'FullStuck initialized successfully!');
         return;
     } catch (Exception $e) { 
-        echo "ERROR: " . $e->getMessage() . "\n";
+        _fst_cli_output('error', 'Initialization failed: ' . $e->getMessage());
         exit(1);
     }
 }
@@ -1671,10 +1700,10 @@ $fst_config = fst_app('config');
 if (php_sapi_name() !== 'cli' && strpos($_SERVER['REQUEST_URI'], 'fullstuck.php') !== false) {
     http_response_code(500);
     die('
-        <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; border: 1px solid #ff4444; border-radius: 8px; background: #fff1f1; color: #333;">
-            <h2 style="color: #d32f2f; margin-top: 0;">🚨 Routing Misconfigured!</h2>
-            <p>Framework mendeteksi <code>fullstuck.php</code> di dalam URL. Ini menandakan URL Rewriting di web server Anda belum aktif.</p>
-            <p><strong>Solusi:</strong> Pastikan Anda menggunakan web server yang mendukung single-entry routing (Apache dengan .htaccess, Nginx, atau FrankenPHP). Silakan baca dokumentasi FullStuck bagian Deployment.</p>
+        <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; border: 1px solid #24324f; border-radius: 8px; background: #172033; color: #f8fafc;">
+            <h2 style="color: #ef4444; margin-top: 0;">🚨 Routing Misconfigured!</h2>
+            <p style="color: #94a3b8;">Framework mendeteksi <code>fullstuck.php</code> di dalam URL. Ini menandakan URL Rewriting di web server Anda belum aktif.</p>
+            <p style="color: #94a3b8;"><strong>Solusi:</strong> Pastikan Anda menggunakan web server yang mendukung single-entry routing (Apache dengan .htaccess, Nginx, atau FrankenPHP). Silakan baca dokumentasi FullStuck bagian Deployment.</p>
         </div>
     ');
 }

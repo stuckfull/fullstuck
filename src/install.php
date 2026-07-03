@@ -1,4 +1,14 @@
 <?php
+function _fst_cli_output(string $status, string $message): void {
+    $colors = [
+        'success' => "\033[1;32m✓\033[0m \033[32m", // Hijau Mint
+        'error'   => "\033[1;31m✗\033[0m \033[31m", // Merah Terpadu
+        'info'    => "\033[1;34mℹ\033[0m \033[36m", // Cyan Info
+    ];
+    $reset = "\033[0m\n";
+    echo ($colors[$status] ?? "") . $message . $reset;
+}
+
 function fst_handle_installation() {
     $is_cli = php_sapi_name() === 'cli';
     
@@ -118,10 +128,18 @@ function fst_handle_installation() {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome</title>
     <style>
-        body { font-family: system-ui, -apple-system, sans-serif; background: #0f172a; color: #f1f5f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .container { text-align: center; background: #1e293b; padding: 3rem; border-radius: 20px; border: 1px solid #334155; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transition: opacity 0.3s ease; }
-        h1 { color: #38bdf8; margin-bottom: 0.5rem; }
-        p { color: #94a3b8; }
+        :root {
+            --bg-main: #0b0f19;
+            --bg-surface: #172033;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #6366f1;
+            --font-sans: system-ui, -apple-system, sans-serif;
+        }
+        body { font-family: var(--font-sans); background: var(--bg-main); color: var(--text-main); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { text-align: center; background: var(--bg-surface); padding: 3rem; border-radius: 20px; border: 1px solid #24324f; border-top: 4px solid var(--primary); box-shadow: 0 10px 30px rgba(0,0,0,0.2); transition: opacity 0.3s ease; }
+        h1 { color: var(--primary); margin-bottom: 0.5rem; }
+        p { color: var(--text-muted); }
         .fst-loading { opacity: 0.5; pointer-events: none; cursor: wait; }
     </style>
 </head>
@@ -150,10 +168,10 @@ PHP;
                 @file_put_contents(FST_ROOT_DIR . '/router.php', $router_code);
             }
         }
-        echo "FullStuck initialized successfully!\n";
+        _fst_cli_output('success', 'FullStuck initialized successfully!');
         return;
     } catch (Exception $e) { 
-        echo "ERROR: " . $e->getMessage() . "\n";
+        _fst_cli_output('error', 'Initialization failed: ' . $e->getMessage());
         exit(1);
     }
 }
