@@ -11,7 +11,7 @@ php fullstuck.php init --db=sqlite --agent_js=yes --scaffold=yes --htaccess=yes
 ### 🤖 Install via Coding Agent
 Jika Anda menggunakan AI Coding Agent (seperti Cline, Cursor, Copilot Workspace), gunakan prompt berikut agar agen menginstal dan mematuhi panduan:
 ```text
-Install fullstuck.php. Lalu baca dan patuhi panduan di [ai-setup.md](../ai-setup.md)
+Install fullstuck.php. Lalu baca dan patuhi panduan di https://raw.githubusercontent.com/stuckfull/fullstuck/refs/heads/main/docs/ai-setup.md
 ```
 
 Atau jalankan `php -S localhost:8000 fullstuck.php` untuk menjalankan server dev bawaan.
@@ -38,10 +38,16 @@ location / {
 }
 ```
 
-**3. FrankenPHP / Caddy**:
-```bash
-frankenphp php-server -r fullstuck.php
+**3. FrankenPHP / Caddy** (Gunakan `Caddyfile`):
+```caddyfile
+:8000 {
+    root * .
+    php_server {
+        index fullstuck.php
+    }
+}
 ```
+Jalankan dengan: `frankenphp run`
 
 ---
 

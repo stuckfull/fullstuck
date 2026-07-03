@@ -97,12 +97,16 @@ location / {
 }
 ```
 
-**3. FrankenPHP / Caddy**
-Untuk menjalankan framework menggunakan eksekutor single-binary modern seperti FrankenPHP, Anda bisa menggunakan perintah sederhana:
-
-```bash
-frankenphp php-server -r fullstuck.php
+**3. FrankenPHP / Caddy** (Gunakan `Caddyfile`):
+```caddyfile
+:8000 {
+    root * .
+    php_server {
+        index fullstuck.php
+    }
+}
 ```
+Jalankan dengan: `frankenphp run`
 
 ---
 

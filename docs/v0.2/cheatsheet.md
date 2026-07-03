@@ -36,9 +36,14 @@ RewriteRule ^(.*)$ fullstuck.php [L]
 # Nginx
 location / { try_files $uri $uri/ /fullstuck.php?$query_string; }
 ```
-```bash
-# FrankenPHP
-frankenphp php-server -r fullstuck.php
+```caddyfile
+# **FrankenPHP / Caddy** (Caddyfile):
+:8000 {
+    root * .
+    php_server {
+        index fullstuck.php
+    }
+}
 ```
 
 ---
