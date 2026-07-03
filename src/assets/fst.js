@@ -15,7 +15,7 @@ class fst_agent {
             if (e.defaultPrevented) return;
             const link = e.target.closest('a');
             if (!link || !link.href) return;
-            if (link.hasAttribute('data-fst-normal-load') || link.classList.contains('no-spa') || link.target === '_blank' || link.hasAttribute('download') || link.hostname !== window.location.hostname || e.ctrlKey || e.metaKey || e.shiftKey) return;
+            if (link.hasAttribute('data-fst-normal-load') || link.target === '_blank' || link.hasAttribute('download') || link.hostname !== window.location.hostname || e.ctrlKey || e.metaKey || e.shiftKey) return;
             
             // Ignore hash links on the same page
             const href = link.getAttribute('href');
@@ -79,7 +79,7 @@ class fst_agent {
         document.addEventListener('submit', async (e) => {
             if (e.defaultPrevented) return;
             const form = e.target;
-            if (form.hasAttribute('data-fst-normal-load') || form.classList.contains('no-spa')) return;
+            if (form.hasAttribute('data-fst-normal-load')) return;
             e.preventDefault();
             this.handleFormSubmit(form);
         });

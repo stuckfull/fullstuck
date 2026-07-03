@@ -74,11 +74,10 @@ fst_post('/simpan', function() {
 
 Dokumentasi FullStuck bersifat **versioned single-file** agar memudahkan pencarian dan memberikan konteks penuh bagi AI:
 
-- 📖 **[Dokumentasi v0.3.0 (Terbaru)](docs/v0.3.0.md)**
-- 📖 **[Dokumentasi v0.2.0 (Legacy)](docs/v0.2.0.md)**
-- 📖 **[Dokumentasi v0.1.0 (Legacy)](docs/v0.1.0.md)**
+- 📖 **[Dokumentasi v0.3.0 (Terbaru)](docs/v0.3/index.md)**
+- 📖 **[Dokumentasi v0.2.0 (Legacy)](docs/v0.2/index.md)**
+- 📖 **[Dokumentasi v0.1.0 (Legacy)](docs/v0.1/index.md)**
 - 📋 **[Riwayat Perubahan (Changelog)](CHANGELOG.md)**
-- 🏗️ **[Arsitektur Framework](docs/ARCHITECTURE.md)**
 
 ---
 

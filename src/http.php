@@ -63,7 +63,7 @@ function fst_redirect($url, $code = 302, $allow_external = false) {
         $url = rtrim($base_path, '/') . $url;
     }
     
-    if (fst_is_spa()) {
+    if (fst_is_fragment_request()) {
         header("X-FST-Redirect: " . $url);
         die();
     }

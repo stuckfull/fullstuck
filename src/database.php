@@ -99,7 +99,7 @@ function fst_db($mode, $sql, $params = [], $connection = null) {
     // [PATCH] Mencegah error PDO generik jika parameter bind berupa array
     foreach ($params as $k => $v) {
         if (is_array($v) || is_object($v)) {
-            throw new Exception("Database Error: Parameter bind [{$k}] tidak boleh berupa array atau object.");
+            throw new Exception("Database Error: Parameter bind [{$k}] must not be an array or object.");
         }
     }
     

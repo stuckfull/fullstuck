@@ -29,9 +29,9 @@ Asumsikan pengguna sudah berada di direktori proyek dengan PHP terinstal.
 
 ### Deployment & Produksi
 - Set `"production": true` di `fullstuck.json` agar error code/PHP Exception tidak bocor ke publik.
-- Error akan dialihkan ke file `.fst-error.log`.
+- Error akan dialihkan ke file `.fst.log`.
 
 ## 🚨 4. Panduan Pemulihan Kesalahan (Error Recovery Playbook)
-- **HTTP 500:** Periksa berkas `.fst-error.log`. Jika error di view, periksa file ter-kompilasi di `view-cache/`.
+- **HTTP 500:** Periksa berkas `.fst.log`. Jika error di view, periksa file ter-kompilasi di `view-cache/`.
 - **Cache Template:** Hapus isi folder `view-cache/` untuk memaksa sistem me-rebuild cache jika Anda merasa perubahannya tidak terlihat.
 - **Gagal Migrasi DB:** Jangan lakukan `DROP TABLE` jika sudah ada data, gunakan `ALTER TABLE`.
