@@ -275,8 +275,16 @@ function fst_run() {
     if ($agent_mode === true || $agent_mode === '1') {
         $should_inject_agent = true;
     }
-
-
+    
+    // Whitelist HTML: Hanya inject script jika tidak ada Content-Type spesifik atau Content-Type adalah text/html
+    foreach (headers_list() as $header) {
+        if (stripos($header, 'Content-Type:') === 0) {
+            if (stripos($header, 'text/html') === false) {
+                $should_inject_agent = false;
+            }
+            break;
+        }
+    }
     if (fst_is_fragment_request()) {
         $target = fst_fragment_target();
         
@@ -308,10 +316,12 @@ function fst_run() {
         $inject_id = $script_id ? 'id="'.$script_id.'" data-req-header="'.$req_header.'" data-target-header="'.$target_header.'" data-indicator-class="'.$indicator_class.'"'.$history_cache : '';
         $script_tag = "<script src=\"/fst-agent.js\" {$inject_id}></script>";
         
-        if (stripos($output, '</body>') !== false) {
-            $output = str_ireplace('</body>', $script_tag . "\n</body>", $output);
+        if (stripos($output, '</head>') !== false) {
+            $output = str_ireplace('</head>', $script_tag . "\n</head>", $output);
+        } elseif (stripos($output, '<body>') !== false) {
+            $output = str_ireplace('<body>', "<body>\n" . $script_tag, $output);
         } else {
-            $output .= "\n" . $script_tag;
+            $output = $script_tag . "\n" . $output;
         }
     }
 

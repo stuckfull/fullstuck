@@ -312,7 +312,7 @@ function fst_extract_html_fragment($html, $selector = 'body') {
     // [PATCH] Regex Fast-Path untuk tag selector utama (hanya body & main)
     // Menghindari double DOMDocument parsing ketika digunakan bersama fst_template.
     // Peringatan: Jangan gunakan regex untuk tag yang bersarang (nested) seperti <div> atau <section>.
-    $singleton_tags = ['body', 'main'];
+    $singleton_tags = ['body'];
     if (!str_starts_with($selector, '#') && !str_starts_with($selector, '.')) {
         $tag = strtolower($selector);
         if (in_array($tag, $singleton_tags)) {

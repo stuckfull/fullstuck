@@ -410,9 +410,22 @@ class fst_agent {
     }
 
     reexecuteScripts(targetElement) {
+        if (!window._fst_executed_scripts) {
+            window._fst_executed_scripts = new Set();
+            // Catat script yang sudah ada saat muat halaman pertama
+            document.querySelectorAll('script[src]').forEach(s => window._fst_executed_scripts.add(s.src));
+        }
+
         const scripts = targetElement.querySelectorAll('script');
         scripts.forEach(oldScript => {
             if (oldScript.id === 'fst-agent' || oldScript.hasAttribute('data-fst-ignore')) return;
+            
+            // Auto-ignore jika script eksternal (src) sudah pernah dimuat
+            if (oldScript.src) {
+                if (window._fst_executed_scripts.has(oldScript.src)) return;
+                window._fst_executed_scripts.add(oldScript.src);
+            }
+
             const newScript = document.createElement('script');
             Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
             newScript.appendChild(document.createTextNode(oldScript.innerHTML));

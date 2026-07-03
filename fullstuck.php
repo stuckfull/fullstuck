@@ -1,12 +1,12 @@
 <?php
 /**
  * 🚀 FULLSTUCK.PHP (v0.3.0)
- * 🛡️ FST_HASH: 2c01c55c1e387354d2a774b14a1559d645c6abbdf56e3c8cea41c859459c03e9
+ * 🛡️ FST_HASH: 34fdb2b83dbb1b9ded955e7159e34dfef39eb095935b8aa00356918741d2c5e8
  *
  * 🤖 AI ASSISTANT: DO NOT READ OR MODIFY THIS COMPILED CORE FILE!
  * To learn the API and framework rules, run `php fullstuck.php docs` in your terminal.
  */
-define('FST_AGENT_JS_CODE', 'class fst_agent { constructor() { this.routes = []; this.baseUrl = \'\'; this.notFoundCallback = null; this.beforeHook = null; this.afterHook = null; this.fetchInterceptor = null; this._currentGroupPrefix = \'\'; this.init(); } init() { document.addEventListener(\'click\', (e) => { if (e.defaultPrevented) return; const link = e.target.closest(\'a\'); if (!link || !link.href) return; if (link.hasAttribute(\'data-fst-normal-load\') || link.target === \'_blank\' || link.hasAttribute(\'download\') || link.hostname !== window.location.hostname || e.ctrlKey || e.metaKey || e.shiftKey) return; const href = link.getAttribute(\'href\'); if (href && (href.startsWith(\'#\') || (link.pathname === window.location.pathname && link.search === window.location.search && link.hash !== \'\'))) { return; } e.preventDefault(); this.handleLinkClick(link); }); window.addEventListener(\'popstate\', async (e) => { const target = (e.state && e.state.fstTarget) || \'body\'; const savedScrollX = e.state?.scrollX; const savedScrollY = e.state?.scrollY; const useCache = e.state?.fstCache ?? (document.querySelector(\'script#fst-agent\')?.getAttribute(\'data-history-cache\') === \'true\'); const path = window.location.pathname + window.location.search; const matchedRoute = this.matchRoute(path); if (matchedRoute) { this.route(path); return; } if (useCache && e.state && e.state.fstHtml) { const targetElement = document.querySelector(target); if (targetElement) { document.dispatchEvent(new Event(\'fst:unload\')); if (e.state.fstBodyAttrs && target === \'body\') { const parser = new DOMParser(); const doc = parser.parseFromString(`<div ${e.state.fstBodyAttrs}></div>`, \'text/html\'); const newBody = doc.body.firstChild; Array.from(document.body.attributes).forEach(attr => document.body.removeAttribute(attr.name)); Array.from(newBody.attributes).forEach(attr => document.body.setAttribute(attr.name, attr.value)); } targetElement.innerHTML = e.state.fstHtml; this.reexecuteScripts(targetElement); document.dispatchEvent(new Event(\'fst:load\')); } else { window.location.reload(); return; } } else { await this.fetchFragment(window.location.href, target, false, null, true); } if (savedScrollX !== undefined && savedScrollY !== undefined) { window.scrollTo({ left: savedScrollX, top: savedScrollY, behavior: \'instant\' }); } else if (window.location.hash) { const targetAnchor = document.querySelector(window.location.hash); if (targetAnchor) targetAnchor.scrollIntoView({ behavior: \'smooth\' }); } }); document.addEventListener(\'submit\', async (e) => { if (e.defaultPrevented) return; const form = e.target; if (form.hasAttribute(\'data-fst-normal-load\')) return; e.preventDefault(); this.handleFormSubmit(form); }); this.setNotFound((path, triggerElement) => { let targetSelector = \'body\'; let isHistoryOptOut = false; if (triggerElement) { targetSelector = triggerElement.getAttribute(\'data-fst-fragment\') || \'body\'; isHistoryOptOut = triggerElement.hasAttribute(\'data-fst-no-history\'); } this.fetchFragment(path, targetSelector, !isHistoryOptOut, triggerElement); }); window.addEventListener(\'DOMContentLoaded\', () => { if (!window.history.state) { const bodyAttrs = Array.from(document.body.attributes).map(a => `${a.name}="${a.value}"`).join(\' \'); window.history.replaceState({ fstHtml: document.body.innerHTML, fstTarget: \'body\', fstBodyAttrs: bodyAttrs }, \'\', window.location.href); } document.dispatchEvent(new Event(\'fst:load\')); const path = window.location.pathname + window.location.search; if (this.matchRoute(path)) { this.route(path); } }); } handleLinkClick(link) { const href = link.href; const path = this.getPathFromHref(href); if (path.startsWith(this.baseUrl)) { this.navigate(path, link); } else { window.location.href = href; } } async handleFormSubmit(form) { const targetSelector = form.getAttribute(\'data-fst-fragment\') || \'body\'; const isHistoryOptOut = form.hasAttribute(\'data-fst-no-history\'); const indicator = this.getIndicatorClass(form); const targetElement = document.querySelector(targetSelector); if (targetElement) targetElement.classList.add(...indicator.split(\' \')); try { const method = (form.getAttribute(\'method\') || \'GET\').toUpperCase(); const action = form.getAttribute(\'action\') || window.location.href; const formData = new FormData(form); const reqHeader = document.querySelector(\'script#fst-agent\')?.getAttribute(\'data-req-header\') || \'X-FST-Request\'; const targetHeader = document.querySelector(\'script#fst-agent\')?.getAttribute(\'data-target-header\') || \'X-FST-Target\'; const headers = { [reqHeader]: \'true\', [targetHeader]: targetSelector }; let fetchOptions = { method, headers }; let finalUrl = action; if (method === \'GET\') { const params = new URLSearchParams(formData); finalUrl = action.includes(\'?\') ? `${action}&${params.toString()}` : `${action}?${params.toString()}`; } else { fetchOptions.body = formData; } const loadingEvent = new CustomEvent(\'fst:loading\', { detail: { url: finalUrl, targetSelector, triggerElement: form }, cancelable: true }); if (!document.dispatchEvent(loadingEvent)) { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); return; } if (this.fetchInterceptor) { const intercepted = await this.fetchInterceptor(finalUrl, fetchOptions); if (intercepted) fetchOptions = intercepted; } const response = await fetch(finalUrl, fetchOptions); const redirectUrl = response.headers.get(\'X-FST-Redirect\'); if (redirectUrl) { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); await this.fetchFragment(redirectUrl, targetSelector, !isHistoryOptOut); return; } if (response.redirected) { window.location.href = response.url; return; } if (!response.ok && response.status !== 400 && response.status !== 422) { const errorHtml = await response.text(); document.open(); document.write(errorHtml); document.close(); return; } const html = await response.text(); this.processFragmentResponse(html, targetSelector, targetElement, response, form, !isHistoryOptOut, finalUrl, method); } catch (err) { window.location.reload(); } finally { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); } } getPathFromHref(href) { const url = new URL(href, window.location.origin); let path = url.pathname; if (url.search) path += url.search; return path; } navigate(path, triggerElement) { if (this.beforeHook && this.beforeHook(path) === false) return; if (window.history.state) { const currentState = window.history.state; currentState.scrollX = window.scrollX; currentState.scrollY = window.scrollY; window.history.replaceState(currentState, \'\'); } const isHistoryOptOut = triggerElement ? triggerElement.hasAttribute(\'data-fst-no-history\') : false; const href = window.location.origin + path; let routePath = path.replace(this.baseUrl, "") || "/"; const match = this.matchRoute(routePath); if (match) { if (!isHistoryOptOut) { window.history.pushState({}, "", href); } this.route(routePath, triggerElement); } else { this.notFoundCallback ? this.notFoundCallback(href, triggerElement) : console.log(`No route matched for: ${href}`); } } route(path, triggerElement) { for (const { pattern, callback } of this.routes) { const match = this.matchRouteCheck(pattern, path); if (match) { callback(match, triggerElement); if (this.afterHook) this.afterHook(path, triggerElement); return; } } } matchRoute(path) { for (const { pattern } of this.routes) { const match = this.matchRouteCheck(pattern, path); if (match) return match; } return null; } matchRouteCheck(pattern, path) { const [patternPath, patternQuery] = pattern.split("?"); const [urlPath, urlQuery] = path.split("?"); const regex = new RegExp("^" + patternPath.replace(/:\\w+/g, "([^/]+)") + "$"); const match = urlPath.match(regex); if (match) { const params = { param: path, query: {} }; const keys = patternPath.match(/:\\w+/g) || []; keys.forEach((key, i) => { params[key.substring(1)] = match[i + 1]; }); if (urlQuery) { const searchParams = new URLSearchParams(urlQuery); for (const [key, value] of searchParams) { params.query[key] = value; } } return params; } return null; } set(pattern, callback) { this.routes.push({ pattern: this._currentGroupPrefix + pattern, callback }); } group(prefix, callback) { const prevPrefix = this._currentGroupPrefix; this._currentGroupPrefix += prefix; callback(); this._currentGroupPrefix = prevPrefix; } setNotFound(callback) { this.notFoundCallback = callback; } setBefore(callback) { this.beforeHook = callback; } setAfter(callback) { this.afterHook = callback; } setInterceptor(callback) { this.fetchInterceptor = callback; } getIndicatorClass(triggerElement) { return (triggerElement && triggerElement.getAttribute("data-fst-indicator")) || document.querySelector("script#fst-agent")?.getAttribute("data-indicator-class") || "fst-loading"; } async fetchFragment(url, targetSelector, pushHistory, triggerElement = null, isPopstate = false) { const reqHeader = document.querySelector(\'script#fst-agent\')?.getAttribute(\'data-req-header\') || \'X-FST-Request\'; const targetHeader = document.querySelector(\'script#fst-agent\')?.getAttribute(\'data-target-header\') || \'X-FST-Target\'; const targetElement = document.querySelector(targetSelector); const indicator = this.getIndicatorClass(triggerElement); if (targetElement) targetElement.classList.add(...indicator.split(\' \')); const loadingEvent = new CustomEvent(\'fst:loading\', { detail: { url, targetSelector, triggerElement }, cancelable: !isPopstate }); if (!isPopstate && !document.dispatchEvent(loadingEvent)) { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); return; } try { const headers = { [reqHeader]: \'true\', [targetHeader]: targetSelector }; let fetchOptions = { headers }; if (this.fetchInterceptor) { const intercepted = await this.fetchInterceptor(url, fetchOptions); if (intercepted) fetchOptions = intercepted; } const response = await fetch(url, fetchOptions); if (!response.ok) { const errorHtml = await response.text(); document.open(); document.write(errorHtml); document.close(); return; } const redirectUrl = response.headers.get(\'X-FST-Redirect\'); if (redirectUrl) { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); if (isPopstate) { window.location.href = redirectUrl; return; } await this.fetchFragment(redirectUrl, targetSelector, pushHistory); return; } if (response.redirected) { window.location.href = response.url; return; } const contentType = response.headers.get(\'content-type\'); if (!contentType || !contentType.includes(\'text/html\')) { window.location.href = url; return; } const html = await response.text(); this.processFragmentResponse(html, targetSelector, targetElement, response, triggerElement, pushHistory, url, \'GET\', isPopstate); if (!isPopstate) { const noScroll = triggerElement ? triggerElement.hasAttribute(\'data-fst-no-scroll\') : false; if (!noScroll) { const scrollBehavior = triggerElement ? (triggerElement.getAttribute(\'data-fst-scroll\') || \'instant\') : \'instant\'; const behavior = scrollBehavior === \'smooth\' ? \'smooth\' : \'instant\'; if (window.location.hash) { const targetAnchor = document.querySelector(window.location.hash); if (targetAnchor) { targetAnchor.scrollIntoView({ behavior }); } else { if (targetSelector === \'body\') window.scrollTo({ top: 0, behavior }); else targetElement.scrollTo({ top: 0, behavior }); } } else { if (targetSelector === \'body\') window.scrollTo({ top: 0, behavior }); else targetElement.scrollTo({ top: 0, behavior }); } } } } catch (err) { window.location.href = url; } finally { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); } } processFragmentResponse(html, targetSelector, targetElement, response, triggerElement, pushHistory, url, method, isPopstate = false) { const newTitle = html.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i); if (newTitle) document.title = newTitle[1]; const bodyAttrs = response.headers.get(\'X-FST-Body-Attrs\'); if (bodyAttrs !== null && targetSelector === \'body\') { const parser = new DOMParser(); const doc = parser.parseFromString(`<div ${bodyAttrs}></div>`, \'text/html\'); const newBody = doc.body.firstChild; Array.from(document.body.attributes).forEach(attr => document.body.removeAttribute(attr.name)); Array.from(newBody.attributes).forEach(attr => document.body.setAttribute(attr.name, attr.value)); } if (!targetElement) throw new Error(\'Target not found\'); document.dispatchEvent(new Event(\'fst:unload\')); targetElement.innerHTML = html; if (pushHistory && method === \'GET\') { const cacheFlag = triggerElement ? triggerElement.getAttribute(\'data-fst-cache\') : null; const globalCache = document.querySelector(\'script#fst-agent\')?.getAttribute(\'data-history-cache\') === \'true\'; const fstCache = cacheFlag !== null ? cacheFlag === \'true\' : globalCache; window.history.pushState({ fstHtml: html, fstTarget: targetSelector, fstBodyAttrs: bodyAttrs, fstCache: fstCache }, \'\', url); } else if (isPopstate) { window.history.replaceState({ fstHtml: html, fstTarget: targetSelector, fstBodyAttrs: bodyAttrs, fstCache: window.history.state?.fstCache ?? false }, \'\', url); } this.reexecuteScripts(targetElement); document.dispatchEvent(new Event(\'fst:load\')); } reexecuteScripts(targetElement) { const scripts = targetElement.querySelectorAll(\'script\'); scripts.forEach(oldScript => { if (oldScript.id === \'fst-agent\' || oldScript.hasAttribute(\'data-fst-ignore\')) return; const newScript = document.createElement(\'script\'); Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value)); newScript.appendChild(document.createTextNode(oldScript.innerHTML)); oldScript.parentNode.replaceChild(newScript, oldScript); }); } go(url, options = {}) { const defaultTarget = document.querySelector(\'script#fst-agent\')?.getAttribute(\'data-default-target\') || \'body\'; const target = options.target || defaultTarget; const history = options.history !== false; const virtualTrigger = { getAttribute: (attr) => { if (attr === \'data-fst-scroll\') return options.scroll !== undefined ? String(options.scroll) : null; if (attr === \'data-fst-indicator\') return options.indicator || null; if (attr === \'data-fst-cache\') return options.cache !== undefined ? String(options.cache) : null; if (attr === \'data-fst-fragment\') return target; return null; }, hasAttribute: (attr) => { if (attr === \'data-fst-no-history\') return !history; if (attr === \'data-fst-no-scroll\') return options.scroll === false; return false; } }; const path = this.getPathFromHref(url); const match = this.matchRoute(path); if (match) { if (history) { window.history.pushState({}, "", url); } this.route(path, virtualTrigger); } else { this.fetchFragment(url, target, history, virtualTrigger); } } } window.fst = new fst_agent();');
+define('FST_AGENT_JS_CODE', 'class fst_agent { constructor() { this.routes = []; this.baseUrl = \'\'; this.notFoundCallback = null; this.beforeHook = null; this.afterHook = null; this.fetchInterceptor = null; this._currentGroupPrefix = \'\'; this.init(); } init() { document.addEventListener(\'click\', (e) => { if (e.defaultPrevented) return; const link = e.target.closest(\'a\'); if (!link || !link.href) return; if (link.hasAttribute(\'data-fst-normal-load\') || link.target === \'_blank\' || link.hasAttribute(\'download\') || link.hostname !== window.location.hostname || e.ctrlKey || e.metaKey || e.shiftKey) return; const href = link.getAttribute(\'href\'); if (href && (href.startsWith(\'#\') || (link.pathname === window.location.pathname && link.search === window.location.search && link.hash !== \'\'))) { return; } e.preventDefault(); this.handleLinkClick(link); }); window.addEventListener(\'popstate\', async (e) => { const target = (e.state && e.state.fstTarget) || \'body\'; const savedScrollX = e.state?.scrollX; const savedScrollY = e.state?.scrollY; const useCache = e.state?.fstCache ?? (document.querySelector(\'script#fst-agent\')?.getAttribute(\'data-history-cache\') === \'true\'); const path = window.location.pathname + window.location.search; const matchedRoute = this.matchRoute(path); if (matchedRoute) { this.route(path); return; } if (useCache && e.state && e.state.fstHtml) { const targetElement = document.querySelector(target); if (targetElement) { document.dispatchEvent(new Event(\'fst:unload\')); if (e.state.fstBodyAttrs && target === \'body\') { const parser = new DOMParser(); const doc = parser.parseFromString(`<div ${e.state.fstBodyAttrs}></div>`, \'text/html\'); const newBody = doc.body.firstChild; Array.from(document.body.attributes).forEach(attr => document.body.removeAttribute(attr.name)); Array.from(newBody.attributes).forEach(attr => document.body.setAttribute(attr.name, attr.value)); } targetElement.innerHTML = e.state.fstHtml; this.reexecuteScripts(targetElement); document.dispatchEvent(new Event(\'fst:load\')); } else { window.location.reload(); return; } } else { await this.fetchFragment(window.location.href, target, false, null, true); } if (savedScrollX !== undefined && savedScrollY !== undefined) { window.scrollTo({ left: savedScrollX, top: savedScrollY, behavior: \'instant\' }); } else if (window.location.hash) { const targetAnchor = document.querySelector(window.location.hash); if (targetAnchor) targetAnchor.scrollIntoView({ behavior: \'smooth\' }); } }); document.addEventListener(\'submit\', async (e) => { if (e.defaultPrevented) return; const form = e.target; if (form.hasAttribute(\'data-fst-normal-load\')) return; e.preventDefault(); this.handleFormSubmit(form); }); this.setNotFound((path, triggerElement) => { let targetSelector = \'body\'; let isHistoryOptOut = false; if (triggerElement) { targetSelector = triggerElement.getAttribute(\'data-fst-fragment\') || \'body\'; isHistoryOptOut = triggerElement.hasAttribute(\'data-fst-no-history\'); } this.fetchFragment(path, targetSelector, !isHistoryOptOut, triggerElement); }); window.addEventListener(\'DOMContentLoaded\', () => { if (!window.history.state) { const bodyAttrs = Array.from(document.body.attributes).map(a => `${a.name}="${a.value}"`).join(\' \'); window.history.replaceState({ fstHtml: document.body.innerHTML, fstTarget: \'body\', fstBodyAttrs: bodyAttrs }, \'\', window.location.href); } document.dispatchEvent(new Event(\'fst:load\')); const path = window.location.pathname + window.location.search; if (this.matchRoute(path)) { this.route(path); } }); } handleLinkClick(link) { const href = link.href; const path = this.getPathFromHref(href); if (path.startsWith(this.baseUrl)) { this.navigate(path, link); } else { window.location.href = href; } } async handleFormSubmit(form) { const targetSelector = form.getAttribute(\'data-fst-fragment\') || \'body\'; const isHistoryOptOut = form.hasAttribute(\'data-fst-no-history\'); const indicator = this.getIndicatorClass(form); const targetElement = document.querySelector(targetSelector); if (targetElement) targetElement.classList.add(...indicator.split(\' \')); try { const method = (form.getAttribute(\'method\') || \'GET\').toUpperCase(); const action = form.getAttribute(\'action\') || window.location.href; const formData = new FormData(form); const reqHeader = document.querySelector(\'script#fst-agent\')?.getAttribute(\'data-req-header\') || \'X-FST-Request\'; const targetHeader = document.querySelector(\'script#fst-agent\')?.getAttribute(\'data-target-header\') || \'X-FST-Target\'; const headers = { [reqHeader]: \'true\', [targetHeader]: targetSelector }; let fetchOptions = { method, headers }; let finalUrl = action; if (method === \'GET\') { const params = new URLSearchParams(formData); finalUrl = action.includes(\'?\') ? `${action}&${params.toString()}` : `${action}?${params.toString()}`; } else { fetchOptions.body = formData; } const loadingEvent = new CustomEvent(\'fst:loading\', { detail: { url: finalUrl, targetSelector, triggerElement: form }, cancelable: true }); if (!document.dispatchEvent(loadingEvent)) { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); return; } if (this.fetchInterceptor) { const intercepted = await this.fetchInterceptor(finalUrl, fetchOptions); if (intercepted) fetchOptions = intercepted; } const response = await fetch(finalUrl, fetchOptions); const redirectUrl = response.headers.get(\'X-FST-Redirect\'); if (redirectUrl) { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); await this.fetchFragment(redirectUrl, targetSelector, !isHistoryOptOut); return; } if (response.redirected) { window.location.href = response.url; return; } if (!response.ok && response.status !== 400 && response.status !== 422) { const errorHtml = await response.text(); document.open(); document.write(errorHtml); document.close(); return; } const html = await response.text(); this.processFragmentResponse(html, targetSelector, targetElement, response, form, !isHistoryOptOut, finalUrl, method); } catch (err) { window.location.reload(); } finally { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); } } getPathFromHref(href) { const url = new URL(href, window.location.origin); let path = url.pathname; if (url.search) path += url.search; return path; } navigate(path, triggerElement) { if (this.beforeHook && this.beforeHook(path) === false) return; if (window.history.state) { const currentState = window.history.state; currentState.scrollX = window.scrollX; currentState.scrollY = window.scrollY; window.history.replaceState(currentState, \'\'); } const isHistoryOptOut = triggerElement ? triggerElement.hasAttribute(\'data-fst-no-history\') : false; const href = window.location.origin + path; let routePath = path.replace(this.baseUrl, "") || "/"; const match = this.matchRoute(routePath); if (match) { if (!isHistoryOptOut) { window.history.pushState({}, "", href); } this.route(routePath, triggerElement); } else { this.notFoundCallback ? this.notFoundCallback(href, triggerElement) : console.log(`No route matched for: ${href}`); } } route(path, triggerElement) { for (const { pattern, callback } of this.routes) { const match = this.matchRouteCheck(pattern, path); if (match) { callback(match, triggerElement); if (this.afterHook) this.afterHook(path, triggerElement); return; } } } matchRoute(path) { for (const { pattern } of this.routes) { const match = this.matchRouteCheck(pattern, path); if (match) return match; } return null; } matchRouteCheck(pattern, path) { const [patternPath, patternQuery] = pattern.split("?"); const [urlPath, urlQuery] = path.split("?"); const regex = new RegExp("^" + patternPath.replace(/:\\w+/g, "([^/]+)") + "$"); const match = urlPath.match(regex); if (match) { const params = { param: path, query: {} }; const keys = patternPath.match(/:\\w+/g) || []; keys.forEach((key, i) => { params[key.substring(1)] = match[i + 1]; }); if (urlQuery) { const searchParams = new URLSearchParams(urlQuery); for (const [key, value] of searchParams) { params.query[key] = value; } } return params; } return null; } set(pattern, callback) { this.routes.push({ pattern: this._currentGroupPrefix + pattern, callback }); } group(prefix, callback) { const prevPrefix = this._currentGroupPrefix; this._currentGroupPrefix += prefix; callback(); this._currentGroupPrefix = prevPrefix; } setNotFound(callback) { this.notFoundCallback = callback; } setBefore(callback) { this.beforeHook = callback; } setAfter(callback) { this.afterHook = callback; } setInterceptor(callback) { this.fetchInterceptor = callback; } getIndicatorClass(triggerElement) { return (triggerElement && triggerElement.getAttribute("data-fst-indicator")) || document.querySelector("script#fst-agent")?.getAttribute("data-indicator-class") || "fst-loading"; } async fetchFragment(url, targetSelector, pushHistory, triggerElement = null, isPopstate = false) { const reqHeader = document.querySelector(\'script#fst-agent\')?.getAttribute(\'data-req-header\') || \'X-FST-Request\'; const targetHeader = document.querySelector(\'script#fst-agent\')?.getAttribute(\'data-target-header\') || \'X-FST-Target\'; const targetElement = document.querySelector(targetSelector); const indicator = this.getIndicatorClass(triggerElement); if (targetElement) targetElement.classList.add(...indicator.split(\' \')); const loadingEvent = new CustomEvent(\'fst:loading\', { detail: { url, targetSelector, triggerElement }, cancelable: !isPopstate }); if (!isPopstate && !document.dispatchEvent(loadingEvent)) { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); return; } try { const headers = { [reqHeader]: \'true\', [targetHeader]: targetSelector }; let fetchOptions = { headers }; if (this.fetchInterceptor) { const intercepted = await this.fetchInterceptor(url, fetchOptions); if (intercepted) fetchOptions = intercepted; } const response = await fetch(url, fetchOptions); if (!response.ok) { const errorHtml = await response.text(); document.open(); document.write(errorHtml); document.close(); return; } const redirectUrl = response.headers.get(\'X-FST-Redirect\'); if (redirectUrl) { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); if (isPopstate) { window.location.href = redirectUrl; return; } await this.fetchFragment(redirectUrl, targetSelector, pushHistory); return; } if (response.redirected) { window.location.href = response.url; return; } const contentType = response.headers.get(\'content-type\'); if (!contentType || !contentType.includes(\'text/html\')) { window.location.href = url; return; } const html = await response.text(); this.processFragmentResponse(html, targetSelector, targetElement, response, triggerElement, pushHistory, url, \'GET\', isPopstate); if (!isPopstate) { const noScroll = triggerElement ? triggerElement.hasAttribute(\'data-fst-no-scroll\') : false; if (!noScroll) { const scrollBehavior = triggerElement ? (triggerElement.getAttribute(\'data-fst-scroll\') || \'instant\') : \'instant\'; const behavior = scrollBehavior === \'smooth\' ? \'smooth\' : \'instant\'; if (window.location.hash) { const targetAnchor = document.querySelector(window.location.hash); if (targetAnchor) { targetAnchor.scrollIntoView({ behavior }); } else { if (targetSelector === \'body\') window.scrollTo({ top: 0, behavior }); else targetElement.scrollTo({ top: 0, behavior }); } } else { if (targetSelector === \'body\') window.scrollTo({ top: 0, behavior }); else targetElement.scrollTo({ top: 0, behavior }); } } } } catch (err) { window.location.href = url; } finally { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); } } processFragmentResponse(html, targetSelector, targetElement, response, triggerElement, pushHistory, url, method, isPopstate = false) { const newTitle = html.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i); if (newTitle) document.title = newTitle[1]; const bodyAttrs = response.headers.get(\'X-FST-Body-Attrs\'); if (bodyAttrs !== null && targetSelector === \'body\') { const parser = new DOMParser(); const doc = parser.parseFromString(`<div ${bodyAttrs}></div>`, \'text/html\'); const newBody = doc.body.firstChild; Array.from(document.body.attributes).forEach(attr => document.body.removeAttribute(attr.name)); Array.from(newBody.attributes).forEach(attr => document.body.setAttribute(attr.name, attr.value)); } if (!targetElement) throw new Error(\'Target not found\'); document.dispatchEvent(new Event(\'fst:unload\')); targetElement.innerHTML = html; if (pushHistory && method === \'GET\') { const cacheFlag = triggerElement ? triggerElement.getAttribute(\'data-fst-cache\') : null; const globalCache = document.querySelector(\'script#fst-agent\')?.getAttribute(\'data-history-cache\') === \'true\'; const fstCache = cacheFlag !== null ? cacheFlag === \'true\' : globalCache; window.history.pushState({ fstHtml: html, fstTarget: targetSelector, fstBodyAttrs: bodyAttrs, fstCache: fstCache }, \'\', url); } else if (isPopstate) { window.history.replaceState({ fstHtml: html, fstTarget: targetSelector, fstBodyAttrs: bodyAttrs, fstCache: window.history.state?.fstCache ?? false }, \'\', url); } this.reexecuteScripts(targetElement); document.dispatchEvent(new Event(\'fst:load\')); } reexecuteScripts(targetElement) { if (!window._fst_executed_scripts) { window._fst_executed_scripts = new Set(); document.querySelectorAll(\'script[src]\').forEach(s => window._fst_executed_scripts.add(s.src)); } const scripts = targetElement.querySelectorAll(\'script\'); scripts.forEach(oldScript => { if (oldScript.id === \'fst-agent\' || oldScript.hasAttribute(\'data-fst-ignore\')) return; if (oldScript.src) { if (window._fst_executed_scripts.has(oldScript.src)) return; window._fst_executed_scripts.add(oldScript.src); } const newScript = document.createElement(\'script\'); Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value)); newScript.appendChild(document.createTextNode(oldScript.innerHTML)); oldScript.parentNode.replaceChild(newScript, oldScript); }); } go(url, options = {}) { const defaultTarget = document.querySelector(\'script#fst-agent\')?.getAttribute(\'data-default-target\') || \'body\'; const target = options.target || defaultTarget; const history = options.history !== false; const virtualTrigger = { getAttribute: (attr) => { if (attr === \'data-fst-scroll\') return options.scroll !== undefined ? String(options.scroll) : null; if (attr === \'data-fst-indicator\') return options.indicator || null; if (attr === \'data-fst-cache\') return options.cache !== undefined ? String(options.cache) : null; if (attr === \'data-fst-fragment\') return target; return null; }, hasAttribute: (attr) => { if (attr === \'data-fst-no-history\') return !history; if (attr === \'data-fst-no-scroll\') return options.scroll === false; return false; } }; const path = this.getPathFromHref(url); const match = this.matchRoute(path); if (match) { if (history) { window.history.pushState({}, "", url); } this.route(path, virtualTrigger); } else { this.fetchFragment(url, target, history, virtualTrigger); } } } window.fst = new fst_agent();');
 
 
 // FILE: core.php
@@ -323,7 +323,7 @@ function fst_extract_html_fragment($html, $selector = 'body') {
     
     
     
-    $singleton_tags = ['body', 'main'];
+    $singleton_tags = ['body'];
     if (!str_starts_with($selector, '#') && !str_starts_with($selector, '.')) {
         $tag = strtolower($selector);
         if (in_array($tag, $singleton_tags)) {
@@ -882,8 +882,16 @@ function fst_run() {
     if ($agent_mode === true || $agent_mode === '1') {
         $should_inject_agent = true;
     }
-
-
+    
+    
+    foreach (headers_list() as $header) {
+        if (stripos($header, 'Content-Type:') === 0) {
+            if (stripos($header, 'text/html') === false) {
+                $should_inject_agent = false;
+            }
+            break;
+        }
+    }
     if (fst_is_fragment_request()) {
         $target = fst_fragment_target();
         
@@ -915,10 +923,12 @@ function fst_run() {
         $inject_id = $script_id ? 'id="'.$script_id.'" data-req-header="'.$req_header.'" data-target-header="'.$target_header.'" data-indicator-class="'.$indicator_class.'"'.$history_cache : '';
         $script_tag = "<script src=\"/fst-agent.js\" {$inject_id}></script>";
         
-        if (stripos($output, '</body>') !== false) {
-            $output = str_ireplace('</body>', $script_tag . "\n</body>", $output);
+        if (stripos($output, '</head>') !== false) {
+            $output = str_ireplace('</head>', $script_tag . "\n</head>", $output);
+        } elseif (stripos($output, '<body>') !== false) {
+            $output = str_ireplace('<body>', "<body>\n" . $script_tag, $output);
         } else {
-            $output .= "\n" . $script_tag;
+            $output = $script_tag . "\n" . $output;
         }
     }
 
@@ -1365,7 +1375,8 @@ function fst_handle_installation() {
         
         if (isset($input_data['generate_starter']) && $input_data['generate_starter'] !== '0') {
             @mkdir(FST_ROOT_DIR . '/views', 0755, true);
-            if (in_array($input_data['generate_starter'], ['minimal', '1'])) {
+            
+            if ($input_data['generate_starter'] === 'minimal') {
                 $html_template = <<<HTML
 <!DOCTYPE html>
 <html lang="en">
@@ -1408,10 +1419,295 @@ fst_get('/', function() {
     fst_template(FST_ROOT_DIR . '/views/index.html', ['title' => 'Welcome to FullStuck'], [
         "title" => '\$title',
         "h1" => '\$title'
-    ], FST_ROOT_DIR . '/build-template', true);
+    ]);
 });
 PHP;
                 @file_put_contents(FST_ROOT_DIR . '/router.php', $router_code);
+            } 
+            else if ($input_data['generate_starter'] === '1') {
+                
+                @mkdir(FST_ROOT_DIR . '/assets', 0755, true);
+                
+                
+                $layout_html = <<<HTML
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App</title>
+    <style>body{font-family:system-ui,sans-serif;max-width:800px;margin:2rem auto;padding:0 1rem}nav a{margin-right:1rem}.flash-msg{background:#d1fae5;border:1px solid #6ee7b7;padding:.5rem 1rem;border-radius:6px}.error-msg{background:#fee2e2;border:1px solid #fca5a5;padding:.5rem 1rem;border-radius:6px}main.fst-loading{opacity:.5;pointer-events:none;cursor:wait;transition:opacity .2s}</style>
+</head>
+<body>
+    <nav>
+        <a href="/" data-fst-fragment="main">Beranda</a>
+        <a href="/tasks" data-fst-fragment="main">Tasks</a>
+        <a href="/logout" data-fst-normal-load>Logout</a>
+    </nav>
+    <hr>
+    <main></main>
+    <script src="/assets/app.js"></script>
+</body>
+</html>
+HTML;
+                @file_put_contents(FST_ROOT_DIR . '/views/_layout.html', $layout_html);
+
+                
+                $index_html = <<<HTML
+<section>
+    <h1>Selamat Datang</h1>
+    <p>Aplikasi FullStuck.php Anda siap digunakan.</p>
+    <a href="/tasks">Lihat Tasks &rarr;</a>
+</section>
+HTML;
+                @file_put_contents(FST_ROOT_DIR . '/views/index.html', $index_html);
+
+                
+                $login_html = <<<HTML
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+</head>
+<body>
+    <h1>Login</h1>
+    <p class="error-msg"></p>
+    <form action="/login" method="POST">
+        <div class="fst-csrf"></div>
+        <div>
+            <label>Email</label>
+            <input type="email" name="email" required>
+        </div>
+        <div>
+            <label>Password</label>
+            <input type="password" name="password" required>
+        </div>
+        <button type="submit">Masuk</button>
+    </form>
+</body>
+</html>
+HTML;
+                @file_put_contents(FST_ROOT_DIR . '/views/login.html', $login_html);
+
+                
+                $tasks_html = <<<HTML
+<div>
+    <h1>Daftar Tasks</h1>
+    <p class="flash-msg"></p>
+    <form action="/tasks" method="POST" data-fst-fragment="main" data-fst-indicator="fst-loading">
+        <div class="fst-csrf"></div>
+        <div>
+            <input type="text" name="title" placeholder="Tugas baru..." required>
+        </div>
+        <div style="margin-top: 0.5rem;">
+            <textarea name="description" placeholder="Deskripsi tugas (opsional)" rows="3" style="width: 100%;"></textarea>
+        </div>
+        <div style="margin-top: 0.5rem;">
+            <button type="submit">Tambah</button>
+        </div>
+    </form>
+    <ul class="task-list">
+        <li>
+            <span class="task-title">Nama Task</span>
+            <a href="/tasks/1/detail" class="detail-link" data-fst-fragment="main">Detail</a>
+            <form class="delete-form" method="POST" data-fst-no-history data-fst-fragment="main" style="display:inline;">
+                <button type="submit">Hapus</button>
+            </form>
+        </li>
+    </ul>
+</div>
+HTML;
+                @file_put_contents(FST_ROOT_DIR . '/views/tasks.html', $tasks_html);
+
+                
+                $app_js = <<<JS
+fst.set('/preview', (params) => {
+    document.querySelector('main').innerHTML = `  
+        <h1>Preview Mode</h1>  
+        <p>Ini dirender murni di browser, tanpa request ke PHP.</p>  
+        <a href="/tasks" data-fst-fragment="main">Kembali ke Tasks</a>  
+    `;
+});
+
+fst.set('/tasks/:id/detail', async (params) => {
+    const main = document.querySelector('main');
+    main.innerHTML = `<div style="text-align:center; padding:2rem;" class="fst-loading">Memuat detail task...</div>`;
+    
+    const res = await fetch(`/api/tasks/\${params.id}`);
+    
+    if (res.status === 404) {
+        main.innerHTML = `
+            <div style="text-align:center; padding: 2rem; color: red;">
+                <h2>404 Not Found</h2>
+                <p>Task dengan ID #\${params.id} tidak ditemukan di database.</p>
+                <a href="/tasks" data-fst-fragment="main">Kembali</a>
+            </div>
+        `;
+        return;
+    }
+
+    const task = await res.json();
+    main.innerHTML = `  
+        <h1>Detail Task #\${task.id}</h1>  
+        <h3>\${task.title}</h3>
+        <p>\${task.description ? task.description : '<i>Tidak ada deskripsi.</i>'}</p>  
+        <small>Dibuat: \${task.created_at}</small>
+        <br><br>
+        <a href="/tasks" data-fst-fragment="main">&larr; Kembali ke Daftar Tasks</a>
+    `;
+});
+
+// ─── Event Hooks ──────────────────────────────────────────────────────────────  
+document.addEventListener('fst:loading', (e) => {
+    console.log('FST: navigating to', e.detail.url);
+});
+
+document.addEventListener('fst:unload', () => {
+    // Destroy plugins here
+});
+
+document.addEventListener('fst:load', () => {
+    // Init plugins here
+    console.log('FST: page loaded');
+});
+JS;
+                @file_put_contents(FST_ROOT_DIR . '/assets/app.js', $app_js);
+
+                
+                $router_php = <<<PHP
+<?php  
+function cek_login(\$next) {  
+    if (!fst_session_get('user_id')) {  
+        fst_flash_set('error', 'Silakan login terlebih dahulu.');  
+        return fst_redirect('/login');  
+    }  
+    return \$next();  
+}  
+  
+fst_get('/', function() {  
+    \$content = fst_template_render(FST_ROOT_DIR . '/views/index.html', [], []);  
+    fst_template(FST_ROOT_DIR . '/views/_layout.html', [  
+        'title' => 'Beranda',  
+        'content' => \$content,  
+    ], ['title' => '\$title', 'main' => ['@html' => '\$content']]);  
+});  
+  
+fst_get('/login', function() {  
+    \$error = fst_flash_get('error');
+    fst_template(FST_ROOT_DIR . '/views/login.html', ['error' => \$error], [  
+        'title' => '"Login"',  
+        'p.error-msg' => ['@if' => '\$error !== null', '@text' => '\$error'],  
+        '.fst-csrf' => ['@html' => 'fst_csrf_field()'],  
+    ]);  
+});  
+  
+fst_post('/login', function() {  
+    fst_csrf_check();
+    \$val = fst_validate(fst_request(), ['email' => 'required|email', 'password' => 'required|min:6']);  
+    if (!\$val['valid']) {  
+        fst_flash_set('error', implode(', ', array_merge(...array_values(\$val['errors']))));  
+        fst_redirect('/login');  
+    }  
+    \$user = fst_db_row('users', ['email' => \$val['data']['email']]);  
+    if (!\$user || !password_verify(\$val['data']['password'], \$user['password'])) {  
+        fst_flash_set('error', 'Email atau password salah.');  
+        fst_redirect('/login');  
+    }  
+    fst_session_set('user_id', \$user['id']);  
+    fst_session_set('user_name', \$user['name']);  
+    fst_redirect('/tasks');  
+});  
+  
+fst_get('/logout', function() {  
+    fst_session_forget('user_id');  
+    fst_session_forget('user_name');  
+    fst_redirect('/login');  
+});  
+  
+fst_get('/tasks', function() {  
+    \$tasks = fst_db_select('tasks', [], ['order_by' => 'id DESC']);  
+    \$flash = fst_flash_get('msg');  
+    \$content = fst_template_render(FST_ROOT_DIR . '/views/tasks.html', [  
+        'tasks' => \$tasks,  
+        'flashMsg' => \$flash,  
+    ], [  
+        'p.flash-msg' => ['@if' => '\$flashMsg !== null', '@text' => '\$flashMsg'],  
+        '.fst-csrf' => ['@html' => 'fst_csrf_field()'],  
+        'ul.task-list > li' => [  
+            '@foreach' => '\$tasks as \$task',  
+            'span.task-title' => '\$task["title"]',  
+            'a.detail-link' => ['[href]' => '"/tasks/" . \$task["id"] . "/detail"'],
+            'form.delete-form' => [  
+                '[action]' => '"/tasks/delete/" . \$task["id"]',  
+                '[method]' => '"POST"',  
+                '@append' => 'fst_csrf_field()',  
+            ],  
+        ],  
+    ]);  
+    fst_template(FST_ROOT_DIR . '/views/_layout.html', [  
+        'title' => 'Tasks',  
+        'content' => \$content,  
+    ], ['title' => '\$title', 'main' => ['@html' => '\$content']]);  
+}, 'cek_login');  
+  
+fst_post('/tasks', function() {  
+    fst_csrf_check();  
+    \$val = fst_validate(fst_request(), [  
+        'title' => 'required|min:3|max:100',
+        'description' => 'optional|max:1000'
+    ]);  
+    if (!\$val['valid']) {  
+        fst_flash_set('msg', 'Error: ' . \$val['errors']['title'][0] ?? 'Input tidak valid.');  
+        fst_redirect('/tasks');  
+    }  
+    fst_db_insert('tasks', [
+        'title' => \$val['data']['title'],
+        'description' => \$val['data']['description'] ?? null
+    ]);  
+    fst_flash_set('msg', 'Task berhasil ditambahkan!');  
+    fst_redirect('/tasks');
+}, 'cek_login');  
+  
+fst_post('/tasks/delete/:id', function(\$params) {  
+    fst_csrf_check();  
+    fst_db_delete('tasks', ['id' => \$params['id']]);  
+    fst_flash_set('msg', 'Task dihapus.');  
+    fst_redirect('/tasks');  
+}, 'cek_login');
+
+function fst_spa_fallback() {
+    fst_template(FST_ROOT_DIR . '/views/_layout.html', [
+        'title' => 'Loading...',
+        'content' => '<div style="text-align:center; padding: 2rem;" class="fst-loading">Loading...</div>'
+    ], ['title' => '\$title', 'main' => ['@html' => '\$content']]);
+}
+
+fst_any('/preview', 'fst_spa_fallback');
+fst_any('/tasks/{id}/detail', 'fst_spa_fallback');
+
+fst_get('/api/tasks/{id:i}', function(\$id) {
+    \$task = fst_db_row('tasks', ['id' => \$id]);
+    if (!\$task) fst_abort(404, 'Task not found');
+    header('Content-Type: application/json');
+    echo json_encode(\$task);
+});
+PHP;
+                @file_put_contents(FST_ROOT_DIR . '/router.php', $router_php);
+                
+                
+                $seed_php = <<<PHP
+<?php
+// Script untuk mengisi tabel users dan tasks perdana (jalankan manual jika perlu)
+require __DIR__ . '/fullstuck.php';
+\$db = new PDO('sqlite:' . FST_ROOT_DIR . '/' . fst_config('database.connections.main.database_path', 'database.sqlite'));
+\$db->exec("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, email TEXT, password TEXT)");
+\$db->exec("CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, description TEXT DEFAULT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+\$stmt = \$db->prepare('INSERT INTO users (name, email, password) VALUES (?, ?, ?)');
+\$stmt->execute(['Demo User', 'demo@example.com', password_hash('123456', PASSWORD_DEFAULT)]);
+echo "Database seeded successfully.\\n";
+PHP;
+                @file_put_contents(FST_ROOT_DIR . '/seed.php', $seed_php);
             }
         }
 
@@ -1729,6 +2025,15 @@ function fst_template(string $templatePath, array $data, array $rules, ?string $
     $data = array_merge($shared_data, $data);
     extract($data, EXTR_SKIP);
     require $cacheFile;
+}
+
+
+
+
+function fst_template_render(string $templatePath, array $data, array $rules, ?string $cacheDir = null, bool $forceRebuild = false): string {
+    ob_start();
+    fst_template($templatePath, $data, $rules, $cacheDir, $forceRebuild);
+    return ob_get_clean();
 }
 
 // FILE: bootstrap.php

@@ -37,9 +37,22 @@ fst.go('/sebagian', { target: '#widget', history: false, scroll: 'smooth' });
 | `data-fst-indicator="class"`| Menimpa *CSS Class* loading untuk elemen spesifik ini saat di-fetch. |
 | `data-fst-ignore` | Ditaruh di dalam `<script>`, menandakan script ini hanya di-eksekusi 1 kali seumur hidup. |
 
-> ⚠️ **Peringatan SPA Script Re-Execution:** Saat FST Agent melakukan transisi *Fragment Routing*, ia akan mengeksekusi ulang seluruh tag `<script>` baru di dalam DOM target agar integrasi *library* lain tetap bekerja. Oleh karena itu:
-> 1. Pastikan script bawaan FST Agent selalu memiliki atribut `id="fst-agent"` (`<script src="/fst-agent.js" id="fst-agent"></script>`) agar tidak dieksekusi berulang kali. (Jika menggunakan `--agent_js=yes`, ini di-*handle* otomatis oleh *framework*).
-> 2. Untuk tag `<script>` khusus Anda sendiri (misalnya pendaftaran rute SPA `fst.set()`), **WAJIB** menambahkan atribut `data-fst-ignore` agar tidak memicu eksekusi/pendaftaran fungsi ganda ketika berpindah halaman!
+> 💡 **Tips Menghindari Eksekusi Script Ganda:** 
+> Saat FST Agent melakukan pergantian konten (*Fragment Routing*), ia akan mengeksekusi ulang seluruh tag `<script>` yang **berada di dalam** target elemen (misal `<main>`).
+> 1. Letakkan skrip global aplikasi Anda (seperti `app.js`) **di luar** elemen target fragment (misal di akhir `<body>` atau `<head>`), sehingga tidak ikut terekskusi ulang setiap berpindah halaman.
+> 2. Untuk *inline script* yang terpaksa harus berada di dalam *fragment* namun hanya ingin dijalankan sekali seumur hidup, tambahkan atribut `data-fst-ignore`.
+> 3. *Script* eksternal (dengan `src`) yang terdeteksi sudah berada di `<head>` akan otomatis di- *skip* (tidak direload ganda).
+
+### Integrasi JSON & API
+FST Agent memiliki sistem **MIME-Type Whitelist** internal. Ini memastikan kerangka kerja **TIDAK AKAN** menyuntikkan skrip `fst-agent.js` ke dalam *response* backend yang dideklarasikan secara spesifik (misalnya JSON).
+```php
+fst_get('/api/data', function() {
+    header('Content-Type: application/json');
+    // FST-Agent otomatis mundur. Aman untuk dikonsumsi Frontend/Fetch!
+    echo json_encode(['status' => 'ok']);
+});
+```
+Jika tidak ada deklarasi `Content-Type`, PHP secara *default* akan menganggap `text/html`, sehingga kerangka kerja akan kembali menyuntikkan skrip agen untuk kebutuhan navigasi.
 
 *Untuk referensi Javascript API dan Event Hooks lebih lengkap, lihat [FULL.md](./FULL.md).*
 

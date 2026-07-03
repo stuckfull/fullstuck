@@ -301,3 +301,12 @@ function fst_template(string $templatePath, array $data, array $rules, ?string $
     extract($data, EXTR_SKIP);
     require $cacheFile;
 }
+
+/**
+ * Merender file HTML menjadi dinamis dan mengembalikan hasilnya sebagai string.
+ */
+function fst_template_render(string $templatePath, array $data, array $rules, ?string $cacheDir = null, bool $forceRebuild = false): string {
+    ob_start();
+    fst_template($templatePath, $data, $rules, $cacheDir, $forceRebuild);
+    return ob_get_clean();
+}
