@@ -14,7 +14,7 @@ hero:
       link: /ai-setup
     - theme: alt
       text: GitHub Repo
-      link: https://github.com/milio48/fullstuck
+      link: https://github.com/stuckfull/fullstuck
 
 features:
   - icon: 📦

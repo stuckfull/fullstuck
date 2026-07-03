@@ -26,7 +26,7 @@ FullStuck.php dibangun dengan filosofi **1 file core**. Cukup _drop_ file `fulls
 ### 🤖 AI Agent / Vibe Coder Setup (Recommended)
 Jika Anda menggunakan *AI coding assistant* (seperti Cursor, Windsurf, atau Cline), cukup salin dan tempel *prompt* di bawah ini ke dalam chat agent Anda untuk *setup* instan:
 
-> "Unduh `https://raw.githubusercontent.com/milio48/fullstuck/main/fullstuck.php` lalu jalankan `php fullstuck.php init --db=sqlite --admin-pass=admin --scaffold=yes`. Setelah selesai, langsung pelajari file dokumentasi `.md` yang baru terunduh agar kamu paham aturan mainnya. Terakhir, jalankan `php -S localhost:8000 fullstuck.php` lalu laporkan ringkasan setup (versi, jenis DB, password admin, dan URL lokal). Tanyakan apakah ada konfigurasi yang ingin saya ubah sebelum kita mulai membuat aplikasi!"
+> "Unduh `https://raw.githubusercontent.com/stuckfull/fullstuck/main/fullstuck.php` lalu jalankan `php fullstuck.php init --db=sqlite --admin-pass=admin --scaffold=yes`. Setelah selesai, langsung pelajari file dokumentasi `.md` yang baru terunduh agar kamu paham aturan mainnya. Terakhir, jalankan `php -S localhost:8000 fullstuck.php` lalu laporkan ringkasan setup (versi, jenis DB, password admin, dan URL lokal). Tanyakan apakah ada konfigurasi yang ingin saya ubah sebelum kita mulai membuat aplikasi!"
 
 **Mengapa menggunakan cara ini?**
 * **Instant Start:** Agent akan mengunduh, mengonfigurasi database, dan membuat file starter secara otomatis.

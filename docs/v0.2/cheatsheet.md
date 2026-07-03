@@ -1,7 +1,7 @@
 # FullStuck.php v0.2.0 Cheatsheet
 **Zero-config, single-file PHP micro-framework. No Composer. No `vendor/`. Deploy anywhere.**
 
-📚 Full Documentation & Tutorials: https://github.com/milio48/fullstuck/blob/main/docs/v0.2.0.md
+📚 Full Documentation & Tutorials: https://github.com/stuckfull/fullstuck/blob/main/docs/v0.2.0.md
 
 ---
 
@@ -9,7 +9,7 @@
 
 **AI Agent setup:**
 ```
-https://raw.githubusercontent.com/milio48/fullstuck/main/docs/ai-setup.md
+https://raw.githubusercontent.com/stuckfull/fullstuck/main/docs/ai-setup.md
 ```
 
 **CLI init (headless):**

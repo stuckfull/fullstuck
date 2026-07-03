@@ -5,7 +5,7 @@ $src_dir = __DIR__;
 $output_file = dirname(__DIR__) . '/fullstuck.php';
 
 define('FST_VERSION', '0.3.0');
-define('FST_DOCS_URL', 'https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v0.3/index.md');
+define('FST_DOCS_URL', 'https://raw.githubusercontent.com/stuckfull/fullstuck/refs/heads/main/docs/v0.3/index.md');
 
 // Minify fst.js
 $fst_js_path = $src_dir . '/assets/fst.js';

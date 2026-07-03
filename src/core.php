@@ -14,7 +14,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start(); 
 }
 define('FST_VERSION', '0.3.0');
-define('FST_DOCS_URL', 'https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v0.3/index.md');
+define('FST_DOCS_URL', 'https://raw.githubusercontent.com/stuckfull/fullstuck/refs/heads/main/docs/v0.3/index.md');
 if (!defined('FST_ROOT_DIR')) {
     $root = __DIR__;
     if (php_sapi_name() === 'cli-server') {
@@ -48,7 +48,7 @@ if (php_sapi_name() === 'cli') {
             exit(0);
         }
         if (strpos($argv[1], 'docs') === 0) {
-            $base_url = 'https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v0.3/';
+            $base_url = 'https://raw.githubusercontent.com/stuckfull/fullstuck/refs/heads/main/docs/v0.3/';
             $map = [
                 'docs' => 'index.md',
                 'docs:1' => '01-getting-started.md',

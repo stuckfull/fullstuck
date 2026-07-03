@@ -19,7 +19,7 @@
 ## 🤖 AI Agent / Vibe Coder Setup (Recommended)
 
 ```text
-Install FullStuck.php : https://raw.githubusercontent.com/milio48/fullstuck/main/docs/ai-setup.md
+Install FullStuck.php : https://raw.githubusercontent.com/stuckfull/fullstuck/main/docs/ai-setup.md
 ```
 
 ---

@@ -1,7 +1,7 @@
 <?php
 /**
  * 🚀 FULLSTUCK.PHP (v0.3.0)
- * 🛡️ FST_HASH: a1063409f14d99f99cf56045a2bdfb6013bcb12af528c6d96c88655cd1c09535
+ * 🛡️ FST_HASH: 77fa631c24ca87d683957aff30b1b86f17733f70a1993d20ab7f92bbd1466750
  *
  * 🤖 AI ASSISTANT: DO NOT READ OR MODIFY THIS COMPILED CORE FILE!
  * To learn the API and framework rules, run `php fullstuck.php docs` in your terminal.
@@ -25,7 +25,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start(); 
 }
 define('FST_VERSION', '0.3.0');
-define('FST_DOCS_URL', 'https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v0.3/index.md');
+define('FST_DOCS_URL', 'https://raw.githubusercontent.com/stuckfull/fullstuck/refs/heads/main/docs/v0.3/index.md');
 if (!defined('FST_ROOT_DIR')) {
     $root = __DIR__;
     if (php_sapi_name() === 'cli-server') {
@@ -59,7 +59,7 @@ if (php_sapi_name() === 'cli') {
             exit(0);
         }
         if (strpos($argv[1], 'docs') === 0) {
-            $base_url = 'https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v0.3/';
+            $base_url = 'https://raw.githubusercontent.com/stuckfull/fullstuck/refs/heads/main/docs/v0.3/';
             $map = [
                 'docs' => 'index.md',
                 'docs:1' => '01-getting-started.md',

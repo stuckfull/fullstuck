@@ -28,8 +28,8 @@ FullStuck.php adalah framework mikro yang dirancang untuk kecepatan pengembangan
 
 ### 🤖 AI Agent / Vibe Coder Setup (Recommended)
 Untuk AI Agent/LLM yang mendampingi Anda di workspace, silakan merujuk pada:
-1. **Alur Kerja & SOP AI**: [ai-setup.md](ai-setup.md) (`https://raw.githubusercontent.com/milio48/fullstuck/main/docs/ai-setup.md`)
-2. **AI Cheatsheet (API Hemat Token)**: [v0.2.0_cheatsheet.md](v0.2.0_cheatsheet.md) (`https://raw.githubusercontent.com/milio48/fullstuck/main/docs/v0.2.0_cheatsheet.md`)
+1. **Alur Kerja & SOP AI**: [ai-setup.md](ai-setup.md) (`https://raw.githubusercontent.com/stuckfull/fullstuck/main/docs/ai-setup.md`)
+2. **AI Cheatsheet (API Hemat Token)**: [v0.2.0_cheatsheet.md](v0.2.0_cheatsheet.md) (`https://raw.githubusercontent.com/stuckfull/fullstuck/main/docs/v0.2.0_cheatsheet.md`)
 
 *Catatan: Saat Anda menjalankan `php fullstuck.php init`, sistem akan otomatis mengunduh cheatsheet ini dan menyimpannya sebagai `fullstuck_cheatsheet.md` di root proyek.*
 
