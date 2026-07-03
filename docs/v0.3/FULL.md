@@ -226,6 +226,23 @@ fst_post('/register', function() {
     $clean = $val['data']; // Data tersanitasi
 });
 ```
+
+### Pencegahan XSS (Cross-Site Scripting)
+
+1. **Sisi Backend (PHP)**:
+   Gunakan helper global `e($str)` atau `fst_escape($str)` saat merender variabel dinamis di dalam file HTML/PHP Anda.
+   ```php
+   <p>Selamat datang, <?= e($username) ?></p>
+   ```
+
+2. **Sisi Frontend (Client-side Router)**:
+   Saat menggunakan rute JavaScript dinamis (`fst.set()`), hindari menyuntikkan data mentah ke `.innerHTML`. Gunakan `fst.e()` atau `fst.escape()` untuk mensterilkan variabel.
+   ```javascript
+   document.querySelector('main').innerHTML = `
+       <p>Menampilkan ID: \${fst.e(params.id)}</p>
+   `;
+   ```
+
 # 🌻 Procedural DOM Templating (`fst_template`)
 
 Pisahkan murni file HTML statis (tanpa tag PHP) dan definisikan logikanya menggunakan Array (Ruleset) dari controller. Templating ini secara otomatis me-*escape* variabel (mencegah XSS).
@@ -313,6 +330,11 @@ fst.group('/dashboard', () => {
 
 // Pemanggilan Programmatik
 fst.go('/sebagian', { target: '#widget', history: false, scroll: 'smooth' });
+
+// Penangkal DOM-based XSS (HTML Escaper)
+// Mengamankan data dinamis/parameter URL sebelum disuntikkan ke innerHTML
+let safeText = fst.e(params.id); 
+let safeTitle = fst.escape(task.title);
 ```
 
 ### HTML Data Attributes

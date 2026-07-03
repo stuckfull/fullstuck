@@ -25,6 +25,11 @@ fst.group('/dashboard', () => {
 
 // Pemanggilan Programmatik
 fst.go('/sebagian', { target: '#widget', history: false, scroll: 'smooth' });
+
+// Penangkal DOM-based XSS (HTML Escaper)
+// Mengamankan data dinamis/parameter URL sebelum disuntikkan ke innerHTML
+let safeText = fst.e(params.id); 
+let safeTitle = fst.escape(task.title);
 ```
 
 ### HTML Data Attributes
