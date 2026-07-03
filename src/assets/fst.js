@@ -5,6 +5,7 @@ class fst_agent {
         this.notFoundCallback = null; // Will default to Fragment Fetch
         this.beforeHook = null;
         this.afterHook = null;
+        this.fetchInterceptor = null;
         this._currentGroupPrefix = '';
         this.init();
     }
@@ -160,6 +161,10 @@ class fst_agent {
                 if (targetElement) targetElement.classList.remove(...indicator.split(' '));
                 return;
             }
+            if (this.fetchInterceptor) {
+                const intercepted = await this.fetchInterceptor(finalUrl, fetchOptions);
+                if (intercepted) fetchOptions = intercepted;
+            }
             
             const response = await fetch(finalUrl, fetchOptions);
             const redirectUrl = response.headers.get('X-FST-Redirect');
@@ -292,6 +297,10 @@ class fst_agent {
         this.afterHook = callback;
     }
 
+    setInterceptor(callback) {
+        this.fetchInterceptor = callback;
+    }
+
     getIndicatorClass(triggerElement) {
         return (triggerElement && triggerElement.getAttribute("data-fst-indicator")) || document.querySelector("script#fst-agent")?.getAttribute("data-indicator-class") || "fst-loading";
     }
@@ -316,7 +325,13 @@ class fst_agent {
 
         try {
             const headers = { [reqHeader]: 'true', [targetHeader]: targetSelector };
-            const response = await fetch(url, { headers });
+            let fetchOptions = { headers };
+            if (this.fetchInterceptor) {
+                const intercepted = await this.fetchInterceptor(url, fetchOptions);
+                if (intercepted) fetchOptions = intercepted;
+            }
+            
+            const response = await fetch(url, fetchOptions);
 
             if (!response.ok) {
                 const errorHtml = await response.text();

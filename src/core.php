@@ -150,6 +150,11 @@ function _fst_exception_handler($e) {
     while (ob_get_level() > 0) { ob_end_clean(); } // [PATCH] Bersihkan buffer HTML parsial
     http_response_code(500);
     
+    $custom_handler = fst_app('error_handler_callback');
+    if ($custom_handler !== null) {
+        call_user_func($custom_handler, $e);
+    }
+    
     fst_log('error', $e->getMessage(), [
         'class' => get_class($e),
         'file' => $e->getFile(),
@@ -235,6 +240,10 @@ function _fst_fatal_error_handler() {
 set_error_handler('_fst_error_handler');
 set_exception_handler('_fst_exception_handler');
 register_shutdown_function('_fst_fatal_error_handler');
+
+function fst_error_handler(callable $callback) {
+    fst_app('error_handler_callback', $callback);
+}
 
 function fst_is_dev() {
     $fst_config = fst_app('config');

@@ -11,3 +11,4 @@ FullStuck.php adalah framework mikro yang dirancang untuk kecepatan pengembangan
 5. [🌻 Procedural DOM Templating](./05-templates.md)
 6. [⚡ FST Agent & Fragment Routing (Client-Side)](./06-fst-agent.md)
 7. [📝 Logging & Error Handling](./07-logging.md)
+8. [🌶️ Advanced Cookbook (Scale-Up Guide)](./08-advanced-cookbook.md)
