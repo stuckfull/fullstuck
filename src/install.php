@@ -185,8 +185,13 @@ PHP;
 <body>
     <nav>
         <a href="/" data-fst-fragment="main">Beranda</a>
-        <a href="/tasks" data-fst-fragment="main">Tasks</a>
-        <a href="/logout" data-fst-normal-load>Logout</a>
+        <span class="auth-menu">
+            <a href="/tasks" data-fst-fragment="main">Tasks</a>
+            <a href="/logout" data-fst-normal-load>Logout</a>
+        </span>
+        <span class="guest-menu">
+            <a href="/login" data-fst-fragment="main">Login</a>
+        </span>
     </nav>
     <hr>
     <main></main>
@@ -208,29 +213,26 @@ HTML;
 
                 // login.html
                 $login_html = <<<HTML
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <title>Login</title>
-</head>
-<body>
+<div>
     <h1>Login</h1>
     <p class="error-msg"></p>
-    <form action="/login" method="POST">
+    <!-- Gunakan atribut data-fst-normal-load (atau no-history) pada link/form 
+         jika Anda membutuhkan sistem untuk melakukan hard-reload. -->
+    <form action="/login" method="POST" data-fst-fragment="main" data-fst-indicator="fst-loading">
         <div class="fst-csrf"></div>
         <div>
             <label>Email</label>
             <input type="email" name="email" required>
         </div>
-        <div>
+        <div style="margin-top: 0.5rem;">
             <label>Password</label>
             <input type="password" name="password" required>
         </div>
-        <button type="submit">Masuk</button>
+        <div style="margin-top: 0.5rem;">
+            <button type="submit">Masuk</button>
+        </div>
     </form>
-</body>
-</html>
+</div>
 HTML;
                 @file_put_contents(FST_ROOT_DIR . '/views/login.html', $login_html);
 
@@ -334,16 +336,19 @@ fst_get('/', function() {
     fst_template(FST_ROOT_DIR . '/views/_layout.html', [  
         'title' => 'Beranda',  
         'content' => \$content,  
-    ], ['title' => '\$title', 'main' => ['@html' => '\$content']]);  
+    ], ['title' => '\$title', 'main' => ['@html' => '\$content'], '.auth-menu' => ['@if' => 'fst_session_get("user_id") !== null'], '.guest-menu' => ['@if' => 'fst_session_get("user_id") === null']]);  
 });  
   
 fst_get('/login', function() {  
     \$error = fst_flash_get('error');
-    fst_template(FST_ROOT_DIR . '/views/login.html', ['error' => \$error], [  
-        'title' => '"Login"',  
+    \$content = fst_template_render(FST_ROOT_DIR . '/views/login.html', ['error' => \$error], [  
         'p.error-msg' => ['@if' => '\$error !== null', '@text' => '\$error'],  
         '.fst-csrf' => ['@html' => 'fst_csrf_field()'],  
     ]);  
+    fst_template(FST_ROOT_DIR . '/views/_layout.html', [  
+        'title' => 'Login',  
+        'content' => \$content,  
+    ], ['title' => '\$title', 'main' => ['@html' => '\$content'], '.auth-menu' => ['@if' => 'fst_session_get("user_id") !== null'], '.guest-menu' => ['@if' => 'fst_session_get("user_id") === null']]);  
 });  
   
 fst_post('/login', function() {  
@@ -392,7 +397,7 @@ fst_get('/tasks', function() {
     fst_template(FST_ROOT_DIR . '/views/_layout.html', [  
         'title' => 'Tasks',  
         'content' => \$content,  
-    ], ['title' => '\$title', 'main' => ['@html' => '\$content']]);  
+    ], ['title' => '\$title', 'main' => ['@html' => '\$content'], '.auth-menu' => ['@if' => 'fst_session_get("user_id") !== null'], '.guest-menu' => ['@if' => 'fst_session_get("user_id") === null']]);  
 }, 'cek_login');  
   
 fst_post('/tasks', function() {  
@@ -424,7 +429,7 @@ function fst_spa_fallback() {
     fst_template(FST_ROOT_DIR . '/views/_layout.html', [
         'title' => 'Loading...',
         'content' => '<div style="text-align:center; padding: 2rem;" class="fst-loading">Loading...</div>'
-    ], ['title' => '\$title', 'main' => ['@html' => '\$content']]);
+    ], ['title' => '\$title', 'main' => ['@html' => '\$content'], '.auth-menu' => ['@if' => 'fst_session_get("user_id") !== null'], '.guest-menu' => ['@if' => 'fst_session_get("user_id") === null']]);
 }
 
 fst_any('/preview', 'fst_spa_fallback');
@@ -438,19 +443,20 @@ fst_get('/api/tasks/{id:i}', function(\$id) {
 PHP;
                 @file_put_contents(FST_ROOT_DIR . '/router.php', $router_php);
                 
-                // seed.php
-                $seed_php = <<<PHP
-<?php
-// Script untuk mengisi tabel users dan tasks perdana (jalankan manual jika perlu)
-require __DIR__ . '/fullstuck.php';
-\$db = new PDO('sqlite:' . FST_ROOT_DIR . '/' . fst_config('database.connections.main.database_path', 'database.sqlite'));
-\$db->exec("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, email TEXT, password TEXT)");
-\$db->exec("CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, description TEXT DEFAULT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
-\$stmt = \$db->prepare('INSERT INTO users (name, email, password) VALUES (?, ?, ?)');
-\$stmt->execute(['Demo User', 'demo@example.com', password_hash('123456', PASSWORD_DEFAULT)]);
-echo "Database seeded successfully.\\n";
-PHP;
-                @file_put_contents(FST_ROOT_DIR . '/seed.php', $seed_php);
+                if ($driver === 'sqlite') {
+                    $path = FST_ROOT_DIR . '/' . ($input_data['db_path'] ?? 'database.sqlite');
+                    if (file_exists($path)) {
+                        $db = new PDO('sqlite:' . $path);
+                        $db->exec("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, email TEXT, password TEXT)");
+                        $db->exec("CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, description TEXT DEFAULT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+                        $stmt = $db->prepare("SELECT COUNT(*) FROM users");
+                        $stmt->execute();
+                        if ($stmt->fetchColumn() == 0) {
+                            $stmt = $db->prepare('INSERT INTO users (name, email, password) VALUES (?, ?, ?)');
+                            $stmt->execute(['Demo User', 'demo@example.com', password_hash('123456', PASSWORD_DEFAULT)]);
+                        }
+                    }
+                }
             }
         }
 
