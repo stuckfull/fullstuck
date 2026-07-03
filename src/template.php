@@ -28,6 +28,15 @@ function fst_template(string $templatePath, array $data, array $rules, ?string $
     $relative_path = ltrim($relative_path, '_');
     $cacheFile = $cacheDir . '/' . $relative_path . '.php';
 
+    array_walk_recursive($rules, function($item) {
+        if ($item instanceof \Closure) {
+            if (function_exists('fst_abort')) {
+                fst_abort(500, "AI Warning: fst_template does not support Closures. Use PHP expression strings instead!");
+            }
+            throw new \Exception("AI Warning: fst_template does not support Closures. Use PHP expression strings instead!");
+        }
+    });
+
     $rules_hash = md5(serialize($rules));
     $cache_valid = false;
     if (!$forceRebuild && file_exists($cacheFile) && filemtime($templatePath) <= filemtime($cacheFile)) {

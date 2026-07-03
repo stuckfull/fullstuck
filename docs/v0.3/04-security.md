@@ -3,8 +3,9 @@
 ### Proteksi CSRF (Wajib pada Form)
 - **File `.php`**: `<?= fst_csrf_field() ?>`
 - **File `.html` (via `fst_template`)**:
+  Beri elemen penanda di dalam form HTML Anda, contoh: `<div class="fst-csrf"></div>`
   ```php
-  "form" => ["@append" => 'fst_csrf_field()']
+  ".fst-csrf" => ["@html" => 'fst_csrf_field()']
   ```
 
 ### Validasi Controller

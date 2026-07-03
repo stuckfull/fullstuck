@@ -18,3 +18,17 @@ fst_group('/admin', function() {
     fst_get('/dashboard', function() { echo "Admin Area"; });
 }, 'cek_login');
 ```
+
+**Pengambilan Data Request:**
+```php
+fst_post('/submit', function() {
+    // fst_input(key, default) secara otomatis mencari dari $_POST, $_GET, atau JSON body
+    $username = fst_input('username');
+    $status = fst_input('status', 'active'); // Default fallback
+    
+    // Semua request data
+    $all = fst_request(); 
+});
+```
+
+> ⚠️ **Peringatan Internal API:** Fungsi `_fst_route()` adalah API internal framework (bersifat *private*) dan DILARANG untuk dipanggil secara langsung. Pengembang (dan Agen AI) WAJIB menggunakan fungsi *wrapper* publik seperti `fst_get()`, `fst_post()`, `fst_put()`, `fst_delete()`, dan `fst_any()`.

@@ -168,6 +168,21 @@ PHP;
                 @file_put_contents(FST_ROOT_DIR . '/router.php', $router_code);
             }
         }
+        
+        // Generate .cursorrules for AI assistance
+        $cursor_rules = <<<TXT
+You are an expert PHP developer working with the FullStuck.php framework.
+Follow these strict rules:
+1. ALWAYS use `fst_*` helpers (e.g. `fst_input`, `fst_request`, `fst_db_select`).
+2. NEVER modify the compiled `fullstuck.php` core file.
+3. ALWAYS use `fst_csrf_check()` for POST/PUT/DELETE routes.
+4. ALWAYS use `fst_validate()` for form input validation.
+5. In `fst_template()`, the \$rules array DOES NOT support Closures/Anonymous functions. Use PHP expression strings only.
+6. The Query Builder supports advanced operators inside keys (e.g., `['price >' => 50]`).
+Run `php fullstuck.php docs` in the terminal to read the full API documentation if you are unsure.
+TXT;
+        @file_put_contents(FST_ROOT_DIR . '/.cursorrules', $cursor_rules);
+
         _fst_cli_output('success', 'FullStuck initialized successfully!');
         return;
     } catch (Exception $e) { 

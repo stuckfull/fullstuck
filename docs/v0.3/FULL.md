@@ -197,6 +197,20 @@ fst_get('/user/{id:i}', function($id) { echo "ID: " . $id; });
 fst_get('/post/{slug:any}?', function($slug = 'default') { echo "Opsional: " . $slug; });
 ```
 
+**Pengambilan Data Request:**
+```php
+fst_post('/submit', function() {
+    // fst_input(key, default) secara otomatis mencari dari $_POST, $_GET, atau JSON body
+    $username = fst_input('username');
+    $status = fst_input('status', 'active'); // Default fallback
+    
+    // Semua request data
+    $all = fst_request(); 
+});
+```
+
+> ⚠️ **Peringatan Internal API:** Fungsi `_fst_route()` adalah API internal framework (bersifat *private*) dan DILARANG untuk dipanggil secara langsung. Pengembang (dan Agen AI) WAJIB menggunakan fungsi *wrapper* publik seperti `fst_get()`, `fst_post()`, `fst_put()`, `fst_delete()`, dan `fst_any()`.
+
 **Middleware (Onion Model):**
 ```php
 function cek_login($next) {
@@ -212,13 +226,20 @@ fst_group('/admin', function() {
 ### B. Database & Query Builder
 Gunakan key `connection` untuk pindah database sesuai `fullstuck.json`.
 
-> **Batasan Query Builder:** `fst_db_select()`, `fst_db_update()`, dll hanya mendukung kondisi `AND` dengan operator `=`. Untuk query lebih kompleks (seperti `OR`, `LIKE`, `>`, `IN`), Anda wajib menggunakan **Raw Query** (`fst_db()`).
+> **Advanced Operators:** Query Builder telah diinjeksi dengan parser khusus yang mendukung penambahan operator langsung pada *key* kondisi (seperti `=`, `!=`, `<`, `>`, `<=`, `>=`, `LIKE`, `NOT LIKE`, `IS`, dan `IS NOT`). Untuk query lebih kompleks (seperti `OR`, `IN`), Anda tetap wajib menggunakan **Raw Query** (`fst_db()`).
 
 **Select:**
 ```php
 $users = fst_db_select('users', ['status' => 'active'], ['order_by' => 'id DESC']);
 $pelanggan = fst_db_select('pelanggan', [], ['connection' => 'mysql_db']);
 $admin = fst_db_select('users', ['role' => 'admin'], ['mode' => 'ROW']); // 1 baris
+
+// Menggunakan operator lanjutan (Advanced Operators)
+$products = fst_db_select('products', [
+    'status' => 'active',
+    'price >' => 50000,
+    'name LIKE' => '%baju%'
+]);
 ```
 
 **Insert, Update, Delete:**
@@ -275,9 +296,9 @@ try {
 > **⚠️ CSRF pada Form HTML:** Nama field CSRF **wajib** `_token`. Cara menyisipkan:
 > - **File `.php`**: `<?= fst_csrf_field() ?>`
 > - **File `.html` (tanpa `fst_template`)**: Tambahkan manual `<input type="hidden" name="_token" value="...">`.
-> - **File `.html` (dengan `fst_template`)**: Gunakan DSL `@append` pada rules:
+> - **File `.html` (dengan `fst_template`)**: Gunakan DSL `@html` pada class penanda khusus di dalam `<form>` HTML Anda (contoh: `<div class="fst-csrf"></div>`):
 >   ```php
->   "form" => ["@append" => 'fst_csrf_field()']
+>   ".fst-csrf" => ["@html" => 'fst_csrf_field()']
 >   ```
 
 ```php
