@@ -325,14 +325,10 @@ JS;
 <?php  
 // --- SETUP DATABASE OTOMATIS (Hanya untuk SQLite Scaffold. Hapus jika menggunakan DB lain/produksi) ---
 try {
-    \$db = fst_db_connect();
-    \$db->exec("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, email TEXT, password TEXT)");
-    \$db->exec("CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, description TEXT DEFAULT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
-    \$stmt = \$db->prepare("SELECT COUNT(*) FROM users");
-    \$stmt->execute();
-    if (\$stmt->fetchColumn() == 0) {
-        \$stmt = \$db->prepare('INSERT INTO users (name, email, password) VALUES (?, ?, ?)');
-        \$stmt->execute(['Demo User', 'demo@example.com', password_hash('123456', PASSWORD_DEFAULT)]);
+    fst_db('EXEC', "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, email TEXT, password TEXT)");
+    fst_db('EXEC', "CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, description TEXT DEFAULT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+    if (!fst_db_exists('users')) {
+        fst_db_insert('users', ['name' => 'Demo User', 'email' => 'demo@example.com', 'password' => password_hash('123456', PASSWORD_DEFAULT)]);
     }
 } catch (Exception \$e) {
     // Abaikan jika driver bukan SQLite

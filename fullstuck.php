@@ -1,7 +1,7 @@
 <?php
 /**
  * 🚀 FULLSTUCK.PHP (v0.3.0)
- * 🛡️ FST_HASH: d689746d95ea48cd8a437b38bd91331673b5eb584f223d31d36ff8e84cf0c324
+ * 🛡️ FST_HASH: 5b3cc11f382e49208318651826638cac47781b313618dd7a0cc0164d45bb715e
  *
  * 🤖 AI ASSISTANT: DO NOT READ OR MODIFY THIS COMPILED CORE FILE!
  * To learn the API and framework rules, run `php fullstuck.php docs` in your terminal.
@@ -1581,14 +1581,10 @@ JS;
 <?php  
 // --- SETUP DATABASE OTOMATIS (Hanya untuk SQLite Scaffold. Hapus jika menggunakan DB lain/produksi) ---
 try {
-    \$db = fst_db_connect();
-    \$db->exec("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, email TEXT, password TEXT)");
-    \$db->exec("CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, description TEXT DEFAULT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
-    \$stmt = \$db->prepare("SELECT COUNT(*) FROM users");
-    \$stmt->execute();
-    if (\$stmt->fetchColumn() == 0) {
-        \$stmt = \$db->prepare('INSERT INTO users (name, email, password) VALUES (?, ?, ?)');
-        \$stmt->execute(['Demo User', 'demo@example.com', password_hash('123456', PASSWORD_DEFAULT)]);
+    fst_db('EXEC', "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, email TEXT, password TEXT)");
+    fst_db('EXEC', "CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, description TEXT DEFAULT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+    if (!fst_db_exists('users')) {
+        fst_db_insert('users', ['name' => 'Demo User', 'email' => 'demo@example.com', 'password' => password_hash('123456', PASSWORD_DEFAULT)]);
     }
 } catch (Exception \$e) {
     // Abaikan jika driver bukan SQLite
