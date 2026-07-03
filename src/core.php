@@ -58,6 +58,7 @@ if (php_sapi_name() === 'cli') {
                 'docs:5' => '05-templates.md',
                 'docs:6' => '06-fst-agent.md',
                 'docs:7' => '07-logging.md',
+                'docs:8' => '08-advanced-cookbook.md',
                 'docs:full' => 'FULL.md'
             ];
             $cmd = $argv[1];

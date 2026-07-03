@@ -1,7 +1,7 @@
 <?php
 /**
  * 🚀 FULLSTUCK.PHP (v0.3.0)
- * 🛡️ FST_HASH: ef78c8a9c99ad5d84cd25f8f5e26a9a4f0dfdc86fce4861b3fc46db49558a8b7
+ * 🛡️ FST_HASH: 5fb32a51ff574826db89dd3a6dc5f90dd909084ab53a7d06d9e91e12dddaf653
  *
  * 🤖 AI ASSISTANT: DO NOT READ OR MODIFY THIS COMPILED CORE FILE!
  * To learn the API and framework rules, run `php fullstuck.php docs` in your terminal.
@@ -69,6 +69,7 @@ if (php_sapi_name() === 'cli') {
                 'docs:5' => '05-templates.md',
                 'docs:6' => '06-fst-agent.md',
                 'docs:7' => '07-logging.md',
+                'docs:8' => '08-advanced-cookbook.md',
                 'docs:full' => 'FULL.md'
             ];
             $cmd = $argv[1];
@@ -1410,6 +1411,21 @@ PHP;
                 @file_put_contents(FST_ROOT_DIR . '/router.php', $router_code);
             }
         }
+
+        
+        $ai_readme = <<<TXT
+# FullStuck.php AI Assistant Guidelines
+
+Welcome! You are working on a FullStuck.php project. 
+FullStuck is a custom micro-framework. To understand its syntax, features, and strict rules, you MUST read the documentation before writing any code.
+
+**Run the following command in your terminal to view the table of contents:**
+`php fullstuck.php docs`
+
+*(Hint: To read section 1, run `php fullstuck.php docs:1`)*
+TXT;
+        @file_put_contents(FST_ROOT_DIR . '/fullstuck_readme.md', $ai_readme);
+
 
         _fst_cli_output('success', 'FullStuck initialized successfully!');
         return;

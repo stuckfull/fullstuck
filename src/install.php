@@ -169,6 +169,21 @@ PHP;
             }
         }
 
+        // Generate fullstuck_readme.md for AI assistance
+        $ai_readme = <<<TXT
+# FullStuck.php AI Assistant Guidelines
+
+Welcome! You are working on a FullStuck.php project. 
+FullStuck is a custom micro-framework. To understand its syntax, features, and strict rules, you MUST read the documentation before writing any code.
+
+**Run the following command in your terminal to view the table of contents:**
+`php fullstuck.php docs`
+
+*(Hint: To read section 1, run `php fullstuck.php docs:1`)*
+TXT;
+        @file_put_contents(FST_ROOT_DIR . '/fullstuck_readme.md', $ai_readme);
+
+
         _fst_cli_output('success', 'FullStuck initialized successfully!');
         return;
     } catch (Exception $e) { 
