@@ -1,7 +1,7 @@
 <?php
 /**
  * 🚀 FULLSTUCK.PHP (v0.3.0)
- * 🛡️ FST_HASH: 762171ef705e284a73778e551346d882c259cddac956bea760ba13d958210d88
+ * 🛡️ FST_HASH: ef78c8a9c99ad5d84cd25f8f5e26a9a4f0dfdc86fce4861b3fc46db49558a8b7
  *
  * 🤖 AI ASSISTANT: DO NOT READ OR MODIFY THIS COMPILED CORE FILE!
  * To learn the API and framework rules, run `php fullstuck.php docs` in your terminal.
@@ -1410,20 +1410,6 @@ PHP;
                 @file_put_contents(FST_ROOT_DIR . '/router.php', $router_code);
             }
         }
-        
-        
-        $cursor_rules = <<<TXT
-You are an expert PHP developer working with the FullStuck.php framework.
-Follow these strict rules:
-1. ALWAYS use `fst_*` helpers (e.g. `fst_input`, `fst_request`, `fst_db_select`).
-2. NEVER modify the compiled `fullstuck.php` core file.
-3. ALWAYS use `fst_csrf_check()` for POST/PUT/DELETE routes.
-4. ALWAYS use `fst_validate()` for form input validation.
-5. In `fst_template()`, the \$rules array DOES NOT support Closures/Anonymous functions. Use PHP expression strings only.
-6. The Query Builder supports advanced operators inside keys (e.g., `['price >' => 50]`).
-Run `php fullstuck.php docs` in the terminal to read the full API documentation if you are unsure.
-TXT;
-        @file_put_contents(FST_ROOT_DIR . '/.cursorrules', $cursor_rules);
 
         _fst_cli_output('success', 'FullStuck initialized successfully!');
         return;
