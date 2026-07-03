@@ -13,7 +13,7 @@ function fst_handle_installation() {
         echo "Run: php fullstuck.php init [options]\n\n";
         echo "Options:\n";
         echo "  --db=sqlite|mysql|pgsql (default: sqlite)\n";
-        echo "  --agent=yes|no (default: yes)\n";
+        echo "  --agent_js=yes|no (default: yes)\n";
         echo "  --scaffold=yes|minimal|no (default: yes)\n";
         echo "  --htaccess=yes|no (default: no)\n";
         exit(1);
@@ -27,7 +27,7 @@ function fst_handle_installation() {
             }
         }
         $driver = $input_data['db'] ?? 'sqlite';
-        $input_data['enable_agent'] = ($input_data['agent'] ?? 'yes') === 'yes' ? '1' : '0';
+        $input_data['enable_agent'] = ($input_data['agent_js'] ?? 'yes') === 'yes' ? '1' : '0';
         $scaffold_opt = $input_data['scaffold'] ?? 'yes';
         $input_data['generate_starter'] = $scaffold_opt === 'minimal' ? 'minimal' : ($scaffold_opt === 'yes' ? '1' : '0');
         $server_type = ($input_data['htaccess'] ?? 'no') === 'yes' ? 'apache_litespeed' : 'other';

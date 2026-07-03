@@ -4,7 +4,7 @@
 
 ## 🚀 1. Persiapan Proyek
 Asumsikan pengguna sudah berada di direktori proyek dengan PHP terinstal.
-1. **Instalasi Framework:** `php fullstuck.php init --db=sqlite --agent=yes --scaffold=yes --htaccess=yes` *(menghasilkan `fullstuck.json` dan struktur dasar)*.
+1. **Instalasi Framework:** `php fullstuck.php init --db=sqlite --agent_js=yes --scaffold=yes --htaccess=yes` *(menghasilkan `fullstuck.json` dan struktur dasar)*.
 2. **Jalankan Server:** `php -S localhost:8000 fullstuck.php`
 3. **Dokumentasi AI:** Selalu jalankan `php fullstuck.php docs` di terminal jika Anda kehilangan konteks API terbaru.
 

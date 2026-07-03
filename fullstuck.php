@@ -1,7 +1,7 @@
 <?php
 /**
  * 🚀 FULLSTUCK.PHP (v0.3.0)
- * 🛡️ FST_HASH: 77d4af5d11b0e5c7f96b6ed2fe017308c587d2993b2bc472262ce2e273358761
+ * 🛡️ FST_HASH: c4efab265954154f6d82ea79c340d79f95b58d8e6b05337c6e9b5b58566d853b
  *
  * 🤖 AI ASSISTANT: DO NOT READ OR MODIFY THIS COMPILED CORE FILE!
  * To learn the API and framework rules, run `php fullstuck.php docs` in your terminal.
@@ -1235,7 +1235,7 @@ function fst_handle_installation() {
         echo "Run: php fullstuck.php init [options]\n\n";
         echo "Options:\n";
         echo "  --db=sqlite|mysql|pgsql (default: sqlite)\n";
-        echo "  --agent=yes|no (default: yes)\n";
+        echo "  --agent_js=yes|no (default: yes)\n";
         echo "  --scaffold=yes|minimal|no (default: yes)\n";
         echo "  --htaccess=yes|no (default: no)\n";
         exit(1);
@@ -1249,7 +1249,7 @@ function fst_handle_installation() {
             }
         }
         $driver = $input_data['db'] ?? 'sqlite';
-        $input_data['enable_agent'] = ($input_data['agent'] ?? 'yes') === 'yes' ? '1' : '0';
+        $input_data['enable_agent'] = ($input_data['agent_js'] ?? 'yes') === 'yes' ? '1' : '0';
         $scaffold_opt = $input_data['scaffold'] ?? 'yes';
         $input_data['generate_starter'] = $scaffold_opt === 'minimal' ? 'minimal' : ($scaffold_opt === 'yes' ? '1' : '0');
         $server_type = ($input_data['htaccess'] ?? 'no') === 'yes' ? 'apache_litespeed' : 'other';

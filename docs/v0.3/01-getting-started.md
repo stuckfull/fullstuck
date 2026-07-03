@@ -4,9 +4,15 @@
 
 ### 💻 Instalasi CLI / Headless
 ```bash
-php fullstuck.php init --db=sqlite --agent=yes --scaffold=yes --htaccess=yes
+php fullstuck.php init --db=sqlite --agent_js=yes --scaffold=yes --htaccess=yes
 ```
-*Flag: `--db` (`sqlite`/`mysql`/`pgsql`/`none`), `--agent` (`yes`/`no`), `--scaffold` (`yes`/`minimal`/`no`), `--htaccess` (`yes`/`no`).*
+*Flag: `--db` (`sqlite`/`mysql`/`pgsql`/`none`), `--agent_js` (`yes`/`no`), `--scaffold` (`yes`/`minimal`/`no`), `--htaccess` (`yes`/`no`).*
+
+### 🤖 Install via Coding Agent
+Jika Anda menggunakan AI Coding Agent (seperti Cline, Cursor, Copilot Workspace), gunakan prompt berikut agar agen menginstal dan mematuhi panduan:
+```text
+Install fullstuck.php. Lalu baca dan patuhi panduan di docs/ai-setup.md
+```
 
 Atau jalankan `php -S localhost:8000 fullstuck.php` untuk menjalankan server dev bawaan.
 
