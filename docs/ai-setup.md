@@ -12,7 +12,7 @@ Asumsikan pengguna sudah berada di direktori proyek dengan PHP terinstal.
 - **Security:** Selalu gunakan `fst_escape()` / `e()` untuk output HTML, dan `fst_csrf_field()` di dalam form. Jangan percaya input pengguna. Saat menyisipkan konten melalui `@append` atau `@prepend` di `fst_template`, pastikan lolos escaping (kecuali Anda yakin isinya aman).
 - **Credentials:** Gunakan variabel lingkungan (seperti `${DB_HOST}`) di `fullstuck.json` agar rahasia tidak bocor.
 - **Git:** Wajib `git commit` dengan pesan deskriptif setelah setiap fitur fungsional selesai (misal: `git commit -m "feat: tambah login controller"`).
-- **Struktur Folder:** AI wajib menyesuaikan diri dengan struktur folder pengguna dan cukup mengubah `"require"` di `fullstuck.json`. Standar (`views/`, `controllers/`) hanya dianjurkan untuk proyek dari nol.
+- **Struktur Folder:** Dilarang menumpuk semua logika di `router.php`. Pecahkan model ke `models/`, middleware ke `middleware/`, dan rute per modul ke `routes/`. Daftarkan via `routing.require` dan `routing.routes_file` di `fullstuck.json`.
 - **Integritas Core:** DILARANG keras menyentuh / memodifikasi `fullstuck.php`.
 - **Advanced Cookbook:** Untuk skenario lanjutan (CORS, JWT, Migrations, Testing), wajib baca Bab 8: Advanced Cookbook di `docs/v0.3/FULL.md` (atau perintah `php fullstuck.php docs --advanced`).
 

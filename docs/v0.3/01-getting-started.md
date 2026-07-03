@@ -56,11 +56,23 @@ Jalankan dengan: `frankenphp run`
 ```text
 my-project/
 ├── assets/         # File statis (CSS, JS, Images)
-├── views/          # Template HTML / PHP
-├── fullstuck.json  # File konfigurasi utama
-├── fullstuck.php   # Framework Core (HARAM dimodifikasi!)
-└── router.php      # Definisi rute utama
+├── models/         # Fungsi model & query helper  ← auto-loaded via "require"
+├── middleware/      # Fungsi middleware             ← auto-loaded via "require"
+├── routes/          # File rute per modul           ← loaded via "routes_file"
+├── views/           # Template HTML / PHP
+├── fullstuck.json   # File konfigurasi utama
+├── fullstuck.php    # Framework Core (HARAM dimodifikasi!)
+└── router.php       # Definisi rute utama (entry point)
 ```
+
+> ⚠️ **Jangan menumpuk semua logika di `router.php`!** Pecahkan model ke `models/`, middleware ke `middleware/`, dan rute per modul ke `routes/`. Daftarkan di `fullstuck.json`:
+> ```json
+> "routing": {
+>     "require": ["models", "middleware"],
+>     "routes_file": ["router.php", "routes/admin.php", "routes/api.php"]
+> }
+> ```
+> `require` auto-load folder/file/glob sebelum routing. `routes_file` mendefinisikan file rute yang dimuat berurutan.
 
 ### Konfigurasi `fullstuck.json`
 Seluruh pengaturan framework berpusat pada file `fullstuck.json`. File ini wajib ada di root project.
@@ -79,7 +91,7 @@ Seluruh pengaturan framework berpusat pada file `fullstuck.json`. File ini wajib
     },
     "routing": {
         "base_path": "/",
-        "require": ["models", "utils.php", "helpers/api_*.php"],
+        "require": ["models", "middleware"],
         "public_folders": ["assets", "uploads", "storage/public"],
         "routes_file": ["router.php"],
         "error_handlers": {
@@ -107,7 +119,8 @@ Seluruh pengaturan framework berpusat pada file `fullstuck.json`. File ini wajib
 
 ### Penjelasan Opsi:
 - **`production`**: `true` menyembunyikan *error stack trace* dari browser dan mengalihkannya ke log file `.fst.log`. `false` akan menampilkan error detil di browser.
-- **`routing.require`**: Array path untuk me-load otomatis file/folder sebelum rute dieksekusi.
+- **`routing.require`**: Auto-load file/folder/glob sebelum rute dieksekusi. Ideal untuk model, helper, dan middleware.
+- **`routing.routes_file`**: Array file rute. Pecahkan saat project membesar (misal: `["router.php", "routes/admin.php"]`).
 - **`agent_js`**: `true` akan otomatis menyuntikkan script FST Agent (`<script src="/fst-agent.js">`) ke setiap output HTML.
 
 *Untuk referensi konfigurasi dan penjelasan lebih lengkap, silakan lihat [FULL.md](./FULL.md).*
@@ -120,3 +133,4 @@ Seluruh pengaturan framework berpusat pada file `fullstuck.json`. File ini wajib
 2. **Jangan Sentuh Core**: Dilarang memodifikasi `fullstuck.php`.
 3. **Proteksi CSRF**: Rute POST/PUT/DELETE **WAJIB** panggil `fst_csrf_check()`.
 4. **Validasi**: Gunakan hanya fungsi `fst_validate()`.
+5. **Pecah Kode**: Dilarang menumpuk semua logika di `router.php`. Pecahkan model, middleware, dan rute per modul ke file/folder terpisah. Update `fullstuck.json` (`require` & `routes_file`).
