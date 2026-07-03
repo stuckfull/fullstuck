@@ -1,7 +1,7 @@
 <?php
 /**
  * 🚀 FULLSTUCK.PHP (v0.3.0)
- * 🛡️ FST_HASH: a195f8234baac4c7080c055ae661fa53bcb12eaf429d8d18a87a38aa3806adfa
+ * 🛡️ FST_HASH: e6987ed909d722943c788d9a9161bdfb94b6700f760dfa4a82173d703a05d9c4
  *
  * 🤖 AI ASSISTANT: DO NOT READ OR MODIFY THIS COMPILED CORE FILE!
  * To learn the API and framework rules, run `php fullstuck.php docs` in your terminal.
@@ -1474,7 +1474,7 @@ HTML;
     <p class="error-msg"></p>
     <!-- Gunakan atribut data-fst-normal-load (atau no-history) pada link/form 
          jika Anda membutuhkan sistem untuk melakukan hard-reload. -->
-    <form action="/login" method="POST" data-fst-normal-load data-fst-indicator="fst-loading">
+    <form action="/login" method="POST" data-fst-normal-load>
         <div class="fst-csrf"></div>
         <div>
             <label>Email</label>

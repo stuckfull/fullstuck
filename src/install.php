@@ -218,7 +218,7 @@ HTML;
     <p class="error-msg"></p>
     <!-- Gunakan atribut data-fst-normal-load (atau no-history) pada link/form 
          jika Anda membutuhkan sistem untuk melakukan hard-reload. -->
-    <form action="/login" method="POST" data-fst-normal-load data-fst-indicator="fst-loading">
+    <form action="/login" method="POST" data-fst-normal-load>
         <div class="fst-csrf"></div>
         <div>
             <label>Email</label>
