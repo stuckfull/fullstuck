@@ -813,13 +813,13 @@ document.addEventListener('fst:load', () => { /* Re-Init Select2/Maps dll */ });
 
 
 <a name="advanced-cookbook"></a>
-# 8. 🌶️ Advanced Cookbook (Scale-Up Guide)
+## 8. 🌶️ Advanced Cookbook (Scale-Up Guide)
 
 FullStuck didesain seringan mungkin untuk mempercepat fase **Zero to One** (Prototyping & MVP). Namun, ketika aplikasi Anda mulai membesar menuju fase **One to Scale** (Production), Anda membutuhkan pendekatan arsitektural tingkat lanjut. 
 
 Bab ini memandu Anda menangani skenario kompleks tanpa perlu mengotori kesederhanaan core framework.
 
-## Component Pattern
+### Component Pattern
 Saat UI Anda semakin kompleks (tabel relasi, *nested list*, komponen kondisional), menulis `fst_template` secara berurutan dalam satu file akan menyebabkan "Array Hell" (kode yang sulit dibaca dan dipelihara).
 
 **Solusi:** Gunakan **Component Pattern** dengan memecah UI menjadi fungsi PHP murni.
@@ -860,7 +860,7 @@ Dengan cara ini, template utama Anda tetap bersih, dan komponen `<UserCard>` dap
 
 ---
 
-## Global Middleware
+### Global Middleware
 Untuk mendukung *Mobile Apps* atau aplikasi eksternal, Anda membutuhkan mekanisme **CORS** (Cross-Origin Resource Sharing) dan Autentikasi Stateless (seperti JWT/Bearer Token).
 
 **Solusi:** Manfaatkan fitur `require` di `fullstuck.json` atau gunakan rute `fst_any('*')` sebagai middleware global.
@@ -907,7 +907,7 @@ fst_get('/api/saldo', function() {
 
 ---
 
-## Request Interceptor
+### Request Interceptor
 Jika Anda menggunakan FST Agent (Fragment Routing) tapi butuh menyuntikkan *header* tambahan di setiap request (misal untuk mengirim token Bearer atau preferensi bahasa).
 
 **Solusi:** Gunakan metode `fst.setInterceptor()` di client-side.
@@ -930,7 +930,7 @@ Agen FST otomatis akan mematuhi *interceptor* ini untuk setiap klik link bersyar
 
 ---
 
-## Global Exception Handler
+### Global Exception Handler
 Saat masuk *production* (`production: true`), `fullstuck.php` hanya menampilkan layar putih/error statis jika terjadi HTTP 500. Jika Anda ingin mengirim notifikasi spesifik (seperti Webhook Telegram/Slack) setiap kali terjadi *Fatal Error* atau masalah PDO, gunakan `fst_error_handler`.
 
 **Solusi:**
@@ -951,7 +951,7 @@ fst_error_handler(function(Throwable $e) {
 
 ---
 
-## Database Migrations
+### Database Migrations
 Micro-framework ini tidak dilengkapi *migration engine* yang *bloated*. Jangan mengeksekusi DDL secara manual berulang-ulang di server *production*!
 
 **Solusi:**
@@ -974,7 +974,7 @@ echo "Done.\n";
 
 ---
 
-## Testing Strategy
+### Testing Strategy
 Sulit melakukan pengujian murni (*Unit Testing*) fungsi-fungsi internal FullStuck karena ia beroperasi menggunakan ruang global monolitik.
 
 **Solusi:** Lakukan pendekatan **Feature Testing** (menembak langsung ke Endpoint). Gunakan **Pest PHP** atau **Playwright** untuk mensimulasikan permintaan klien nyata.
@@ -992,7 +992,7 @@ Metode "*Outside-in*" ini jauh lebih efektif dan menjamin fungsionalitas keselur
 
 ---
 
-## CRUD Recipe
+### CRUD Recipe
 Untuk melihat bagaimana semua konsep (Router, Validasi, Database, CSRF, Flash Message, dan DOM Templating) bekerja sama, ini adalah contoh alur utuh sebuah aplikasi "Tugas":
 
 ```php
