@@ -28,7 +28,6 @@ FullStuck.php adalah framework mikro yang dirancang untuk kecepatan pengembangan
 ### 🤖 AI Agent / Vibe Coder Setup (Recommended)
 Untuk AI Agent/LLM yang mendampingi Anda di workspace, silakan merujuk pada:
 1. **Alur Kerja & SOP AI**: [ai-setup.md](ai-setup.md) (`https://raw.githubusercontent.com/milio48/fullstuck/main/docs/ai-setup.md`)
-2. **AI Cheatsheet (API Hemat Token)**: [v0.3.0_cheatsheet.md](v0.3.0_cheatsheet.md) (`https://raw.githubusercontent.com/milio48/fullstuck/main/docs/v0.3.0_cheatsheet.md`)
 
 *Catatan: Saat ini cheatsheet dan dokumentasi utuh dapat dipanggil langsung dari terminal Anda melalui perintah `php fullstuck.php docs` tanpa perlu mengunduh file markdown ke proyek.*
 
@@ -39,7 +38,7 @@ php fullstuck.php init --db=sqlite --agent=yes --scaffold=yes --htaccess=yes
 ```
 *Flag: `--db` (`sqlite`/`mysql`/`pgsql`/`none`), `--agent` (`yes`/`no`), `--scaffold` (`yes`/`minimal`/`no`), `--htaccess` (`yes`/`no`).*
 
-Atau jalankan `php -S localhost:8000 fullstuck.php` untuk **GUI Setup Wizard** di browser.
+Atau jalankan `php -S localhost:8000 fullstuck.php` untuk menjalankan local development server.
 
 ### 🔧 Web Server Deployment
 
@@ -80,7 +79,6 @@ frankenphp php-server -r fullstuck.php
 ```text
 my-project/
 ├── assets/         # File statis (CSS, JS, Images)
-├── fst-plugins/    # Folder plugin (HANYA dikelola via Admin Dashboard)
 ├── views/          # Template HTML / PHP
 ├── fullstuck.json  # File konfigurasi utama
 ├── fullstuck.php   # Framework Core (HARAM dimodifikasi!)
@@ -111,9 +109,22 @@ Seluruh pengaturan framework berpusat pada file `fullstuck.json`. File ini wajib
         ],
         "routes_file": [
             "router.php"
-        ]
+        ],
+        "error_handlers": {
+            "404": "views/404.html"
+        },
+        "regex_shortcuts": {
+            ":id": "([0-9]+)",
+            ":slug": "([a-zA-Z0-9_-]+)"
+        }
     },
     "agent_js": true,
+    "fragment": {
+        "header_request": "HTTP_X_FST_FRAGMENT",
+        "header_target": "X-FST-Target",
+        "indicator_class": "fst-loading",
+        "history_cache": true
+    },
     "mime_types": {
         "custom": "application/x-custom"
     }
@@ -123,13 +134,17 @@ Seluruh pengaturan framework berpusat pada file `fullstuck.json`. File ini wajib
 > **Tips:** Anda dapat menggunakan sintaks `${NAMA_ENV}` untuk mengambil nilai secara aman dari variabel sistem operasi (Environment Variables) tanpa perlu file `.env`.
 
 ### Penjelasan Opsi Konfigurasi:
-- **`production`**: Set ke `false` untuk melihat *error trace* secara detail di layar, atau `true` untuk menyembunyikan error sensitif (pesan akan dicatat ke `.fst-error.log`) dan memunculkan custom error 500.
+- **`production`**: Set ke `false` untuk melihat *error trace* secara detail di layar, atau `true` untuk menyembunyikan error sensitif (pesan akan dicatat ke `.fst.log`) dan memunculkan custom error 500.
 - **`database`**: Mengatur koneksi database. Mendukung banyak koneksi melalui key `connections` dan menentukan koneksi utama via key `default`. Anda dapat menggunakan `${ENV_VAR}` untuk menginterpolasi nilai dari variabel lingkungan.
 - **`routing`**: 
   - `require`: Array berisi daftar path untuk me-load file fungsi/model PHP secara otomatis (*auto-include*) sebelum rute dieksekusi. Mendukung nama folder (otomatis me-load semua file `.php`), file spesifik, maupun *wildcard* Glob. (Contoh: `["models", "utils.php", "helpers/api_*.php"]`).
   - `public_folders`: Array direktori yang diizinkan untuk diakses langsung oleh publik (bypass engine framework).
   - `routes_file`: Array file yang berisi definisi rute (seperti `router.php`).
+  - `error_handlers`: Objek pemetaan kode error HTTP (seperti 404, 500) ke custom view HTML atau URL (optional).
+  - `regex_shortcuts`: Daftar regex custom yang dapat dipakai di route path untuk memperpendek penulisan parameter regex rumit (contoh `:id`, `:slug`).
 - **`agent_js`**: Mengaktifkan atau menonaktifkan agen JS bawaan. Jika `true`, skrip FST Agent akan otomatis disuntikkan di bagian bawah elemen `<body>`. Agen JS inilah yang memberdayakan Fragment Routing dan navigasi hybrid SPA.
+- **`fragment`**: (Optional) Penyesuaian header & style yang digunakan Agen FST untuk melakukan DOM Replacement parsial. Defaultnya adalah nilai-nilai di atas.
+- **`mime_types`**: (Optional) Daftar ekstensi file dan MIME type terkait untuk melakukan *override* atau menambah dukungan tipe file statis baru.
 - **`mime_types`**: (Optional) Daftar ekstensi file dan MIME type terkait untuk melakukan *override* atau menambah dukungan tipe file statis baru.
 
 ---
@@ -613,7 +628,7 @@ Mulai dari v0.3.0, FullStuck tidak hanya beroperasi sebagai SPA otomatis, namun 
     <a href="/tab-2" data-fst-fragment="#isi-tab" data-fst-no-history>Buka Tab 2</a>
     ```
 
-*   **`data-fst-normal-load` (atau class `no-spa`)**
+*   **`data-fst-normal-load`**
     Mem-bypass agen FST, memaksa peramban untuk *full reload*.
     ```html
     <a href="/logout" data-fst-normal-load>Keluar Normal</a>
@@ -701,6 +716,7 @@ document.addEventListener('fst:load', () => { /* Re-Init Select2/Maps dll */ });
 *   `fst_is_fragment_request()`: Mengembalikan *true* jika dipanggil via agen SPA. **Return**: `bool`.
 *   `fst_fragment_target()`: Mengambil ID/Class target DOM dari agen SPA. **Return**: `string|null`.
 *   `fst_run()`: Menjalankan engine routing framework (biasanya dipanggil otomatis).
+*   `fst_log($level, $message, $context = [])`: Menulis log JSON terstruktur ke `.fst.log`. Parameter `$level` bisa berupa string (info, error, warning). **Return**: `void`.
 
 ### Database
 *   `fst_db($mode, $sql, $params, $connection)`: Raw Query PDO manual. Mode: `'ROW'`, `'ALL'`, `'SCALAR'` (atau `'ONE'`), dan `'EXEC'`.
@@ -736,13 +752,11 @@ document.addEventListener('fst:load', () => { /* Re-Init Select2/Maps dll */ });
 *   `fst_session_set|get|forget($key, $val)`: Membaca dan menulis *session*. **Return**: `mixed` (untuk `get`).
 *   `fst_flash_set|get($key, $val)`: Session pesan *flash* (sekali baca langsung hilang). **Return**: `mixed` (untuk `get`).
 *   `fst_flash_has($key)`: Cek keberadaan pesan *flash*. **Return**: `bool`.
-*   `fst_is_safe_to_debug()`: Cek visibilitas detail *error trace* ke layar pengguna. **Return**: `bool`.
 *   `fst_config($key, $default)`: Baca dari `fullstuck.json`. **Return**: `mixed`.
 *   `fst_is_dev()`: Apakah mode *development* sedang aktif? **Return**: `bool`.
 *   `fst_app($key, $value)`: Akses ke memori internal (kontainer state) framework. Gunakan untuk menyimpan cache state yang konsisten selama lifecycle request. **Return**: `mixed`.
 *   `fst_dump(...$vars)`: *Debug variable* cantik. **Return**: `void`.
 *   `fst_dd(...$vars)`: *Debug variable* cantik lalu *die*. **Return**: `void` (Otomatis exit).
-*   `fst_register_plugin($id, $config)`: Mendaftarkan plugin ke dalam framework. **Return**: `void`.
 
 ---
 
