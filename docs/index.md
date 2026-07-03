@@ -7,8 +7,8 @@ hero:
   tagline: "Micro-framework satu-file untuk membangun Web App & REST API secepat kilat, ramah AI, dan built-in SPA."
   actions:
     - theme: brand
-      text: Mulai Cepat v0.2.0
-      link: /v0.2.0
+      text: Mulai Cepat v0.3.0
+      link: /v0.3/01-getting-started
     - theme: alt
       text: Panduan AI Setup
       link: /ai-setup
@@ -29,9 +29,9 @@ features:
   - icon: 🤖
     title: AI-Agent Friendly
     details: Dokumentasi terkonsolidasi satu-file dirancang khusus untuk meminimalkan token context asisten AI Anda.
-  - icon: 🎛️
-    title: Built-in Admin Dashboard
-    details: Panel admin modern di /stuck untuk edit konfigurasi, memantau integritas file, dan satu-klik instal plugin.
+  - icon: 🪶
+    title: Extreme Minimalist
+    details: Arsitektur baru v0.3 membuang seluruh kompleksitas legacy, menyisakan core murni yang ringan dan sangat mudah dipelajari AI.
   - icon: 🔒
     title: Hardened Security
     details: Proteksi CSRF otomatis, sanitasi path traversal, session fixation protection, dan whitelist IP bawaan.
@@ -50,19 +50,19 @@ Kami percaya masa depan *coding* adalah kolaborasi dengan AI. Dokumentasi FullSt
 
 ---
 
-## 🛠️ Contoh Kode (DOM Templating v0.2.0)
+## 🛠️ Contoh Kode (DOM Templating v0.3.0)
 
 ```php
 // router.php
 fst_get('/', function() {
     $data = ['name' => 'World'];
-    $rules = ['h1 span' => '$name'];
-    return fst_template('views/welcome.html', $data, $rules);
+    $rules = ['h1 span' => ['@text' => $data['name']]];
+    return fst_template('views/welcome.html', [], $rules);
 });
 ```
 
 ```html
 <!-- views/welcome.html -->
 <h1>Hello, <span>Placeholder</span>!</h1>
-<p>Dijalankan dengan FullStuck v0.2.0</p>
+<p>Dijalankan dengan FullStuck v0.3.0</p>
 ```

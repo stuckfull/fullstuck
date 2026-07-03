@@ -16,9 +16,8 @@ export default defineConfig({
           { text: 'v0.2.0 (Legacy)', link: '/v0.2/' }
         ]
       },
-      { text: 'Cheatsheet AI', link: '/v0.3.0_cheatsheet' },
       { text: 'Panduan AI', link: '/ai-setup' },
-      { text: 'Changelog', link: 'https://github.com/milio48/fullstuck/blob/main/CHANGELOG.md' }
+      { text: 'Changelog', link: 'https://github.com/stuckfull/fullstuck/blob/main/CHANGELOG.md' }
     ],
     sidebar: {
       '/v0.3/': [
@@ -26,7 +25,6 @@ export default defineConfig({
           text: 'Mulai Cepat',
           items: [
             { text: 'Pengenalan & Instalasi', link: '/v0.3/01-getting-started' },
-            { text: 'Cheatsheet AI Cepat', link: '/v0.3.0_cheatsheet' },
             { text: 'Versi Lengkap (All-in-One)', link: '/v0.3/FULL' }
           ]
         },
@@ -36,7 +34,8 @@ export default defineConfig({
             { text: 'Routing & Middleware', link: '/v0.3/02-routing' },
             { text: 'Database & Query', link: '/v0.3/03-database' },
             { text: 'Security & Validation', link: '/v0.3/04-security' },
-            { text: 'DOM Templating', link: '/v0.3/05-templates' }
+            { text: 'DOM Templating', link: '/v0.3/05-templates' },
+            { text: 'Advanced Cookbook', link: '/v0.3/08-advanced-cookbook' }
           ]
         },
         {
@@ -62,9 +61,7 @@ export default defineConfig({
         {
           text: 'Konsep & Panduan Lanjut',
           items: [
-            { text: 'SOP & Panduan Setup AI', link: '/ai-setup' },
-            { text: 'Arsitektur Framework', link: '/ARCHITECTURE' },
-            { text: 'Pengembangan Plugin', link: '/PLUGIN_DEVELOPMENT' }
+            { text: 'SOP & Panduan Setup AI', link: '/ai-setup' }
           ]
         },
         {
@@ -78,11 +75,11 @@ export default defineConfig({
       ]
     },
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/milio48/fullstuck' }
+      { icon: 'github', link: 'https://github.com/stuckfull/fullstuck' }
     ],
     footer: {
       message: 'Dibuat dengan ❤️ untuk ekosistem PHP yang lebih sederhana.',
-      copyright: 'Copyright © 2026-present milio48'
+      copyright: 'Copyright © 2026-present Stuckfull'
     }
   }
 })
