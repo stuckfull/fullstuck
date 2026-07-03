@@ -14,12 +14,13 @@ Asumsikan pengguna sudah berada di direktori proyek dengan PHP terinstal.
 - **Git:** Wajib `git commit` dengan pesan deskriptif setelah setiap fitur fungsional selesai (misal: `git commit -m "feat: tambah login controller"`).
 - **Struktur Folder:** AI wajib menyesuaikan diri dengan struktur folder pengguna dan cukup mengubah `"require"` di `fullstuck.json`. Standar (`views/`, `controllers/`) hanya dianjurkan untuk proyek dari nol.
 - **Integritas Core:** DILARANG keras menyentuh / memodifikasi `fullstuck.php`.
+- **Advanced Cookbook:** Untuk skenario lanjutan (CORS, JWT, Migrations, Testing), wajib baca Bab 8: Advanced Cookbook di `docs/v0.3/FULL.md` (atau perintah `php fullstuck.php docs --advanced`).
 
 ## 📋 3. Panduan Implementasi Fitur Baru
 
 ### Aturan Logika vs Tampilan
 *ATURAN: Pisahkan HTML & PHP. Tidak boleh ada tag `<?php ?>` di file view!*
-1. Buat HTML statis (gunakan Tailwind CDN jika perlu).
+1. Buat HTML statis (gunakan Vanilla CSS, jangan mengasumsikan Tailwind atau Bootstrap kecuali pengguna yang memintanya secara eksplisit).
 2. **Tandai Elemen Dinamis:** Berikan atribut unik `data-fst="kunci"` (misal `<span data-fst="nama">`).
 3. Daftarkan rute di `router.php` atau `controllers/*.php`.
 4. **FST Agent (SPA):** Jika `agent_js` bernilai `true`, pastikan form kecil menggunakan atribut `data-fst-no-history` agar tak merusak tombol Back browser. Gunakan atribut seperti `data-fst-fragment` jika hanya sebagian halaman yang perlu di-update.

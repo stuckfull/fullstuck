@@ -10,9 +10,10 @@ FullStuck.php adalah framework mikro yang dirancang untuk kecepatan pengembangan
 2. [📂 Arsitektur & Struktur Folder](#struktur-folder)
 3. [🤖 Strict Rules for AI](#ai-rules)
 4. [📖 Panduan Inti (Core Concepts)](#core-concepts)
-5. [🌻 Templating (Dom Based)](#dom-template)
+5. [🌻 Procedural DOM Templating (`fst_template`)](#dom-template)
 6. [✨ FST Agent & 3-Level Routing](#spa)
-7. [📚 API Reference (Kamus Fungsi)](#api-reference)
+7. [📚 API Reference (Cheat Sheet)](#api-reference)
+8. [🌶️ Advanced Cookbook (Scale-Up Guide)](#advanced-cookbook)
 
 ---
 
@@ -756,13 +757,23 @@ document.addEventListener('fst:load', () => { /* Re-Init Select2/Maps dll */ });
 *   `fst_app($key, $value)`: Akses ke memori internal (kontainer state) framework. Gunakan untuk menyimpan cache state yang konsisten selama lifecycle request. **Return**: `mixed`.
 *   `fst_dump(...$vars)`: *Debug variable* cantik. **Return**: `void`.
 *   `fst_dd(...$vars)`: *Debug variable* cantik lalu *die*. **Return**: `void` (Otomatis exit).
-*   `fst_error_handler(callable $callback)`: Daftarkan custom callback untuk menangkap Throwable / Error sebelum HTTP 500 dirender. **Return**: `void`.
+*   `fst_error_handler(callable $callback)`: Daftarkan custom callback untuk menangkap Throwable / Error sebelum HTTP 500 dirender.
+    *   **Perilaku:** Callback menerima 1 argumen (`Throwable $e`).
+    *   Setelah callback selesai dieksekusi, framework akan *tetap* menjalankan error handler bawaannya (mencetak log dan menampilkan layar 500), KECUALI callback Anda memanggil `die()` atau `exit()`.
+    *   Jika dipanggil lebih dari sekali, callback terakhir yang akan menimpa callback sebelumnya (tidak distack).
+
+### Client-Side JS API (`window.fst`)
+*   `fst.set(path, callback)`: Mendaftarkan rute client-side (JS murni). Callback menerima argumen `(params, triggerElement)`.
+*   `fst.group(prefix, callback)`: Mengelompokkan rute client-side dengan prefix tertentu.
+*   `fst.go(url, options?)`: Melakukan navigasi SPA secara programmatik. Opsi: `{ target, history, scroll, triggerElement }`.
+*   `fst.setInterceptor(callback)`: Mendaftarkan global request interceptor. Callback menerima `(url, fetchOptions)` dan harus me-return `fetchOptions` yang telah dimodifikasi (bisa *async*).
 
 ---
 
 
 
 
+<a name="advanced-cookbook"></a>
 # 8. 🌶️ Advanced Cookbook (Scale-Up Guide)
 
 FullStuck didesain seringan mungkin untuk mempercepat fase **Zero to One** (Prototyping & MVP). Namun, ketika aplikasi Anda mulai membesar menuju fase **One to Scale** (Production), Anda membutuhkan pendekatan arsitektural tingkat lanjut. 
@@ -912,12 +923,11 @@ Buatlah file skrip khusus (misal `tools/migrate.php`) yang dieksekusi hanya lewa
 require 'fullstuck.php'; // Load environment db
 
 echo "Migrating DB...\n";
-$db = _fst_get_pdo();
 
 // Versi 1
-$db->exec("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT)");
+fst_db('EXEC', "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT)");
 // Versi 2
-$db->exec("ALTER TABLE users ADD COLUMN email TEXT");
+fst_db('EXEC', "ALTER TABLE users ADD COLUMN email TEXT");
 
 echo "Done.\n";
 ```
@@ -940,3 +950,84 @@ if (!str_contains($response, "Budi")) {
 echo "Test Passed!";
 ```
 Metode "*Outside-in*" ini jauh lebih efektif dan menjamin fungsionalitas keseluruhan aplikasi tanpa terganggu masalah manipulasi memori internal framework.
+
+---
+
+## 7. Quick Recipe: CRUD Sederhana (End-to-End)
+Untuk melihat bagaimana semua konsep (Router, Validasi, Database, CSRF, Flash Message, dan DOM Templating) bekerja sama, ini adalah contoh alur utuh sebuah aplikasi "Tugas":
+
+```php
+// 1. Skema Database (Misal di tools/migrate.php)
+fst_db('EXEC', "CREATE TABLE tasks (id INTEGER PRIMARY KEY, title TEXT, is_done INTEGER DEFAULT 0)");
+
+// 2. Daftar Rute (di router.php)
+
+// Tampilkan Daftar & Form
+fst_get('/tasks', function() {
+    $tasks = fst_db_select('tasks', [], ['order_by' => 'id DESC']);
+    
+    // Pesan Flash jika ada
+    $alert = '';
+    if (fst_flash_has('msg')) {
+        $alert = ["div" => ["@class" => "alert success", "@text" => fst_flash_get('msg')]];
+    }
+
+    fst_template('BaseLayout', [
+        "h1" => "Daftar Tugas",
+        ".flash-container" => ["@html" => $alert],
+        
+        // Render List Tugas
+        "ul.task-list" => ["@append" => array_map(function($t) {
+            return ["li" => [
+                "span" => e($t['title']),
+                "form" => [
+                    "@action" => "/tasks/delete/".$t['id'], "@method" => "POST",
+                    "@style" => "display:inline; margin-left: 10px;",
+                    "@append" => [ fst_csrf_field(), ["button" => "Hapus"] ]
+                ]
+            ]];
+        }, $tasks)],
+        
+        // Render Form Tambah (Akan disuntik ke tag main atau penampung yang ada di BaseLayout)
+        "form.add-task" => [
+            "@action" => "/tasks", "@method" => "POST",
+            "@append" => [
+                fst_csrf_field(),
+                ["input" => ["@type" => "text", "@name" => "title", "@placeholder" => "Tugas baru", "@required" => true]],
+                ["button" => "Simpan"]
+            ]
+        ]
+    ]);
+});
+
+// Proses Simpan Data
+fst_post('/tasks', function() {
+    fst_csrf_check(); // Validasi token keamanan
+    
+    // Validasi input
+    $input = fst_validate($_POST, [ 'title' => 'required|min:3' ]);
+    
+    if (!$input['valid']) {
+        // Jika gagal, kembalikan dengan error 400
+        fst_abort(400, "Input tidak valid: " . $input['errors']['title'][0]);
+    }
+    
+    // Simpan ke database
+    fst_db_insert('tasks', ['title' => $input['data']['title']]);
+    
+    // Set Flash Message
+    fst_flash_set('msg', 'Tugas berhasil ditambahkan!');
+    
+    // Redirect kembali
+    fst_redirect('/tasks');
+});
+
+// Proses Hapus Data
+fst_post('/tasks/delete/:id', function($params) {
+    fst_csrf_check();
+    fst_db_delete('tasks', ['id' => $params['id']]);
+    fst_flash_set('msg', 'Tugas dihapus!');
+    fst_redirect('/tasks');
+});
+```
+*Dengan skrip ringkas ini, Anda sudah mendapatkan SSR CRUD super cepat tanpa load halaman jika digabungkan dengan agen SPA (`agent_js: true`)!*

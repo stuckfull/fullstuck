@@ -35,7 +35,9 @@ fst.go('/sebagian', { target: '#widget', history: false, scroll: 'smooth' });
 | `data-fst-no-history` | Mencegah navigasi untuk dicatat dalam *URL Bar* (browser history). Sangat cocok untuk action form DELETE / POST. |
 | `data-fst-no-scroll` | Mematikan efek `scroll-to-top` otomatis setelah perpindahan halaman. |
 | `data-fst-indicator="class"`| Menimpa *CSS Class* loading untuk elemen spesifik ini saat di-fetch. |
-| `data-fst-cache="true|false"` | Mengesampingkan aturan `history_cache` di config, spesifik untuk tautan ini (mengontrol memori back/forward). |
+| `data-fst-ignore` | Ditaruh di dalam `<script>`, menandakan script ini hanya di-eksekusi 1 kali seumur hidup. |
+
+*Untuk referensi Javascript API dan Event Hooks lebih lengkap, lihat [FULL.md](./FULL.md).*
 
 ### Javascript Event Hooks
 Anda dapat memberikan reaksi saat halaman sedang memuat atau selesai memuat (Sangat membantu untuk menghancurkan & me-load ulang library jQuery / pihak ke-3):

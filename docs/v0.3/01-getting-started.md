@@ -71,12 +71,23 @@ Seluruh pengaturan framework berpusat pada file `fullstuck.json`. File ini wajib
         "public_folders": ["assets", "uploads", "storage/public"],
         "routes_file": ["router.php"],
         "error_handlers": {
-            "404": "views/errors/404.php",
-            "403": "Sorry, you do not have permission.",
-            "500": "views/errors/500.php"
+            "404": "views/404.html"
+        },
+        "regex_shortcuts": {
+            ":id": "([0-9]+)",
+            ":slug": "([a-zA-Z0-9_-]+)"
         }
     },
-    "agent_js": true
+    "agent_js": true,
+    "fragment": {
+        "header_request": "HTTP_X_FST_FRAGMENT",
+        "header_target": "X-FST-Target",
+        "indicator_class": "fst-loading",
+        "history_cache": true
+    },
+    "mime_types": {
+        "custom": "application/x-custom"
+    }
 }
 ```
 
@@ -86,6 +97,8 @@ Seluruh pengaturan framework berpusat pada file `fullstuck.json`. File ini wajib
 - **`production`**: `true` menyembunyikan *error stack trace* dari browser dan mengalihkannya ke log file `.fst.log`. `false` akan menampilkan error detil di browser.
 - **`routing.require`**: Array path untuk me-load otomatis file/folder sebelum rute dieksekusi.
 - **`agent_js`**: `true` akan otomatis menyuntikkan script FST Agent (`<script src="/fst-agent.js">`) ke setiap output HTML.
+
+*Untuk referensi konfigurasi dan penjelasan lebih lengkap, silakan lihat [FULL.md](./FULL.md).*
 
 ---
 
