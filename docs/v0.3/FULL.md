@@ -554,7 +554,7 @@ $rules = [
 
     // IF Murni (Menyembunyikan/Menampilkan Elemen)
     "div.banner-promo" => [
-        "@if" => '$isPromoActive'
+        "@if" => '$isPromoActive' // Jika false, elemen dihapus permanen dari DOM output (bukan display: none!)
     ],
 
     // IF & ELSE (Gunakan Inverse Logic ! pada class berbeda)
@@ -580,6 +580,8 @@ $rules = [
     ]
 ];
 ```
+
+> ⚠️ **Peringatan DX (Closure):** Array `$rules` **tidak mendukung** *Closure* (`fn() => ...`). Semua logika HARUS ditulis dalam bentuk *String Literal Ekspresi PHP* agar dapat di-*serialize* untuk *caching*. Jika butuh variabel kompleks, evaluasi variabel tersebut di *controller* dan suntikkan hasilnya melalui array `$data`.
 
 > **💡 Tips Debugging & Cara Kerja Evaluasi Variabel:**
 > Saat Anda menuliskan aturan seperti `"span.price" => '"Rp " . number_format($p["price"], 0, ",", ".")'`, ruleset tersebut disimpan sebagai **string ekspresi PHP** yang akan dievaluasi pada saat *runtime* di dalam file PHP terkompilasi.
@@ -651,6 +653,10 @@ Mulai dari v0.3.0, FullStuck tidak hanya beroperasi sebagai SPA otomatis, namun 
 
 *   **`data-fst-ignore`**
     Ditaruh di dalam `<script>`, menandakan script ini hanya di-eksekusi 1 kali seumur hidup, sangat berguna bagi SDK Analytic yang tidak boleh meledak saat SPA routing bertransisi berulang-ulang.
+
+> ⚠️ **Peringatan SPA Script Re-Execution:** Saat FST Agent melakukan transisi *Fragment Routing*, ia akan mengeksekusi ulang seluruh tag `<script>` baru di dalam DOM target agar integrasi *library* lain tetap bekerja. Oleh karena itu:
+> 1. Pastikan script bawaan FST Agent selalu memiliki atribut `id="fst-agent"` (`<script src="/fst-agent.js" id="fst-agent"></script>`) agar tidak dieksekusi berulang kali. (Jika menggunakan `--agent_js=yes`, ini di-*handle* otomatis oleh *framework*).
+> 2. Untuk tag `<script>` khusus Anda sendiri (misalnya pendaftaran rute SPA `fst.set()`), **WAJIB** menambahkan atribut `data-fst-ignore` agar tidak memicu eksekusi/pendaftaran fungsi ganda ketika berpindah halaman!
 
 ---
 

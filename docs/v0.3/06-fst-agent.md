@@ -37,6 +37,10 @@ fst.go('/sebagian', { target: '#widget', history: false, scroll: 'smooth' });
 | `data-fst-indicator="class"`| Menimpa *CSS Class* loading untuk elemen spesifik ini saat di-fetch. |
 | `data-fst-ignore` | Ditaruh di dalam `<script>`, menandakan script ini hanya di-eksekusi 1 kali seumur hidup. |
 
+> ⚠️ **Peringatan SPA Script Re-Execution:** Saat FST Agent melakukan transisi *Fragment Routing*, ia akan mengeksekusi ulang seluruh tag `<script>` baru di dalam DOM target agar integrasi *library* lain tetap bekerja. Oleh karena itu:
+> 1. Pastikan script bawaan FST Agent selalu memiliki atribut `id="fst-agent"` (`<script src="/fst-agent.js" id="fst-agent"></script>`) agar tidak dieksekusi berulang kali. (Jika menggunakan `--agent_js=yes`, ini di-*handle* otomatis oleh *framework*).
+> 2. Untuk tag `<script>` khusus Anda sendiri (misalnya pendaftaran rute SPA `fst.set()`), **WAJIB** menambahkan atribut `data-fst-ignore` agar tidak memicu eksekusi/pendaftaran fungsi ganda ketika berpindah halaman!
+
 *Untuk referensi Javascript API dan Event Hooks lebih lengkap, lihat [FULL.md](./FULL.md).*
 
 ### Javascript Event Hooks

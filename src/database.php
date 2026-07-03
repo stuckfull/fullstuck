@@ -125,6 +125,15 @@ function fst_db($mode, $sql, $params = [], $connection = null) {
     };
 }
 
+function _fst_parse_condition($key, $conn) {
+    $parts = preg_split('/\s+/', trim($key), 2);
+    $field = fst_db_quote_ident($parts[0], $conn);
+    $operator = isset($parts[1]) ? strtoupper(trim($parts[1])) : '=';
+    $allowed_operators = ['=', '!=', '<', '>', '<=', '>=', 'LIKE', 'NOT LIKE', 'IS', 'IS NOT'];
+    if (!in_array($operator, $allowed_operators)) $operator = '=';
+    return $field . " " . $operator . " ?";
+}
+
 function fst_db_select($table, $conditions = [], $options = []) {
     $conn = $options['connection'] ?? null;
     $columns = $options['select'] ?? '*';
@@ -134,7 +143,7 @@ function fst_db_select($table, $conditions = [], $options = []) {
     if (!empty($conditions)) {
         $where = [];
         foreach ($conditions as $k => $v) {
-            $where[] = fst_db_quote_ident($k, $conn) . " = ?";
+            $where[] = _fst_parse_condition($k, $conn);
             $params[] = $v;
         }
         $sql .= " WHERE " . implode(" AND ", $where);
@@ -176,7 +185,7 @@ function fst_db_update($table, $data, $conditions = [], $options = []) {
     
     $where = [];
     foreach ($conditions as $k => $v) {
-        $where[] = fst_db_quote_ident($k, $conn) . " = ?";
+        $where[] = _fst_parse_condition($k, $conn);
         $params[] = $v;
     }
     $sql .= " WHERE " . implode(" AND ", $where);
@@ -191,7 +200,7 @@ function fst_db_delete($table, $conditions, $options = []) {
     $where = [];
     $params = [];
     foreach ($conditions as $k => $v) {
-        $where[] = fst_db_quote_ident($k, $conn) . " = ?";
+        $where[] = _fst_parse_condition($k, $conn);
         $params[] = $v;
     }
     $sql = "DELETE FROM {$t} WHERE " . implode(" AND ", $where);

@@ -1,8 +1,8 @@
 class fst_agent {
     constructor() {
         this.routes = [];
-        this.baseUrl = ''; // This could be set via config
-        this.notFoundCallback = null; // Will default to Fragment Fetch
+        this.baseUrl = '';
+        this.notFoundCallback = null;
         this.beforeHook = null;
         this.afterHook = null;
         this.fetchInterceptor = null;
@@ -11,14 +11,12 @@ class fst_agent {
     }
 
     init() {
-        // Intercept link clicks
         document.addEventListener('click', (e) => {
             if (e.defaultPrevented) return;
             const link = e.target.closest('a');
             if (!link || !link.href) return;
             if (link.hasAttribute('data-fst-normal-load') || link.target === '_blank' || link.hasAttribute('download') || link.hostname !== window.location.hostname || e.ctrlKey || e.metaKey || e.shiftKey) return;
             
-            // Ignore hash links on the same page
             const href = link.getAttribute('href');
             if (href && (href.startsWith('#') || (link.pathname === window.location.pathname && link.search === window.location.search && link.hash !== ''))) {
                 return;
@@ -28,24 +26,20 @@ class fst_agent {
             this.handleLinkClick(link);
         });
 
-        // Intercept Popstate
         window.addEventListener('popstate', async (e) => {
             const target = (e.state && e.state.fstTarget) || 'body';
             const savedScrollX = e.state?.scrollX;
             const savedScrollY = e.state?.scrollY;
             const useCache = e.state?.fstCache ?? (document.querySelector('script#fst-agent')?.getAttribute('data-history-cache') === 'true');
 
-            // Find route in JS
             const path = window.location.pathname + window.location.search;
             const matchedRoute = this.matchRoute(path);
 
             if (matchedRoute) {
-                // It's a JS route
                 this.route(path);
                 return;
             }
 
-            // Fragment Fetcher Popstate
             if (useCache && e.state && e.state.fstHtml) {
                 const targetElement = document.querySelector(target);
                 if (targetElement) {
@@ -76,7 +70,6 @@ class fst_agent {
             }
         });
 
-        // Form Submit
         document.addEventListener('submit', async (e) => {
             if (e.defaultPrevented) return;
             const form = e.target;
@@ -85,7 +78,6 @@ class fst_agent {
             this.handleFormSubmit(form);
         });
 
-        // Default Not Found Callback (Fragment Fetcher)
         this.setNotFound((path, triggerElement) => {
             let targetSelector = 'body';
             let isHistoryOptOut = false;
@@ -96,7 +88,6 @@ class fst_agent {
             this.fetchFragment(path, targetSelector, !isHistoryOptOut, triggerElement);
         });
 
-        // Initial state load
         window.addEventListener('DOMContentLoaded', () => {
             if (!window.history.state) {
                 const bodyAttrs = Array.from(document.body.attributes).map(a => `${a.name}="${a.value}"`).join(' ');
@@ -108,7 +99,6 @@ class fst_agent {
             }
             document.dispatchEvent(new Event('fst:load'));
             
-            // Check if initial URL matches any client-side route
             const path = window.location.pathname + window.location.search;
             if (this.matchRoute(path)) {
                 this.route(path);
@@ -206,7 +196,6 @@ class fst_agent {
     navigate(path, triggerElement) {
         if (this.beforeHook && this.beforeHook(path) === false) return;
         
-        // Save scroll pos before changing history state
         if (window.history.state) {
             const currentState = window.history.state;
             currentState.scrollX = window.scrollX;
@@ -219,7 +208,6 @@ class fst_agent {
 
         let routePath = path.replace(this.baseUrl, "") || "/";
         
-        // Match JS route
         const match = this.matchRoute(routePath);
         if (match) {
             if (!isHistoryOptOut) {
@@ -227,7 +215,6 @@ class fst_agent {
             }
             this.route(routePath, triggerElement);
         } else {
-            // Fragment route will push state internally upon success
             this.notFoundCallback ? this.notFoundCallback(href, triggerElement) : console.log(`No route matched for: ${href}`);
         }
     }
@@ -363,7 +350,6 @@ class fst_agent {
             const html = await response.text();
             this.processFragmentResponse(html, targetSelector, targetElement, response, triggerElement, pushHistory, url, 'GET', isPopstate);
             
-            // Handle scroll behavior
             if (!isPopstate) {
                 const noScroll = triggerElement ? triggerElement.hasAttribute('data-fst-no-scroll') : false;
                 if (!noScroll) {
@@ -456,7 +442,6 @@ class fst_agent {
 
         const path = this.getPathFromHref(url);
         
-        // JS route match
         const match = this.matchRoute(path);
         if (match) {
             if (history) {

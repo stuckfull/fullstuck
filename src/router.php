@@ -25,7 +25,7 @@ HTML;
     echo $html; die();
 }
 
-function fst_route($method, $path, $callback, $middleware = []) {
+function _fst_route($method, $path, $callback, $middleware = []) {
     $fst_config = fst_app('config');
     $fst_routes = fst_app('routes');
     $fst_route_prefix = fst_app('route_prefix');
@@ -82,12 +82,12 @@ function fst_route($method, $path, $callback, $middleware = []) {
     fst_app('routes', $fst_routes);
 }
 
-function fst_get($path, $callback, $middleware = []) { fst_route('GET', $path, $callback, $middleware); }
-function fst_post($path, $callback, $middleware = []) { fst_route('POST', $path, $callback, $middleware); }
-function fst_put($path, $callback, $middleware = []) { fst_route('PUT', $path, $callback, $middleware); }
-function fst_patch($path, $callback, $middleware = []) { fst_route('PATCH', $path, $callback, $middleware); }
-function fst_delete($path, $callback, $middleware = []) { fst_route('DELETE', $path, $callback, $middleware); }
-function fst_any($path, $callback, $middleware = []) { fst_route('ANY', $path, $callback, $middleware); }
+function fst_get($path, $callback, $middleware = []) { _fst_route('GET', $path, $callback, $middleware); }
+function fst_post($path, $callback, $middleware = []) { _fst_route('POST', $path, $callback, $middleware); }
+function fst_put($path, $callback, $middleware = []) { _fst_route('PUT', $path, $callback, $middleware); }
+function fst_patch($path, $callback, $middleware = []) { _fst_route('PATCH', $path, $callback, $middleware); }
+function fst_delete($path, $callback, $middleware = []) { _fst_route('DELETE', $path, $callback, $middleware); }
+function fst_any($path, $callback, $middleware = []) { _fst_route('ANY', $path, $callback, $middleware); }
 
 function fst_group($prefix, $callback, $middleware = []) {
     $parent_prefix = fst_app('route_prefix');

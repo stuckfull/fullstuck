@@ -119,7 +119,7 @@ function fst_handle_installation() {
         // Auto-Scaffolding Starter Project
         if (isset($input_data['generate_starter']) && $input_data['generate_starter'] !== '0') {
             @mkdir(FST_ROOT_DIR . '/views', 0755, true);
-            if ($input_data['generate_starter'] === 'minimal') {
+            if (in_array($input_data['generate_starter'], ['minimal', '1'])) {
                 $html_template = <<<HTML
 <!DOCTYPE html>
 <html lang="en">

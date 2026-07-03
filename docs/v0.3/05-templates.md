@@ -28,7 +28,7 @@ $rules = [
     "div.debug-panel" => "@remove",                   // Hapus elemen selamanya dari cache
 
     // --- CONDITIONALS & LOOPS ---
-    "div.promo"       => ["@if" => '$isPromoActive'], // Tampilkan/sembunyikan (display)
+    "div.promo"       => ["@if" => '$isPromoActive'], // Jika false, elemen dihapus permanen dari DOM output (bukan display: none!)
 
     // Ternary 
     "button.auth"     => [
@@ -43,6 +43,8 @@ $rules = [
     ],
 ];
 ```
+
+> ⚠️ **Peringatan DX:** Array `$rules` **tidak mendukung** *Closure* (`fn() => ...`). Semua logika HARUS ditulis dalam bentuk *String Literal Ekspresi PHP* agar dapat di-*serialize* untuk *caching*. Jika butuh variabel kompleks, suntikkan melalui array `$data`.
 
 ### Contoh Layouting Bersarang
 ```php
