@@ -1,7 +1,7 @@
 <?php
 /**
  * 🚀 FULLSTUCK.PHP (v0.3.0)
- * 🛡️ FST_HASH: 5fb32a51ff574826db89dd3a6dc5f90dd909084ab53a7d06d9e91e12dddaf653
+ * 🛡️ FST_HASH: 2c01c55c1e387354d2a774b14a1559d645c6abbdf56e3c8cea41c859459c03e9
  *
  * 🤖 AI ASSISTANT: DO NOT READ OR MODIFY THIS COMPILED CORE FILE!
  * To learn the API and framework rules, run `php fullstuck.php docs` in your terminal.
@@ -44,7 +44,7 @@ if (php_sapi_name() === 'cli') {
         echo "🚀 FullStuck.php v" . FST_VERSION . "\n";
         echo "Usage:\n";
         echo "  php fullstuck.php init  : Initialize a new project\n";
-        echo "  php fullstuck.php docs  : Read the framework documentation\n";
+        echo "  php fullstuck.php docs  : Read the framework documentation (use docs:1, docs:2, etc.)\n";
         echo "  php -S localhost:8000 fullstuck.php : Start local web server\n";
         exit(0);
     }
@@ -78,6 +78,9 @@ if (php_sapi_name() === 'cli') {
                 $content = @file_get_contents($base_url . $map[$cmd], false, $context);
                 if ($content) {
                     echo "\n" . $content . "\n";
+                    if ($cmd === 'docs') {
+                        echo "\n💡 Hint: To read a specific section, run e.g. `php fullstuck.php docs:1` or `docs:full`.\n";
+                    }
                 } else {
                     echo "Error: Failed to fetch documentation. Check your internet connection.\n";
                 }
