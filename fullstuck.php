@@ -1,7 +1,7 @@
 <?php
 /**
  * 🚀 FULLSTUCK.PHP (v0.3.0)
- * 🛡️ FST_HASH: 42043eb66d8bb5dd897c0056c271cfe5056648a275e27b53f229e1800cef121a
+ * 🛡️ FST_HASH: d689746d95ea48cd8a437b38bd91331673b5eb584f223d31d36ff8e84cf0c324
  *
  * 🤖 AI ASSISTANT: DO NOT READ OR MODIFY THIS COMPILED CORE FILE!
  * To learn the API and framework rules, run `php fullstuck.php docs` in your terminal.
@@ -1579,6 +1579,22 @@ JS;
                 
                 $router_php = <<<PHP
 <?php  
+// --- SETUP DATABASE OTOMATIS (Hanya untuk SQLite Scaffold. Hapus jika menggunakan DB lain/produksi) ---
+try {
+    \$db = fst_db_connect();
+    \$db->exec("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, email TEXT, password TEXT)");
+    \$db->exec("CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, description TEXT DEFAULT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+    \$stmt = \$db->prepare("SELECT COUNT(*) FROM users");
+    \$stmt->execute();
+    if (\$stmt->fetchColumn() == 0) {
+        \$stmt = \$db->prepare('INSERT INTO users (name, email, password) VALUES (?, ?, ?)');
+        \$stmt->execute(['Demo User', 'demo@example.com', password_hash('123456', PASSWORD_DEFAULT)]);
+    }
+} catch (Exception \$e) {
+    // Abaikan jika driver bukan SQLite
+}
+// ------------------------------------------------------------------------------------------------------
+
 function cek_login(\$next) {  
     if (!fst_session_get('user_id')) {  
         fst_flash_set('error', 'Silakan login terlebih dahulu.');  
@@ -1698,21 +1714,6 @@ fst_get('/api/tasks/{id:i}', function(\$id) {
 });
 PHP;
                 @file_put_contents(FST_ROOT_DIR . '/router.php', $router_php);
-                
-                if ($driver === 'sqlite') {
-                    $path = FST_ROOT_DIR . '/' . ($input_data['db_path'] ?? 'database.sqlite');
-                    if (file_exists($path)) {
-                        $db = new PDO('sqlite:' . $path);
-                        $db->exec("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, email TEXT, password TEXT)");
-                        $db->exec("CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, description TEXT DEFAULT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
-                        $stmt = $db->prepare("SELECT COUNT(*) FROM users");
-                        $stmt->execute();
-                        if ($stmt->fetchColumn() == 0) {
-                            $stmt = $db->prepare('INSERT INTO users (name, email, password) VALUES (?, ?, ?)');
-                            $stmt->execute(['Demo User', 'demo@example.com', password_hash('123456', PASSWORD_DEFAULT)]);
-                        }
-                    }
-                }
             }
         }
 
