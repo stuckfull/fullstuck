@@ -286,7 +286,7 @@ fst.set('/tasks/:id/detail', async (params) => {
         main.innerHTML = `
             <div style="text-align:center; padding: 2rem; color: red;">
                 <h2>404 Not Found</h2>
-                <p>Task dengan ID #\${params.id} tidak ditemukan di database.</p>
+                <p>Task dengan ID #\${fst.e(params.id)} tidak ditemukan di database.</p>
                 <a href="/tasks" data-fst-fragment="main">Kembali</a>
             </div>
         `;
@@ -295,10 +295,10 @@ fst.set('/tasks/:id/detail', async (params) => {
 
     const task = await res.json();
     main.innerHTML = `  
-        <h1>Detail Task #\${task.id}</h1>  
-        <h3>\${task.title}</h3>
-        <p>\${task.description ? task.description : '<i>Tidak ada deskripsi.</i>'}</p>  
-        <small>Dibuat: \${task.created_at}</small>
+        <h1>Detail Task #\${fst.e(task.id)}</h1>  
+        <h3>\${fst.e(task.title)}</h3>
+        <p>\${task.description ? fst.e(task.description) : '<i>Tidak ada deskripsi.</i>'}</p>  
+        <small>Dibuat: \${fst.e(task.created_at)}</small>
         <br><br>
         <a href="/tasks" data-fst-fragment="main">&larr; Kembali ke Daftar Tasks</a>
     `;

@@ -465,6 +465,16 @@ class fst_agent {
             this.fetchFragment(url, target, history, virtualTrigger);
         }
     }
+    escape(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
 }
 
 window.fst = new fst_agent();
+window.fst.e = window.fst.escape;
