@@ -1,23 +1,10 @@
 <?php
 /**
- * 🚀 FULLSTUCK.PHP - The Zero-Config, AI-Friendly Framework
- * 🔗 Repository: https://github.com/milio48/fullstuck
- * 📚 Raw Docs: https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v0.3.0.md
- * 💡 Version: 0.3.0 | FST_HASH: aa6614da9a09700289f8102b340b292231244c93b22e802b3d000a1c0074207e
+ * 🚀 FULLSTUCK.PHP (v0.3.0)
+ * 🛡️ FST_HASH: 68438d5e9ac88ef822c1c0550551a40a05a94b406e7bbdc0479d70f55089a84f
  *
- * 🛑 ===================================================================== 🛑
- * 🤖 STRICT AI AGENT DIRECTIVE (LLM / VIBE CODER INSTRUCTIONS)
- * 🛑 ===================================================================== 🛑
- * STOP READING THIS FILE IMMEDIATELY! 
- * This is the compiled core framework. Do NOT analyze, read, or attempt to 
- * modify the internal logic of this file. Reading this dense file will cause 
- * context overflow and hallucinations.
- *
- * To understand how to build with this framework, you MUST read:
- * 1. The main docs: https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v0.3.0.md
- * 2. The API cheatsheet: https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v0.3.0_cheatsheet.md
- * Rely ONLY on these documents when implementing features or fixing bugs.
- * ==========================================================================
+ * 🤖 AI ASSISTANT: DO NOT READ OR MODIFY THIS COMPILED CORE FILE!
+ * To learn the API and framework rules, run `php fullstuck.php docs` in your terminal.
  */
 define('FST_AGENT_JS_CODE', 'class fst_agent { constructor() { this.routes = []; this.baseUrl = \'\'; // This could be set via config this.notFoundCallback = null; // Will default to Fragment Fetch this.beforeHook = null; this.afterHook = null; this._currentGroupPrefix = \'\'; this.init(); } init() { document.addEventListener(\'click\', (e) => { if (e.defaultPrevented) return; const link = e.target.closest(\'a\'); if (!link || !link.href) return; if (link.hasAttribute(\'data-fst-normal-load\') || link.classList.contains(\'no-spa\') || link.target === \'_blank\' || link.hasAttribute(\'download\') || link.hostname !== window.location.hostname || e.ctrlKey || e.metaKey || e.shiftKey) return; const href = link.getAttribute(\'href\'); if (href && (href.startsWith(\'#\') || (link.pathname === window.location.pathname && link.search === window.location.search && link.hash !== \'\'))) { return; } e.preventDefault(); this.handleLinkClick(link); }); window.addEventListener(\'popstate\', async (e) => { const target = (e.state && e.state.fstTarget) || \'body\'; const savedScrollX = e.state?.scrollX; const savedScrollY = e.state?.scrollY; const useCache = e.state?.fstCache ?? (document.querySelector(\'script#fst-agent\')?.getAttribute(\'data-history-cache\') === \'true\'); const path = window.location.pathname + window.location.search; const matchedRoute = this.matchRoute(path); if (matchedRoute) { this.route(path); return; } if (useCache && e.state && e.state.fstHtml) { const targetElement = document.querySelector(target); if (targetElement) { document.dispatchEvent(new Event(\'fst:unload\')); if (e.state.fstBodyAttrs && target === \'body\') { const parser = new DOMParser(); const doc = parser.parseFromString(`<div ${e.state.fstBodyAttrs}></div>`, \'text/html\'); const newBody = doc.body.firstChild; Array.from(document.body.attributes).forEach(attr => document.body.removeAttribute(attr.name)); Array.from(newBody.attributes).forEach(attr => document.body.setAttribute(attr.name, attr.value)); } targetElement.innerHTML = e.state.fstHtml; this.reexecuteScripts(targetElement); document.dispatchEvent(new Event(\'fst:load\')); } else { window.location.reload(); return; } } else { await this.fetchFragment(window.location.href, target, false, null, true); } if (savedScrollX !== undefined && savedScrollY !== undefined) { window.scrollTo({ left: savedScrollX, top: savedScrollY, behavior: \'instant\' }); } else if (window.location.hash) { const targetAnchor = document.querySelector(window.location.hash); if (targetAnchor) targetAnchor.scrollIntoView({ behavior: \'smooth\' }); } }); document.addEventListener(\'submit\', async (e) => { if (e.defaultPrevented) return; const form = e.target; if (form.hasAttribute(\'data-fst-normal-load\') || form.classList.contains(\'no-spa\')) return; e.preventDefault(); this.handleFormSubmit(form); }); this.setNotFound((path, triggerElement) => { let targetSelector = \'body\'; let isHistoryOptOut = false; if (triggerElement) { targetSelector = triggerElement.getAttribute(\'data-fst-fragment\') || \'body\'; isHistoryOptOut = triggerElement.hasAttribute(\'data-fst-no-history\'); } this.fetchFragment(path, targetSelector, !isHistoryOptOut, triggerElement); }); window.addEventListener(\'DOMContentLoaded\', () => { if (!window.history.state) { const bodyAttrs = Array.from(document.body.attributes).map(a => `${a.name}="${a.value}"`).join(\' \'); window.history.replaceState({ fstHtml: document.body.innerHTML, fstTarget: \'body\', fstBodyAttrs: bodyAttrs }, \'\', window.location.href); } document.dispatchEvent(new Event(\'fst:load\')); const path = window.location.pathname + window.location.search; if (this.matchRoute(path)) { this.route(path); } }); } handleLinkClick(link) { const href = link.href; const path = this.getPathFromHref(href); if (path.startsWith(this.baseUrl)) { this.navigate(path, link); } else { window.location.href = href; } } async handleFormSubmit(form) { const targetSelector = form.getAttribute(\'data-fst-fragment\') || \'body\'; const isHistoryOptOut = form.hasAttribute(\'data-fst-no-history\'); const indicator = this.getIndicatorClass(form); const targetElement = document.querySelector(targetSelector); if (targetElement) targetElement.classList.add(...indicator.split(\' \')); try { const method = (form.getAttribute(\'method\') || \'GET\').toUpperCase(); const action = form.getAttribute(\'action\') || window.location.href; const formData = new FormData(form); const reqHeader = document.querySelector(\'script#fst-agent\')?.getAttribute(\'data-req-header\') || \'X-FST-Request\'; const targetHeader = document.querySelector(\'script#fst-agent\')?.getAttribute(\'data-target-header\') || \'X-FST-Target\'; const headers = { [reqHeader]: \'true\', [targetHeader]: targetSelector }; let fetchOptions = { method, headers }; let finalUrl = action; if (method === \'GET\') { const params = new URLSearchParams(formData); finalUrl = action.includes(\'?\') ? `${action}&${params.toString()}` : `${action}?${params.toString()}`; } else { fetchOptions.body = formData; } const loadingEvent = new CustomEvent(\'fst:loading\', { detail: { url: finalUrl, targetSelector, triggerElement: form }, cancelable: true }); if (!document.dispatchEvent(loadingEvent)) { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); return; } const response = await fetch(finalUrl, fetchOptions); const redirectUrl = response.headers.get(\'X-FST-Redirect\'); if (redirectUrl) { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); await this.fetchFragment(redirectUrl, targetSelector, !isHistoryOptOut); return; } if (response.redirected) { window.location.href = response.url; return; } if (!response.ok && response.status !== 400 && response.status !== 422) { const errorHtml = await response.text(); document.open(); document.write(errorHtml); document.close(); return; } const html = await response.text(); this.processFragmentResponse(html, targetSelector, targetElement, response, form, !isHistoryOptOut, finalUrl, method); } catch (err) { window.location.reload(); } finally { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); } } getPathFromHref(href) { const url = new URL(href, window.location.origin); let path = url.pathname; if (url.search) path += url.search; return path; } navigate(path, triggerElement) { if (this.beforeHook && this.beforeHook(path) === false) return; if (window.history.state) { const currentState = window.history.state; currentState.scrollX = window.scrollX; currentState.scrollY = window.scrollY; window.history.replaceState(currentState, \'\'); } const isHistoryOptOut = triggerElement ? triggerElement.hasAttribute(\'data-fst-no-history\') : false; const href = window.location.origin + path; let routePath = path.replace(this.baseUrl, "") || "/"; const match = this.matchRoute(routePath); if (match) { if (!isHistoryOptOut) { window.history.pushState({}, "", href); } this.route(routePath, triggerElement); } else { this.notFoundCallback ? this.notFoundCallback(href, triggerElement) : console.log(`No route matched for: ${href}`); } } route(path, triggerElement) { for (const { pattern, callback } of this.routes) { const match = this.matchRouteCheck(pattern, path); if (match) { callback(match, triggerElement); if (this.afterHook) this.afterHook(path, triggerElement); return; } } } matchRoute(path) { for (const { pattern } of this.routes) { const match = this.matchRouteCheck(pattern, path); if (match) return match; } return null; } matchRouteCheck(pattern, path) { const [patternPath, patternQuery] = pattern.split("?"); const [urlPath, urlQuery] = path.split("?"); const regex = new RegExp("^" + patternPath.replace(/:\\w+/g, "([^/]+)") + "$"); const match = urlPath.match(regex); if (match) { const params = { param: path, query: {} }; const keys = patternPath.match(/:\\w+/g) || []; keys.forEach((key, i) => { params[key.substring(1)] = match[i + 1]; }); if (urlQuery) { const searchParams = new URLSearchParams(urlQuery); for (const [key, value] of searchParams) { params.query[key] = value; } } return params; } return null; } set(pattern, callback) { this.routes.push({ pattern: this._currentGroupPrefix + pattern, callback }); } group(prefix, callback) { const prevPrefix = this._currentGroupPrefix; this._currentGroupPrefix += prefix; callback(); this._currentGroupPrefix = prevPrefix; } setNotFound(callback) { this.notFoundCallback = callback; } setBefore(callback) { this.beforeHook = callback; } setAfter(callback) { this.afterHook = callback; } getIndicatorClass(triggerElement) { return (triggerElement && triggerElement.getAttribute("data-fst-indicator")) || document.querySelector("script#fst-agent")?.getAttribute("data-indicator-class") || "fst-loading"; } async fetchFragment(url, targetSelector, pushHistory, triggerElement = null, isPopstate = false) { const reqHeader = document.querySelector(\'script#fst-agent\')?.getAttribute(\'data-req-header\') || \'X-FST-Request\'; const targetHeader = document.querySelector(\'script#fst-agent\')?.getAttribute(\'data-target-header\') || \'X-FST-Target\'; const targetElement = document.querySelector(targetSelector); const indicator = this.getIndicatorClass(triggerElement); if (targetElement) targetElement.classList.add(...indicator.split(\' \')); const loadingEvent = new CustomEvent(\'fst:loading\', { detail: { url, targetSelector, triggerElement }, cancelable: !isPopstate }); if (!isPopstate && !document.dispatchEvent(loadingEvent)) { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); return; } try { const headers = { [reqHeader]: \'true\', [targetHeader]: targetSelector }; const response = await fetch(url, { headers }); if (!response.ok) { const errorHtml = await response.text(); document.open(); document.write(errorHtml); document.close(); return; } const redirectUrl = response.headers.get(\'X-FST-Redirect\'); if (redirectUrl) { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); if (isPopstate) { window.location.href = redirectUrl; return; } await this.fetchFragment(redirectUrl, targetSelector, pushHistory); return; } if (response.redirected) { window.location.href = response.url; return; } const contentType = response.headers.get(\'content-type\'); if (!contentType || !contentType.includes(\'text/html\')) { window.location.href = url; return; } const html = await response.text(); this.processFragmentResponse(html, targetSelector, targetElement, response, triggerElement, pushHistory, url, \'GET\', isPopstate); if (!isPopstate) { const noScroll = triggerElement ? triggerElement.hasAttribute(\'data-fst-no-scroll\') : false; if (!noScroll) { const scrollBehavior = triggerElement ? (triggerElement.getAttribute(\'data-fst-scroll\') || \'instant\') : \'instant\'; const behavior = scrollBehavior === \'smooth\' ? \'smooth\' : \'instant\'; if (window.location.hash) { const targetAnchor = document.querySelector(window.location.hash); if (targetAnchor) { targetAnchor.scrollIntoView({ behavior }); } else { if (targetSelector === \'body\') window.scrollTo({ top: 0, behavior }); else targetElement.scrollTo({ top: 0, behavior }); } } else { if (targetSelector === \'body\') window.scrollTo({ top: 0, behavior }); else targetElement.scrollTo({ top: 0, behavior }); } } } } catch (err) { window.location.href = url; } finally { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); } } processFragmentResponse(html, targetSelector, targetElement, response, triggerElement, pushHistory, url, method, isPopstate = false) { const newTitle = html.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i); if (newTitle) document.title = newTitle[1]; const bodyAttrs = response.headers.get(\'X-FST-Body-Attrs\'); if (bodyAttrs !== null && targetSelector === \'body\') { const parser = new DOMParser(); const doc = parser.parseFromString(`<div ${bodyAttrs}></div>`, \'text/html\'); const newBody = doc.body.firstChild; Array.from(document.body.attributes).forEach(attr => document.body.removeAttribute(attr.name)); Array.from(newBody.attributes).forEach(attr => document.body.setAttribute(attr.name, attr.value)); } if (!targetElement) throw new Error(\'Target not found\'); document.dispatchEvent(new Event(\'fst:unload\')); targetElement.innerHTML = html; if (pushHistory && method === \'GET\') { const cacheFlag = triggerElement ? triggerElement.getAttribute(\'data-fst-cache\') : null; const globalCache = document.querySelector(\'script#fst-agent\')?.getAttribute(\'data-history-cache\') === \'true\'; const fstCache = cacheFlag !== null ? cacheFlag === \'true\' : globalCache; window.history.pushState({ fstHtml: html, fstTarget: targetSelector, fstBodyAttrs: bodyAttrs, fstCache: fstCache }, \'\', url); } else if (isPopstate) { window.history.replaceState({ fstHtml: html, fstTarget: targetSelector, fstBodyAttrs: bodyAttrs, fstCache: window.history.state?.fstCache ?? false }, \'\', url); } this.reexecuteScripts(targetElement); document.dispatchEvent(new Event(\'fst:load\')); } reexecuteScripts(targetElement) { const scripts = targetElement.querySelectorAll(\'script\'); scripts.forEach(oldScript => { if (oldScript.id === \'fst-agent\' || oldScript.hasAttribute(\'data-fst-ignore\')) return; const newScript = document.createElement(\'script\'); Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value)); newScript.appendChild(document.createTextNode(oldScript.innerHTML)); oldScript.parentNode.replaceChild(newScript, oldScript); }); } go(url, options = {}) { const defaultTarget = document.querySelector(\'script#fst-agent\')?.getAttribute(\'data-default-target\') || \'body\'; const target = options.target || defaultTarget; const history = options.history !== false; const virtualTrigger = { getAttribute: (attr) => { if (attr === \'data-fst-scroll\') return options.scroll !== undefined ? String(options.scroll) : null; if (attr === \'data-fst-indicator\') return options.indicator || null; if (attr === \'data-fst-cache\') return options.cache !== undefined ? String(options.cache) : null; if (attr === \'data-fst-fragment\') return target; return null; }, hasAttribute: (attr) => { if (attr === \'data-fst-no-history\') return !history; if (attr === \'data-fst-no-scroll\') return options.scroll === false; return false; } }; const path = this.getPathFromHref(url); const match = this.matchRoute(path); if (match) { if (history) { window.history.pushState({}, "", url); } this.route(path, virtualTrigger); } else { this.fetchFragment(url, target, history, virtualTrigger); } } } window.fst = new fst_agent();');
 
@@ -38,8 +25,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start(); 
 }
 define('FST_VERSION', '0.3.0');
-define('FST_DOCS_URL', 'https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v' . FST_VERSION . '.md');
-define('FST_CHEATSHEET_URL', 'https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v' . FST_VERSION . '_cheatsheet.md');
+define('FST_DOCS_URL', 'https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v0.3/index.md');
 if (!defined('FST_ROOT_DIR')) {
     $root = __DIR__;
     if (php_sapi_name() === 'cli-server') {
@@ -54,13 +40,52 @@ define('FST_CONFIG_FILE', FST_ROOT_DIR . DIRECTORY_SEPARATOR . 'fullstuck.json')
 
 if (php_sapi_name() === 'cli') {
     global $argv;
-    if (isset($argv[1]) && $argv[1] === 'init') {
-        if (file_exists(FST_CONFIG_FILE)) {
-            echo "Error: fullstuck.json already exists. Delete it first if you want to re-initialize.\n";
-            exit(1);
-        }
-        fst_handle_installation();
+    if (!isset($argv[1])) {
+        echo "🚀 FullStuck.php v" . FST_VERSION . "\n";
+        echo "Usage:\n";
+        echo "  php fullstuck.php init  : Initialize a new project\n";
+        echo "  php fullstuck.php docs  : Read the framework documentation\n";
+        echo "  php -S localhost:8000 fullstuck.php : Start local web server\n";
         exit(0);
+    }
+    
+    if (isset($argv[1])) {
+        if ($argv[1] === 'init') {
+            if (file_exists(FST_CONFIG_FILE)) {
+                echo "Error: fullstuck.json already exists. Delete it first if you want to re-initialize.\n";
+                exit(1);
+            }
+            fst_handle_installation();
+            exit(0);
+        }
+        if (strpos($argv[1], 'docs') === 0) {
+            $base_url = 'https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v0.3/';
+            $map = [
+                'docs' => 'index.md',
+                'docs:1' => '01-getting-started.md',
+                'docs:2' => '02-routing.md',
+                'docs:3' => '03-database.md',
+                'docs:4' => '04-security.md',
+                'docs:5' => '05-templates.md',
+                'docs:6' => '06-fst-agent.md',
+                'docs:7' => '07-logging.md',
+                'docs:full' => 'FULL.md'
+            ];
+            $cmd = $argv[1];
+            if (isset($map[$cmd])) {
+                $context = stream_context_create(['http' => ['header' => "User-Agent: FullStuck CLI\r\n"]]);
+                $content = @file_get_contents($base_url . $map[$cmd], false, $context);
+                if ($content) {
+                    echo "\n" . $content . "\n";
+                } else {
+                    echo "Error: Failed to fetch documentation. Check your internet connection.\n";
+                }
+            } else {
+                echo "Available docs commands:\n";
+                foreach(array_keys($map) as $k) { echo "  php fullstuck.php $k\n"; }
+            }
+            exit(0);
+        }
     }
 }
 
@@ -1241,37 +1266,32 @@ function fst_handle_installation() {
             }
         }
         
+        $db_conn = ["driver" => $driver];
+        if ($driver === 'sqlite') {
+            $db_conn["database_path"] = $input_data['db_path'] ?? 'database.sqlite';
+        } else if ($driver !== 'none') {
+            $db_conn["host"] = $input_data['db_host'] ?? 'localhost';
+            $db_conn["port"] = $input_data['db_port'] ?? ($driver === 'pgsql' ? '5432' : '3306');
+            $db_conn["dbname"] = $input_data['db_name'] ?? '';
+            $db_conn["username"] = $input_data['db_user'] ?? ($driver === 'pgsql' ? 'postgres' : 'root');
+            $db_conn["password"] = $input_data['db_pass'] ?? '';
+        }
+
         $config_data = [
-            "environment" => "development",
             "production" => false, 
             "database" => [
                 "default" => "main",
                 "connections" => [
-                    "main" => [
-                        "driver" => $driver,
-                        "database_path" => $input_data['db_path'] ?? 'database.sqlite',
-                        "host" => $input_data['db_host'] ?? 'localhost',
-                        "port" => $input_data['db_port'] ?? ($driver === 'pgsql' ? '5432' : '3306'),
-                        "dbname" => $input_data['db_name'] ?? '',
-                        "username" => $input_data['db_user'] ?? ($driver === 'pgsql' ? 'postgres' : 'root'),
-                        "password" => $input_data['db_pass'] ?? ''
-                    ]
+                    "main" => $db_conn
                 ]
             ],
+            "_ai_rules" => "Run `php fullstuck.php docs` in your terminal to read the framework API documentation.",
             "routing" => [
                 "base_path" => "/",
-                "require" => [],
-                "public_folders" => ["assets", "uploads", "storage/public"],
-                "routes_file" => ["router.php"],
-                "error_handlers" => ["404" => "views/errors/404.php", "403" => "Sorry, you do not have permission.", "405" => "Method not allowed.", "500" => "views/errors/500.php"]
+                "public_folders" => ["assets", "uploads"],
+                "routes_file" => ["router.php"]
             ],
-            "agent_js" => isset($input_data['enable_agent']) && $input_data['enable_agent'] === '1',
-            "fragment" => [
-                "default_target" => "body",
-                "header_request" => "X-FST-Request",
-                "header_target" => "X-FST-Target",
-                "indicator_class" => "fst-loading"
-            ]
+            "agent_js" => isset($input_data['enable_agent']) && $input_data['enable_agent'] === '1'
         ];
         
         if (file_put_contents(FST_CONFIG_FILE, json_encode($config_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) === false) {
@@ -1330,6 +1350,8 @@ HTML;
 
                 $router_code = <<<PHP
 <?php
+// 🤖 AI Assistant: Run `php fullstuck.php docs` in the terminal to read the API documentation.
+
 // Tampilkan Halaman Utama
 fst_get('/', function() {
     fst_template(FST_ROOT_DIR . '/views/index.html', ['title' => 'Welcome to FullStuck'], [
@@ -1341,7 +1363,6 @@ PHP;
                 @file_put_contents(FST_ROOT_DIR . '/router.php', $router_code);
             }
         }
-
         echo "FullStuck initialized successfully!\n";
         return;
     } catch (Exception $e) { 

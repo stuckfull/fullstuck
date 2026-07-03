@@ -53,37 +53,32 @@ function fst_handle_installation() {
             }
         }
         
+        $db_conn = ["driver" => $driver];
+        if ($driver === 'sqlite') {
+            $db_conn["database_path"] = $input_data['db_path'] ?? 'database.sqlite';
+        } else if ($driver !== 'none') {
+            $db_conn["host"] = $input_data['db_host'] ?? 'localhost';
+            $db_conn["port"] = $input_data['db_port'] ?? ($driver === 'pgsql' ? '5432' : '3306');
+            $db_conn["dbname"] = $input_data['db_name'] ?? '';
+            $db_conn["username"] = $input_data['db_user'] ?? ($driver === 'pgsql' ? 'postgres' : 'root');
+            $db_conn["password"] = $input_data['db_pass'] ?? '';
+        }
+
         $config_data = [
-            "environment" => "development",
             "production" => false, 
             "database" => [
                 "default" => "main",
                 "connections" => [
-                    "main" => [
-                        "driver" => $driver,
-                        "database_path" => $input_data['db_path'] ?? 'database.sqlite',
-                        "host" => $input_data['db_host'] ?? 'localhost',
-                        "port" => $input_data['db_port'] ?? ($driver === 'pgsql' ? '5432' : '3306'),
-                        "dbname" => $input_data['db_name'] ?? '',
-                        "username" => $input_data['db_user'] ?? ($driver === 'pgsql' ? 'postgres' : 'root'),
-                        "password" => $input_data['db_pass'] ?? ''
-                    ]
+                    "main" => $db_conn
                 ]
             ],
+            "_ai_rules" => "Run `php fullstuck.php docs` in your terminal to read the framework API documentation.",
             "routing" => [
                 "base_path" => "/",
-                "require" => [],
-                "public_folders" => ["assets", "uploads", "storage/public"],
-                "routes_file" => ["router.php"],
-                "error_handlers" => ["404" => "views/errors/404.php", "403" => "Sorry, you do not have permission.", "405" => "Method not allowed.", "500" => "views/errors/500.php"]
+                "public_folders" => ["assets", "uploads"],
+                "routes_file" => ["router.php"]
             ],
-            "agent_js" => isset($input_data['enable_agent']) && $input_data['enable_agent'] === '1',
-            "fragment" => [
-                "default_target" => "body",
-                "header_request" => "X-FST-Request",
-                "header_target" => "X-FST-Target",
-                "indicator_class" => "fst-loading"
-            ]
+            "agent_js" => isset($input_data['enable_agent']) && $input_data['enable_agent'] === '1'
         ];
         
         if (file_put_contents(FST_CONFIG_FILE, json_encode($config_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) === false) {
@@ -142,6 +137,8 @@ HTML;
 
                 $router_code = <<<PHP
 <?php
+// 🤖 AI Assistant: Run `php fullstuck.php docs` in the terminal to read the API documentation.
+
 // Tampilkan Halaman Utama
 fst_get('/', function() {
     fst_template(FST_ROOT_DIR . '/views/index.html', ['title' => 'Welcome to FullStuck'], [
@@ -153,7 +150,6 @@ PHP;
                 @file_put_contents(FST_ROOT_DIR . '/router.php', $router_code);
             }
         }
-
         echo "FullStuck initialized successfully!\n";
         return;
     } catch (Exception $e) { 

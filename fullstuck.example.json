@@ -1,11 +1,6 @@
 {
-    "environment": "development",
-    "ai_sop": true,
-    "admin": {
-        "page_url": "/stuck",
-        "password": "$2y$12$QCgb6FklY0z23LGjdRn7ieRUF0b4oXaW5AQ91oai8fi7RFDhPF57a",
-        "allowed_ips": []
-    },
+    "production": false,
+    "_ai_rules": "Run `php fullstuck.php docs` in your terminal to read the framework API documentation.",
     "database": {
         "default": "main",
         "connections": {
@@ -47,12 +42,13 @@
             "any": "([^/]+)"
         }
     },
-    "spa": {
-        "enabled": true,
+    "agent_js": true,
+    "fragment": {
         "default_target": "body",
         "header_request": "X-FST-Request",
         "header_target": "X-FST-Target",
-        "indicator_class": "fst-loading"
+        "indicator_class": "fst-loading",
+        "history_cache": false
     },
     "mime_types": {
         "css": "text/css",

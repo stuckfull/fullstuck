@@ -5,8 +5,7 @@ $src_dir = __DIR__;
 $output_file = dirname(__DIR__) . '/fullstuck.php';
 
 define('FST_VERSION', '0.3.0');
-define('FST_DOCS_URL', 'https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v' . FST_VERSION . '.md');
-define('FST_CHEATSHEET_URL', 'https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v' . FST_VERSION . '_cheatsheet.md');
+define('FST_DOCS_URL', 'https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v0.3/index.md');
 
 // Minify fst.js
 $fst_js_path = $src_dir . '/assets/fst.js';
@@ -75,24 +74,11 @@ $fim_hash = hash('sha256', str_replace("\r\n", "\n", $compiled_code));
 // Bentuk Output Akhir dengan Sintaks Header
 $output = "<?php\n";
 $output .= "/**\n";
-$output .= " * 🚀 FULLSTUCK.PHP - The Zero-Config, AI-Friendly Framework\n";
-$output .= " * 🔗 Repository: https://github.com/milio48/fullstuck\n";
-$output .= " * 📚 Raw Docs: " . FST_DOCS_URL . "\n";
-$output .= " * 💡 Version: " . FST_VERSION . " | FST_HASH: {$fim_hash}\n";
+$output .= " * 🚀 FULLSTUCK.PHP (v" . FST_VERSION . ")\n";
+$output .= " * 🛡️ FST_HASH: {$fim_hash}\n";
 $output .= " *\n";
-$output .= " * 🛑 ===================================================================== 🛑\n";
-$output .= " * 🤖 STRICT AI AGENT DIRECTIVE (LLM / VIBE CODER INSTRUCTIONS)\n";
-$output .= " * 🛑 ===================================================================== 🛑\n";
-$output .= " * STOP READING THIS FILE IMMEDIATELY! \n";
-$output .= " * This is the compiled core framework. Do NOT analyze, read, or attempt to \n";
-$output .= " * modify the internal logic of this file. Reading this dense file will cause \n";
-$output .= " * context overflow and hallucinations.\n";
-$output .= " *\n";
-$output .= " * To understand how to build with this framework, you MUST read:\n";
-$output .= " * 1. The main docs: " . FST_DOCS_URL . "\n";
-$output .= " * 2. The API cheatsheet: " . FST_CHEATSHEET_URL . "\n";
-$output .= " * Rely ONLY on these documents when implementing features or fixing bugs.\n";
-$output .= " * ==========================================================================\n";
+$output .= " * 🤖 AI ASSISTANT: DO NOT READ OR MODIFY THIS COMPILED CORE FILE!\n";
+$output .= " * To learn the API and framework rules, run `php fullstuck.php docs` in your terminal.\n";
 $output .= " */\n";
 $output .= $compiled_code;
 

@@ -14,8 +14,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start(); 
 }
 define('FST_VERSION', '0.3.0');
-define('FST_DOCS_URL', 'https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v' . FST_VERSION . '.md');
-define('FST_CHEATSHEET_URL', 'https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v' . FST_VERSION . '_cheatsheet.md');
+define('FST_DOCS_URL', 'https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v0.3/index.md');
 if (!defined('FST_ROOT_DIR')) {
     $root = __DIR__;
     if (php_sapi_name() === 'cli-server') {
@@ -30,13 +29,52 @@ define('FST_CONFIG_FILE', FST_ROOT_DIR . DIRECTORY_SEPARATOR . 'fullstuck.json')
 // Handle CLI Commands
 if (php_sapi_name() === 'cli') {
     global $argv;
-    if (isset($argv[1]) && $argv[1] === 'init') {
-        if (file_exists(FST_CONFIG_FILE)) {
-            echo "Error: fullstuck.json already exists. Delete it first if you want to re-initialize.\n";
-            exit(1);
-        }
-        fst_handle_installation();
+    if (!isset($argv[1])) {
+        echo "🚀 FullStuck.php v" . FST_VERSION . "\n";
+        echo "Usage:\n";
+        echo "  php fullstuck.php init  : Initialize a new project\n";
+        echo "  php fullstuck.php docs  : Read the framework documentation\n";
+        echo "  php -S localhost:8000 fullstuck.php : Start local web server\n";
         exit(0);
+    }
+    
+    if (isset($argv[1])) {
+        if ($argv[1] === 'init') {
+            if (file_exists(FST_CONFIG_FILE)) {
+                echo "Error: fullstuck.json already exists. Delete it first if you want to re-initialize.\n";
+                exit(1);
+            }
+            fst_handle_installation();
+            exit(0);
+        }
+        if (strpos($argv[1], 'docs') === 0) {
+            $base_url = 'https://raw.githubusercontent.com/milio48/fullstuck/refs/heads/main/docs/v0.3/';
+            $map = [
+                'docs' => 'index.md',
+                'docs:1' => '01-getting-started.md',
+                'docs:2' => '02-routing.md',
+                'docs:3' => '03-database.md',
+                'docs:4' => '04-security.md',
+                'docs:5' => '05-templates.md',
+                'docs:6' => '06-fst-agent.md',
+                'docs:7' => '07-logging.md',
+                'docs:full' => 'FULL.md'
+            ];
+            $cmd = $argv[1];
+            if (isset($map[$cmd])) {
+                $context = stream_context_create(['http' => ['header' => "User-Agent: FullStuck CLI\r\n"]]);
+                $content = @file_get_contents($base_url . $map[$cmd], false, $context);
+                if ($content) {
+                    echo "\n" . $content . "\n";
+                } else {
+                    echo "Error: Failed to fetch documentation. Check your internet connection.\n";
+                }
+            } else {
+                echo "Available docs commands:\n";
+                foreach(array_keys($map) as $k) { echo "  php fullstuck.php $k\n"; }
+            }
+            exit(0);
+        }
     }
 }
 
