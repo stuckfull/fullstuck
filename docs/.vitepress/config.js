@@ -49,6 +49,12 @@ export default defineConfig({
           items: [
             { text: 'Logging & Error Handling', link: '/v0.3/07-logging' }
           ]
+        },
+        {
+          text: 'Referensi',
+          items: [
+            { text: 'API Reference', link: '/v0.3/09-api-reference' }
+          ]
         }
       ],
       '/': [
