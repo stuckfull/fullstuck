@@ -12,6 +12,7 @@ FullStuck.php adalah framework mikro yang dirancang untuk kecepatan pengembangan
 6. [⚡ FST Agent & Fragment Routing (Client-Side)](./06-fst-agent.md) *(CLI: `php fullstuck.php docs:6`)*
 7. [📝 Logging & Error Handling](./07-logging.md) *(CLI: `php fullstuck.php docs:7`)*
 8. [🌶️ Advanced Cookbook (Scale-Up Guide)](./08-advanced-cookbook.md) *(CLI: `php fullstuck.php docs:8`)*
+9. [📚 API Reference (Kamus Fungsi Lengkap)](./09-api-reference.md) *(CLI: `php fullstuck.php docs:9`)*
 
 ---
 > 🤖 **Untuk AI Assistant:** Gunakan command CLI di atas untuk membaca detail setiap modul. Atau gunakan `php fullstuck.php docs:full` untuk memuat seluruh manual secara utuh (namun butuh token/konteks window besar).
