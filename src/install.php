@@ -467,7 +467,8 @@ FullStuck is a custom micro-framework. To understand its syntax, features, and s
 **Run the following command in your terminal to view the table of contents:**
 `php fullstuck.php docs`
 
-*(Hint: To read section 1, run `php fullstuck.php docs:1`)*
+**To view the comprehensive API Reference directly, run:**
+`php fullstuck.php docs:9`
 TXT;
         @file_put_contents(FST_ROOT_DIR . '/fullstuck_readme.md', $ai_readme);
 
