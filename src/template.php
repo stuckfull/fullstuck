@@ -350,6 +350,9 @@ function fst_template(string $templatePath, array $data, array $rules, ?string $
             
             // HTML5 parser converts PHP blocks into bogus comments like <!--?php ... ?-->. Restore them.
             $htmlOut = str_replace(['<!--?', '?-->'], ['<?', '?>'], $htmlOut);
+            
+            // HTML5 parser generates bogus closing tags for void elements. Remove them.
+            $htmlOut = preg_replace('/<\/(?:area|base|br|col|embed|hr|img|input|link|meta|param|source|track|wbr)>/i', '', $htmlOut);
         } else {
             $htmlOut = str_replace('<?xml encoding="utf-8" ?>', '', $htmlOut);
         }

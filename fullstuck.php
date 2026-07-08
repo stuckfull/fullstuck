@@ -1,7 +1,7 @@
 <?php
 /**
  * 🚀 FULLSTUCK.PHP (v0.3.0)
- * 🛡️ FST_HASH: 16f1891c6d1546e4ca1db286a25bffc75c9bb928e6c3982199da32ddabb07d05
+ * 🛡️ FST_HASH: 89dd19151f29dec14e0258b486e99b122f43f3fcd80288b6c7c43ca1630af4c8
  *
  * 🤖 AI ASSISTANT: DO NOT READ OR MODIFY THIS COMPILED CORE FILE!
  * To learn the API and framework rules, run `php fullstuck.php docs` in your terminal.
@@ -2079,6 +2079,9 @@ function fst_template(string $templatePath, array $data, array $rules, ?string $
             
             
             $htmlOut = str_replace(['<!--?', '?-->'], ['<?', '?>'], $htmlOut);
+            
+            
+            $htmlOut = preg_replace('/<\/(?:area|base|br|col|embed|hr|img|input|link|meta|param|source|track|wbr)>/i', '', $htmlOut);
         } else {
             $htmlOut = str_replace('<?xml encoding="utf-8" ?>', '', $htmlOut);
         }
