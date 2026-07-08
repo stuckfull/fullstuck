@@ -341,8 +341,13 @@ function fst_template(string $templatePath, array $data, array $rules, ?string $
         $applyRules($rules);
         
         $htmlOut = $useHtml5 ? $dom->saveHtml() : $dom->saveHTML();
-        // Hapus hack header XML jika menggunakan DOMDocument
-        if (!$useHtml5) {
+        
+        // Fix encoded scripts and styles in HTML5 parser, and remove XML hack in legacy mode
+        if ($useHtml5) {
+            $htmlOut = preg_replace_callback('/(<(?:script|style)[^>]*>)(.*?)(<\/(?:script|style)>)/is', function($m) {
+                return $m[1] . htmlspecialchars_decode($m[2], ENT_QUOTES) . $m[3];
+            }, $htmlOut);
+        } else {
             $htmlOut = str_replace('<?xml encoding="utf-8" ?>', '', $htmlOut);
         }
         

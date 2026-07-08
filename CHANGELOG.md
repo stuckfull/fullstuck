@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Template**: Upgraded all structural logic markers (`@if`, `@foreach`, `@prepend`, `@append`) from Text Nodes to Comment Nodes. This completely eliminates libxml "foster parenting" bugs and `HierarchyRequestError` exceptions when modifying strict elements like `<table>` or `<tbody>`.
 
 ### Fixed
+- **Template**: Fixed critical bug where `\Dom\HTMLDocument` (PHP 8.4+) automatically encoded `<` and `>` entities inside `<script>` and `<style>` blocks, breaking client-side logic. (Hotfix applied via regex decoder).
 - **Template**: Fixed severe performance bottleneck and potential double-replace corruption by replacing the `str_replace` loop with a single-pass `strtr()` (Aho-Corasick algorithm) for marker substitutions.
 - **Template**: Fixed undefined variable `$getAttrMarker` in the closure by correctly passing it via the `use()` statement.
 - **Template**: Fixed uninitialized `$useXPath` warning prior to selector logic execution.

@@ -1,7 +1,7 @@
 <?php
 /**
  * 🚀 FULLSTUCK.PHP (v0.3.0)
- * 🛡️ FST_HASH: ac105704520e09e1ce35053790aff05af67a837c2bae87f07812a35bc715c61a
+ * 🛡️ FST_HASH: 08b1c3476aab6a9066e439321306436d574ddc413e7f3b3c38490dbf225493d6
  *
  * 🤖 AI ASSISTANT: DO NOT READ OR MODIFY THIS COMPILED CORE FILE!
  * To learn the API and framework rules, run `php fullstuck.php docs` in your terminal.
@@ -2071,7 +2071,12 @@ function fst_template(string $templatePath, array $data, array $rules, ?string $
         
         $htmlOut = $useHtml5 ? $dom->saveHtml() : $dom->saveHTML();
         
-        if (!$useHtml5) {
+        
+        if ($useHtml5) {
+            $htmlOut = preg_replace_callback('/(<(?:script|style)[^>]*>)(.*?)(<\/(?:script|style)>)/is', function($m) {
+                return $m[1] . htmlspecialchars_decode($m[2], ENT_QUOTES) . $m[3];
+            }, $htmlOut);
+        } else {
             $htmlOut = str_replace('<?xml encoding="utf-8" ?>', '', $htmlOut);
         }
         
