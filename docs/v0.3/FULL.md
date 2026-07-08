@@ -276,10 +276,21 @@ $rules = [
     "h3"           => ["@text" => '$heading'],         // Sama seperti di atas
     "span.content" => ["@html" => '$htmlContent'],     // Raw innerHTML (hanya untuk trusted content)
     "head"         => ["@append"  => '"<style>...</style>"'],  // insertAdjacentHTML (beforeend)
+    "body"         => ["@prepend" => '"<div>Notif</div>"'],    // insertAdjacentHTML (afterbegin)
 
     // --- ATTRIBUTES ---
     "a.external"   => ["[href]" => '$linkUrl', "[target]" => '"_blank"'],
     "[data-fst=\"my-form\"]" => ["[action]" => '"/submit"'],
+
+    // --- BOOLEAN / RAW DYNAMIC ATTRIBUTES ---
+    // Jangan gunakan `[disabled] => '$cond ? "disabled" : ""'` karena string kosong HTML5 tetap menghitungnya ada.
+    // Gunakan `@attrs` untuk merender string raw langsung ke dalam tag.
+    "button.submit" => ["@attrs" => '$isDisabled ? "disabled" : ""'],
+
+    // --- SINGLE TARGETING (Optimasi Performa) ---
+    // Gunakan prefix `^` untuk memicu querySelector() secara native (bukan querySelectorAll).
+    // Sangat berguna jika Anda yakin elemen hanya ada 1 di halaman.
+    "^div.alert"   => '"Ini alert pertama saja"',
 
     // --- COMPILE-TIME REMOVAL ---
     "div.debug-panel" => "@remove",                   // Hapus elemen selamanya dari cache

@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Template**: Added support for native HTML5 parsing in `fst_template()` via `\Dom\HTMLDocument` when running on PHP 8.4+, ensuring WHATWG-compliant rendering without unwanted tag injections.
+- **Template**: Added `@attrs` directive to the ruleset DSL for injecting raw dynamic attributes directly into elements, solving the boolean attribute issue (e.g., `<button disabled>`).
+- **Template**: Added `^` prefix to the ruleset DSL for explicitly triggering single node selection (`querySelector` instead of `querySelectorAll`), optimizing performance for unique elements.
+- **Template**: Added engine identifier (`html5` or `legacy`) to the template cache hash to prevent silent collisions across servers with different PHP versions.
+- **Template**: Added automatic fallback to `css2xpath` if `querySelector()` encounters an unsupported pseudo-selector.
+
+### Changed
+- **Template**: Replaced `$node->nodeValue` assignments with `$node->textContent` to comply with the standard DOM specification where `Element::$nodeValue` is strictly readonly (PHP 8.4 `ext-dom`).
+- **Template**: Upgraded all structural logic markers (`@if`, `@foreach`, `@prepend`, `@append`) from Text Nodes to Comment Nodes. This completely eliminates libxml "foster parenting" bugs and `HierarchyRequestError` exceptions when modifying strict elements like `<table>` or `<tbody>`.
+
+### Fixed
+- **Template**: Fixed severe performance bottleneck and potential double-replace corruption by replacing the `str_replace` loop with a single-pass `strtr()` (Aho-Corasick algorithm) for marker substitutions.
+- **Template**: Fixed undefined variable `$getAttrMarker` in the closure by correctly passing it via the `use()` statement.
+- **Template**: Fixed uninitialized `$useXPath` warning prior to selector logic execution.
+- **Template**: Fixed potential `Fatal Error` on `removeChild()` for `@remove` directives by adding a defensive `if ($node->parentNode)` guard, protecting against sequential nested removals.
+
 ## [v0.3.0] - 2026-07-03
 
 ### Refactored

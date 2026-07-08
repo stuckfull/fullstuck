@@ -1,7 +1,7 @@
 <?php
 /**
  * 🚀 FULLSTUCK.PHP (v0.3.0)
- * 🛡️ FST_HASH: 57cd961546d2254e7147280481af19ee9bfe02a35c4ebc5cd72fb4bfe185cf55
+ * 🛡️ FST_HASH: ac105704520e09e1ce35053790aff05af67a837c2bae87f07812a35bc715c61a
  *
  * 🤖 AI ASSISTANT: DO NOT READ OR MODIFY THIS COMPILED CORE FILE!
  * To learn the API and framework rules, run `php fullstuck.php docs` in your terminal.
@@ -1766,7 +1766,8 @@ function fst_template(string $templatePath, array $data, array $rules, ?string $
         }
     });
 
-    $rules_hash = md5(serialize($rules));
+    $useHtml5 = class_exists('\Dom\HTMLDocument');
+    $rules_hash = md5(serialize($rules) . ($useHtml5 ? 'html5' : 'legacy'));
     $cache_valid = false;
     if (!$forceRebuild && file_exists($cacheFile) && filemtime($templatePath) <= filemtime($cacheFile)) {
         $fp = fopen($cacheFile, 'r');
@@ -1784,16 +1785,20 @@ function fst_template(string $templatePath, array $data, array $rules, ?string $
     
     if (!$cache_valid) {
         
-        $dom = new DOMDocument();
-        libxml_use_internal_errors(true);
         $html = file_get_contents($templatePath);
-        if ($html) {
-            
-            $dom->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
-        }
-        libxml_clear_errors();
         
-        $xpath = new DOMXPath($dom);
+        if ($useHtml5) {
+            $dom = \Dom\HTMLDocument::createFromString($html, \LIBXML_NOERROR | \LIBXML_HTML_NOIMPLIED | \Dom\HTML_NO_DEFAULT_NS);
+        } else {
+            $dom = new DOMDocument();
+            libxml_use_internal_errors(true);
+            if ($html) {
+                
+                $dom->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+            }
+            libxml_clear_errors();
+        }
+        
         $replacements = [];
         $markerCount = 0;
         
@@ -1801,6 +1806,12 @@ function fst_template(string $templatePath, array $data, array $rules, ?string $
         $getMarker = function() use (&$markerCount) {
             $markerCount++;
             return "@@__FST_MARKER_{$markerCount}__@@";
+        };
+        
+        
+        $getAttrMarker = function() use (&$markerCount) {
+            $markerCount++;
+            return "fst_attr_marker_{$markerCount}";
         };
 
         $css2xpath = function(string $selector): string {
@@ -1841,12 +1852,15 @@ function fst_template(string $templatePath, array $data, array $rules, ?string $
             return implode(' | ', $paths);
         };
 
+        $xpath = $useHtml5 ? null : new DOMXPath($dom);
+        $xpath5 = $useHtml5 ? new \Dom\XPath($dom) : null;
+
         
-        $applyRules = function(array $currentRules, ?DOMNode $context = null) use (&$applyRules, $xpath, &$replacements, $getMarker, $dom, $css2xpath) {
+        $applyRules = function(array $currentRules, $context = null) use (&$applyRules, $dom, $xpath, $xpath5, $useHtml5, &$replacements, $getMarker, $getAttrMarker, $css2xpath) {
             foreach ($currentRules as $key => $value) {
                 
                 
-                if (str_starts_with($key, '[') && str_ends_with($key, ']') && $context instanceof DOMElement && strpos($key, '=') === false) {
+                if (str_starts_with($key, '[') && str_ends_with($key, ']') && is_object($context) && method_exists($context, 'setAttribute') && strpos($key, '=') === false) {
                     $attrName = substr($key, 1, -1);
                     if ($value === '@remove') {
                         $context->removeAttribute($attrName);
@@ -1870,36 +1884,75 @@ function fst_template(string $templatePath, array $data, array $rules, ?string $
                     $key = substr($key, 1);
                 }
 
-                $xpathSel = $css2xpath($key);
-                $nodes = $xpath->query($xpathSel, $context ?? $dom);
-                
-                if ($nodes === false || $nodes->length === 0) continue;
-
                 $targetNodes = [];
-                if ($isSingleSelection) {
-                    $targetNodes[] = $nodes->item(0);
+                $useXPath = false;
+                if ($useHtml5 && !str_starts_with($key, '//') && !str_starts_with($key, './/')) {
+                    try {
+                        if ($isSingleSelection) {
+                            $node = $context ? $context->querySelector($key) : $dom->querySelector($key);
+                            if ($node) $targetNodes[] = $node;
+                        } else {
+                            $nodeList = $context ? $context->querySelectorAll($key) : $dom->querySelectorAll($key);
+                            if ($nodeList->length > 0) {
+                                foreach ($nodeList as $n) $targetNodes[] = $n;
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        
+                        $useXPath = true;
+                    }
                 } else {
-                    foreach ($nodes as $n) $targetNodes[] = $n;
+                    $useXPath = true;
                 }
+
+                if ($useXPath) {
+                    $xpathSel = $css2xpath($key);
+                    $xp = $useHtml5 ? $xpath5 : $xpath;
+                    $nodeList = $xp->query($xpathSel, $context ?? $dom);
+                    
+                    if ($nodeList !== false && $nodeList->length > 0) {
+                        if ($isSingleSelection) {
+                            $targetNodes[] = $nodeList->item(0);
+                        } else {
+                            foreach ($nodeList as $n) $targetNodes[] = $n;
+                        }
+                    }
+                }
+
+                if (empty($targetNodes)) continue;
 
                 
                 if (is_string($value)) {
                     if ($value === '@remove') {
                         foreach ($targetNodes as $node) {
-                            $node->parentNode->removeChild($node);
+                            if ($node->parentNode) {
+                                $node->parentNode->removeChild($node);
+                            }
                         }
                         continue;
                     }
 
                     foreach ($targetNodes as $node) {
                         $marker = $getMarker();
-                        $node->nodeValue = $marker;
+                        $node->textContent = $marker;
                         $replacements[$marker] = "<?= htmlspecialchars({$value} ?? '', ENT_QUOTES, 'UTF-8') ?>";
                     }
                 } 
                 
                 elseif (is_array($value)) {
                     
+                    if (isset($value['@attrs'])) {
+                        foreach ($targetNodes as $node) {
+                            $attrMarker = $getAttrMarker();
+                            if (is_object($node) && method_exists($node, 'setAttribute')) {
+                                $node->setAttribute($attrMarker, $attrMarker);
+                                
+                                $replacements[$attrMarker . '="' . $attrMarker . '"'] = "<?= {$value['@attrs']} ?>";
+                            }
+                        }
+                        unset($value['@attrs']);
+                    }
+
                     if (isset($value['@if'])) {
                         foreach ($targetNodes as $node) {
                             $startMarker = $getMarker();
@@ -1908,14 +1961,16 @@ function fst_template(string $templatePath, array $data, array $rules, ?string $
                             $replacements[$startMarker] = "<?php if ({$value['@if']}): ?>";
                             $replacements[$endMarker] = "<?php endif; ?>";
                             
-                            $startTextNode = $dom->createTextNode($startMarker);
-                            $endTextNode = $dom->createTextNode($endMarker);
                             
-                            $node->parentNode->insertBefore($startTextNode, $node);
+                            
+                            $startCommentNode = $dom->createComment($startMarker);
+                            $endCommentNode = $dom->createComment($endMarker);
+                            
+                            $node->parentNode->insertBefore($startCommentNode, $node);
                             if ($node->nextSibling) {
-                                $node->parentNode->insertBefore($endTextNode, $node->nextSibling);
+                                $node->parentNode->insertBefore($endCommentNode, $node->nextSibling);
                             } else {
-                                $node->parentNode->appendChild($endTextNode);
+                                $node->parentNode->appendChild($endCommentNode);
                             }
                         }
                         unset($value['@if']);
@@ -1925,7 +1980,7 @@ function fst_template(string $templatePath, array $data, array $rules, ?string $
                         
                         foreach ($targetNodes as $node) {
                             $marker = $getMarker();
-                            $node->nodeValue = $marker;
+                            $node->textContent = $marker;
                             $replacements[$marker] = "<?= htmlspecialchars({$value['@text']} ?? '', ENT_QUOTES, 'UTF-8') ?>";
                         }
                         unset($value['@text']);
@@ -1935,7 +1990,7 @@ function fst_template(string $templatePath, array $data, array $rules, ?string $
                         
                         foreach ($targetNodes as $node) {
                             $marker = $getMarker();
-                            $node->nodeValue = $marker;
+                            $node->textContent = $marker;
                             $replacements[$marker] = "<?= {$value['@html']} ?? '' ?>";
                         }
                         unset($value['@html']);
@@ -1946,7 +2001,7 @@ function fst_template(string $templatePath, array $data, array $rules, ?string $
                         foreach ($targetNodes as $node) {
                             $marker = $getMarker();
                             $replacements[$marker] = "<?= {$value['@append']} ?? '' ?>";
-                            $node->appendChild($dom->createTextNode($marker));
+                            $node->appendChild($dom->createComment($marker));
                         }
                         unset($value['@append']);
                     }
@@ -1956,14 +2011,14 @@ function fst_template(string $templatePath, array $data, array $rules, ?string $
                         foreach ($targetNodes as $node) {
                             $marker = $getMarker();
                             $replacements[$marker] = "<?= {$value['@prepend']} ?? '' ?>";
-                            $node->insertBefore($dom->createTextNode($marker), $node->firstChild);
+                            $node->insertBefore($dom->createComment($marker), $node->firstChild);
                         }
                         unset($value['@prepend']);
                     }
 
                     if (isset($value['@foreach'])) {
                         
-                        $templateNode = $nodes->item(0);
+                        $templateNode = $targetNodes[0];
                         $container = $templateNode->parentNode;
                         
                         $foreachStr = $value['@foreach'];
@@ -1975,17 +2030,20 @@ function fst_template(string $templatePath, array $data, array $rules, ?string $
                         $replacements[$startMarker] = "<?php foreach ({$foreachStr}): ?>";
                         $replacements[$endMarker] = "<?php endforeach; ?>";
                         
+                        $startCommentNode = $dom->createComment($startMarker);
+                        $endCommentNode = $dom->createComment($endMarker);
                         
-                        $container->insertBefore($dom->createTextNode($startMarker), $templateNode);
+                        
+                        $container->insertBefore($startCommentNode, $templateNode);
                         if ($templateNode->nextSibling) {
-                            $container->insertBefore($dom->createTextNode($endMarker), $templateNode->nextSibling);
+                            $container->insertBefore($endCommentNode, $templateNode->nextSibling);
                         } else {
-                            $container->appendChild($dom->createTextNode($endMarker));
+                            $container->appendChild($endCommentNode);
                         }
                         
                         
-                        for ($i = 1; $i < $nodes->length; $i++) {
-                            $nodeToRemove = $nodes->item($i);
+                        for ($i = 1; $i < count($targetNodes); $i++) {
+                            $nodeToRemove = $targetNodes[$i];
                             if ($nodeToRemove->parentNode) {
                                 $nodeToRemove->parentNode->removeChild($nodeToRemove);
                             }
@@ -2011,14 +2069,19 @@ function fst_template(string $templatePath, array $data, array $rules, ?string $
         
         $applyRules($rules);
         
-        $htmlOut = $dom->saveHTML();
+        $htmlOut = $useHtml5 ? $dom->saveHtml() : $dom->saveHTML();
         
-        $htmlOut = str_replace('<?xml encoding="utf-8" ?>', '', $htmlOut);
-        
-        
-        foreach ($replacements as $marker => $phpCode) {
-            $htmlOut = str_replace($marker, $phpCode, $htmlOut);
+        if (!$useHtml5) {
+            $htmlOut = str_replace('<?xml encoding="utf-8" ?>', '', $htmlOut);
         }
+        
+        
+        $trans = [];
+        foreach ($replacements as $marker => $phpCode) {
+            $trans['<!--' . $marker . '-->'] = $phpCode; 
+            $trans[$marker] = $phpCode; 
+        }
+        $htmlOut = strtr($htmlOut, $trans);
         
         $htmlOut = "<?php // fst_rules_hash: {$rules_hash} ?>\n" . $htmlOut;
         file_put_contents($cacheFile, $htmlOut);
