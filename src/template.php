@@ -348,7 +348,7 @@ function fst_template(string $templatePath, array $data, array $rules, ?string $
                 return $m[1] . htmlspecialchars_decode($m[2], ENT_QUOTES) . $m[3];
             }, $htmlOut);
             
-            // HTML5 parser converts <?php ... ?> into bogus comments <!--?php ... ?-->. Restore them.
+            // HTML5 parser converts PHP blocks into bogus comments like <!--?php ... ?-->. Restore them.
             $htmlOut = str_replace(['<!--?', '?-->'], ['<?', '?>'], $htmlOut);
         } else {
             $htmlOut = str_replace('<?xml encoding="utf-8" ?>', '', $htmlOut);
