@@ -342,11 +342,14 @@ function fst_template(string $templatePath, array $data, array $rules, ?string $
         
         $htmlOut = $useHtml5 ? $dom->saveHtml() : $dom->saveHTML();
         
-        // Fix encoded scripts and styles in HTML5 parser, and remove XML hack in legacy mode
+        // Fix encoded scripts and styles in HTML5 parser, and restore raw PHP tags, and remove XML hack in legacy mode
         if ($useHtml5) {
             $htmlOut = preg_replace_callback('/(<(?:script|style)[^>]*>)(.*?)(<\/(?:script|style)>)/is', function($m) {
                 return $m[1] . htmlspecialchars_decode($m[2], ENT_QUOTES) . $m[3];
             }, $htmlOut);
+            
+            // HTML5 parser converts <?php ... ?> into bogus comments <!--?php ... ?-->. Restore them.
+            $htmlOut = str_replace(['<!--?', '?-->'], ['<?', '?>'], $htmlOut);
         } else {
             $htmlOut = str_replace('<?xml encoding="utf-8" ?>', '', $htmlOut);
         }

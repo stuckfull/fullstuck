@@ -1,7 +1,7 @@
 <?php
 /**
  * 🚀 FULLSTUCK.PHP (v0.3.0)
- * 🛡️ FST_HASH: 08b1c3476aab6a9066e439321306436d574ddc413e7f3b3c38490dbf225493d6
+ * 🛡️ FST_HASH: 87b118b5f47b8bfc054ff7a06ec63582e8e5459bdf1ee4945e1dcda4477ae343
  *
  * 🤖 AI ASSISTANT: DO NOT READ OR MODIFY THIS COMPILED CORE FILE!
  * To learn the API and framework rules, run `php fullstuck.php docs` in your terminal.
@@ -2076,32 +2076,35 @@ function fst_template(string $templatePath, array $data, array $rules, ?string $
             $htmlOut = preg_replace_callback('/(<(?:script|style)[^>]*>)(.*?)(<\/(?:script|style)>)/is', function($m) {
                 return $m[1] . htmlspecialchars_decode($m[2], ENT_QUOTES) . $m[3];
             }, $htmlOut);
+            
+             into bogus comments <!--?php ... ?-->. Restore them.
+            $htmlOut = str_replace(['<!--?', '?-->'], ['<?', '?>'], $htmlOut);
         } else {
             $htmlOut = str_replace('<?xml encoding="utf-8" ?>', '', $htmlOut);
         }
         
-        
+        // Replace semua marker dengan script PHP dalam 1 pass (Lebih cepat & mencegah double-replace)
         $trans = [];
         foreach ($replacements as $marker => $phpCode) {
-            $trans['<!--' . $marker . '-->'] = $phpCode; 
-            $trans[$marker] = $phpCode; 
+            $trans['<!--' . $marker . '-->'] = $phpCode; // Untuk comment node
+            $trans[$marker] = $phpCode; // Untuk attribute & text node
         }
         $htmlOut = strtr($htmlOut, $trans);
         
-        $htmlOut = "<?php // fst_rules_hash: {$rules_hash} ?>\n" . $htmlOut;
+        $htmlOut = "\n" . $htmlOut;
         file_put_contents($cacheFile, $htmlOut);
     }
 
-    
+    // Render file cache (Output)
     $shared_data = function_exists('fst_app') ? (fst_app('shared_view_data') ?? []) : [];
     $data = array_merge($shared_data, $data);
     extract($data, EXTR_SKIP);
     require $cacheFile;
 }
 
-
-
-
+/**
+ * Merender file HTML menjadi dinamis dan mengembalikan hasilnya sebagai string.
+ */
 function fst_template_render(string $templatePath, array $data, array $rules, ?string $cacheDir = null, bool $forceRebuild = false): string {
     ob_start();
     fst_template($templatePath, $data, $rules, $cacheDir, $forceRebuild);
