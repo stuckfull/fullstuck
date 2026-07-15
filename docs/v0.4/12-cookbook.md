@@ -9,7 +9,7 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-FST-Request");
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+if (fst_method() === 'OPTIONS') {
     fst_status_code(200);
     die();
 }

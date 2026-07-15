@@ -5,7 +5,7 @@ File `action.php` menangani logika mutasi data. Fokus ke PHP murni:
 ```php
 <?php
 // app/users/action.php
-$method = $_SERVER['REQUEST_METHOD'];
+$method = fst_method();
 
 if ($method === 'POST') {
     $val = fst_validate(fst_request(), [

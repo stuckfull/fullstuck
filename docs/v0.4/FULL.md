@@ -334,7 +334,7 @@ File `action.php` menangani logika mutasi data. Fokus ke PHP murni:
 ```php
 <?php
 // app/users/action.php
-$method = $_SERVER['REQUEST_METHOD'];
+$method = fst_method();
 
 if ($method === 'POST') {
     $val = fst_validate(fst_request(), [
@@ -644,7 +644,7 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-FST-Request");
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+if (fst_method() === 'OPTIONS') {
     fst_status_code(200);
     die();
 }
