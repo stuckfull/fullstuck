@@ -105,13 +105,16 @@ fst.on('event_name', (detail) => { ... });
 
 // Navigasi programatik
 fst.go('/path');
-fst.go('/path', { target: '#el', history: false, scroll: 'smooth' });
+fst.go('/path', { fragment: '#el', history: false, scroll: 'smooth' });
 
 // XSS escape untuk innerHTML
 fst.e(untrustedString);
 ```
 
-Atribut HTML: `data-fst-fragment="#id"` · `data-fst-normal-load` · `data-fst-no-history` · `data-fst-no-scroll` · `data-fst-indicator="class"` · `data-fst-ignore`
+Atribut HTML: `data-fst-fragment="#id"` · `data-fst-normal-load` · `data-fst-history="false"` · `data-fst-scroll="false"` · `data-fst-indicator="class"` · `data-fst-ignore`
+
+**Batasan Target SPA (Wadah Bisu):** Elemen target dari `data-fst-fragment` atau header `X-FST-Fragment` diganti menggunakan `innerHTML`. Akibatnya, class/atribut pada tag pembungkus target **TIDAK** ikut ter-update. Elemen target wajib berupa wadah statis, letakkan desain dinamis (class) di dalamnya.
+**Dukungan Selector Fragment:** Mendukung ID (`#app`), Class (`.box`), Tag (`main`), Atribut (`[data-id="1"]`), Descendant (`#app .box`), Child (`>`), & Kombinasi (`,`). **TIDAK MENDUKUNG:** Pseudo (`:`, `::`), Sibling (`+`, `~`), Regex Atribut (`^=`, `*=`).
 
 ## PHP API
 

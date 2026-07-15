@@ -286,15 +286,22 @@ function fst_config($key = null, $default = null) {
 }
 
 function fst_is_fragment_request(): bool { return isset($_SERVER['HTTP_X_FST_REQUEST']); }
-function fst_fragment_target(): string { return $_SERVER['HTTP_X_FST_TARGET'] ?? 'body'; }
+function fst_fragment_target(): string { return $_SERVER['HTTP_X_FST_FRAGMENT'] ?? 'body'; }
 
 function fst_extract_html_fragment($html, $selector = 'body') {
     if (empty(trim($html))) return '';
 
-    // [PATCH] Regex Fast-Path for main tag selectors (only body & main)
-    // Avoid double DOMDocument parsing when used with fst_template.
-    // Warning: Do not use regex for nested tags like <div> or <section>.
-    $singleton_tags = ['body'];
+    // [SECURITY PATCH 1] Strict Allowlist for Client-Controlled Header (X-FST-Fragment)
+    // Prevent LFI/RCE via XPath functions (e.g., document('/etc/passwd')) by blocking
+    // any character outside basic CSS selectors, explicitly forbidding '(' and ')'.
+    $selector = trim($selector);
+    if (!preg_match('/^[a-zA-Z0-9_\-\.\#\s,>\[\]="\']+$/', $selector)) {
+        return $html; // Abort extraction and return full HTML if invalid characters detected
+    }
+
+    // [PATCH] Regex Fast-Path for main tag selectors (body & main)
+    // Avoid double DOMDocument parsing when used with normal SSR views.
+    $singleton_tags = ['body', 'main'];
     if (!str_starts_with($selector, '#') && !str_starts_with($selector, '.')) {
         $tag = strtolower($selector);
         if (in_array($tag, $singleton_tags)) {
@@ -303,15 +310,9 @@ function fst_extract_html_fragment($html, $selector = 'body') {
                 return $m[1];
             }
         }
-        // If the tag is not a singleton, or not found, fallback to DOMDocument below
     }
 
     // [PATCH] Convert CSS Selector to XPath dynamically and safely
-    // Prevent XPath Injection by blocking unsupported pseudo-classes and sibling characters
-    if (strpos($selector, ':') !== false || strpos($selector, '+') !== false || strpos($selector, '~') !== false) {
-        return $html; 
-    }
-
     $paths = [];
     foreach (explode(',', $selector) as $sel) {
         $sel = trim($sel);
@@ -320,8 +321,11 @@ function fst_extract_html_fragment($html, $selector = 'body') {
         $sel = preg_replace('/#([\w\-]+)/', '[@id="$1"]', $sel); // ID
         $sel = preg_replace('/\.([\w\-]+)/', '[contains(concat(" ", normalize-space(@class), " "), " $1 ")]', $sel); // Class
         
-        // Convert CSS [attr="val"] to XPath [@attr="val"]
-        $sel = preg_replace('/\[([\w\-]+)=([\'"]?.*?[\'"]?)\]/', '[@$1=$2]', $sel);
+        // [SECURITY PATCH 2] Strict Attribute Value Normalization
+        // Prevent Boolean-based XPath Injection (e.g., [x="1" or 1=1]) by strictly
+        // bounding attribute values to safe characters (alphanumeric, dash, space, slash, dot).
+        $sel = preg_replace('/\[([\w\-]+)=(["\']?)([\w\-\s\/\.]*)\2\]/', '[@$1="$3"]', $sel);
+        
         // Convert [attr] to [@attr]
         $sel = preg_replace('/\[([\w\-]+)\]/', '[@$1]', $sel);
         // Handle tagless attributes by prepending *
@@ -336,11 +340,13 @@ function fst_extract_html_fragment($html, $selector = 'body') {
     }
     $xpath_query = implode(' | ', $paths);
 
+    $is_modern_dom = class_exists('Dom\HTMLDocument');
+
     // --- PROGRESSIVE ENHANCEMENT: PHP 8.4+ Dom\HTMLDocument vs Legacy DOMDocument ---
-    if (class_exists('Dom\HTMLDocument')) {
+    if ($is_modern_dom) {
         // ✅ MODE PHP 8.4+: WHATWG HTML5 Compliant & Native UTF-8
         try {
-            $dom = \Dom\HTMLDocument::createFromString($html, LIBXML_NOERROR | LIBXML_NOWARNING);
+            $dom = \Dom\HTMLDocument::createFromString($html, LIBXML_NOERROR);
             $xpath = new \Dom\XPath($dom);
         } catch (\Throwable $e) {
             return $html;
@@ -354,11 +360,17 @@ function fst_extract_html_fragment($html, $selector = 'body') {
         $xpath = new DOMXPath($dom);
     }
     // --- END ENHANCEMENT ---
+
     $nodes = $xpath->query($xpath_query);
     if ($nodes && $nodes->length > 0) {
         $inner_html = '';
-        foreach ($nodes->item(0)->childNodes as $child) {
-            $inner_html .= $dom->saveHTML($child);
+        $target_node = $nodes->item(0);
+        foreach ($target_node->childNodes as $child) {
+            if ($is_modern_dom) {
+                $inner_html .= $dom->saveHtml($child);
+            } else {
+                $inner_html .= $dom->saveHTML($child);
+            }
         }
         return $inner_html;
     }

@@ -30,7 +30,7 @@ class fst_agent {
         });
 
         window.addEventListener('popstate', async (e) => {
-            const target = (e.state && e.state.fstTarget) || 'body';
+            const fragmentSelector = (e.state && e.state.fstFragment) || 'body';
             const savedScrollX = e.state?.scrollX;
             const savedScrollY = e.state?.scrollY;
             const useCache = e.state?.fstCache ?? (document.querySelector('script#fst-agent')?.getAttribute('data-history-cache') === 'true');
@@ -44,11 +44,11 @@ class fst_agent {
             }
 
             if (useCache && e.state && e.state.fstHtml) {
-                const targetElement = document.querySelector(target);
+                const targetElement = document.querySelector(fragmentSelector);
                 if (targetElement) {
                     document.dispatchEvent(new Event('fst:unload'));
                     this.cleanup();
-                    if (e.state.fstBodyAttrs && target === 'body') {
+                    if (e.state.fstBodyAttrs && fragmentSelector === 'body') {
                         const parser = new DOMParser();
                         const doc = parser.parseFromString(`<div ${e.state.fstBodyAttrs}></div>`, 'text/html');
                         const newBody = doc.body.firstChild;
@@ -63,7 +63,7 @@ class fst_agent {
                     return;
                 }
             } else {
-                await this.fetchFragment(window.location.href, target, false, null, true);
+                await this.fetchFragment(window.location.href, fragmentSelector, false, null, true);
             }
 
             if (savedScrollX !== undefined && savedScrollY !== undefined) {
@@ -83,13 +83,13 @@ class fst_agent {
         });
 
         this.setNotFound((path, triggerElement) => {
-            let targetSelector = 'body';
-            let isHistoryOptOut = false;
+            let fragmentSelector = 'body';
+            let pushHistory = true;
             if (triggerElement) {
-                targetSelector = triggerElement.getAttribute('data-fst-fragment') || 'body';
-                isHistoryOptOut = triggerElement.hasAttribute('data-fst-no-history');
+                fragmentSelector = triggerElement.getAttribute('data-fst-fragment') || 'body';
+                if (triggerElement.getAttribute('data-fst-history') === 'false') pushHistory = false;
             }
-            this.fetchFragment(path, targetSelector, !isHistoryOptOut, triggerElement);
+            this.fetchFragment(path, fragmentSelector, pushHistory, triggerElement);
         });
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -97,7 +97,7 @@ class fst_agent {
                 const bodyAttrs = Array.from(document.body.attributes).map(a => `${a.name}="${a.value}"`).join(' ');
                 window.history.replaceState({
                     fstHtml: document.body.innerHTML,
-                    fstTarget: 'body',
+                    fstFragment: 'body',
                     fstBodyAttrs: bodyAttrs
                 }, '', window.location.href);
             }
@@ -121,10 +121,10 @@ class fst_agent {
     }
 
     async handleFormSubmit(form) {
-        const targetSelector = form.getAttribute('data-fst-fragment') || 'body';
-        const isHistoryOptOut = form.hasAttribute('data-fst-no-history');
+        const fragmentSelector = form.getAttribute('data-fst-fragment') || 'body';
+        const pushHistory = form.getAttribute('data-fst-history') !== 'false';
         const indicator = this.getIndicatorClass(form);
-        const targetElement = document.querySelector(targetSelector);
+        const targetElement = document.querySelector(fragmentSelector);
         
         if (targetElement) targetElement.classList.add(...indicator.split(' '));
         
@@ -134,8 +134,8 @@ class fst_agent {
             const formData = new FormData(form);
             
             const reqHeader = document.querySelector('script#fst-agent')?.getAttribute('data-req-header') || 'X-FST-Request';
-            const targetHeader = document.querySelector('script#fst-agent')?.getAttribute('data-target-header') || 'X-FST-Target';
-            const headers = { [reqHeader]: 'true', [targetHeader]: targetSelector };
+            const targetHeader = document.querySelector('script#fst-agent')?.getAttribute('data-fragment-header') || 'X-FST-Fragment';
+            const headers = { [reqHeader]: 'true', [targetHeader]: fragmentSelector };
             
             let fetchOptions = { method, headers };
             let finalUrl = action;
@@ -148,7 +148,7 @@ class fst_agent {
             }
 
             const loadingEvent = new CustomEvent('fst:loading', { 
-                detail: { url: finalUrl, targetSelector, triggerElement: form },
+                detail: { url: finalUrl, fragmentSelector, triggerElement: form },
                 cancelable: true
             });
             if (!document.dispatchEvent(loadingEvent)) {
@@ -164,7 +164,7 @@ class fst_agent {
             const redirectUrl = response.headers.get('X-FST-Redirect');
             if (redirectUrl) {
                 if (targetElement) targetElement.classList.remove(...indicator.split(' '));
-                await this.fetchFragment(redirectUrl, targetSelector, !isHistoryOptOut);
+                await this.fetchFragment(redirectUrl, fragmentSelector, pushHistory);
                 return;
             }
             
@@ -182,7 +182,7 @@ class fst_agent {
             }
             
             const html = await response.text();
-            this.processFragmentResponse(html, targetSelector, targetElement, response, form, !isHistoryOptOut, finalUrl, method);
+            this.processFragmentResponse(html, fragmentSelector, targetElement, response, form, pushHistory, finalUrl, method);
         } catch (err) {
             window.location.reload();
         } finally {
@@ -207,14 +207,14 @@ class fst_agent {
             window.history.replaceState(currentState, '');
         }
 
-        const isHistoryOptOut = triggerElement ? triggerElement.hasAttribute('data-fst-no-history') : false;
+        const pushHistory = triggerElement ? triggerElement.getAttribute('data-fst-history') !== 'false' : true;
         const href = window.location.origin + path;
 
         let routePath = path.replace(this.baseUrl, "") || "/";
         
         const match = this.matchRoute(routePath);
         if (match) {
-            if (!isHistoryOptOut) {
+            if (pushHistory) {
                 window.history.pushState({}, "", href);
             }
             this.route(routePath, triggerElement);
@@ -296,16 +296,16 @@ class fst_agent {
         return (triggerElement && triggerElement.getAttribute("data-fst-indicator")) || document.querySelector("script#fst-agent")?.getAttribute("data-indicator-class") || "fst-loading";
     }
 
-    async fetchFragment(url, targetSelector, pushHistory, triggerElement = null, isPopstate = false) {
+    async fetchFragment(url, fragmentSelector, pushHistory, triggerElement = null, isPopstate = false) {
         const reqHeader = document.querySelector('script#fst-agent')?.getAttribute('data-req-header') || 'X-FST-Request';
-        const targetHeader = document.querySelector('script#fst-agent')?.getAttribute('data-target-header') || 'X-FST-Target';
-        const targetElement = document.querySelector(targetSelector);
+        const targetHeader = document.querySelector('script#fst-agent')?.getAttribute('data-fragment-header') || 'X-FST-Fragment';
+        const targetElement = document.querySelector(fragmentSelector);
         const indicator = this.getIndicatorClass(triggerElement);
         
         if (targetElement) targetElement.classList.add(...indicator.split(' '));
         
         const loadingEvent = new CustomEvent('fst:loading', { 
-            detail: { url, targetSelector, triggerElement },
+            detail: { url, fragmentSelector, triggerElement },
             cancelable: !isPopstate
         });
         
@@ -315,7 +315,7 @@ class fst_agent {
         }
 
         try {
-            const headers = { [reqHeader]: 'true', [targetHeader]: targetSelector };
+            const headers = { [reqHeader]: 'true', [targetHeader]: fragmentSelector };
             let fetchOptions = { headers };
             if (this.fetchInterceptor) {
                 const intercepted = await this.fetchInterceptor(url, fetchOptions);
@@ -336,7 +336,7 @@ class fst_agent {
             if (redirectUrl) {
                 if (targetElement) targetElement.classList.remove(...indicator.split(' '));
                 if (isPopstate) { window.location.href = redirectUrl; return; }
-                await this.fetchFragment(redirectUrl, targetSelector, pushHistory);
+                await this.fetchFragment(redirectUrl, fragmentSelector, pushHistory);
                 return;
             }
 
@@ -352,24 +352,24 @@ class fst_agent {
             }
 
             const html = await response.text();
-            this.processFragmentResponse(html, targetSelector, targetElement, response, triggerElement, pushHistory, url, 'GET', isPopstate);
+            this.processFragmentResponse(html, fragmentSelector, targetElement, response, triggerElement, pushHistory, url, 'GET', isPopstate);
             
             if (!isPopstate) {
-                const noScroll = triggerElement ? triggerElement.hasAttribute('data-fst-no-scroll') : false;
-                if (!noScroll) {
-                    const scrollBehavior = triggerElement ? (triggerElement.getAttribute('data-fst-scroll') || 'instant') : 'instant';
-                    const behavior = scrollBehavior === 'smooth' ? 'smooth' : 'instant';
+                const doScroll = triggerElement ? triggerElement.getAttribute('data-fst-scroll') !== 'false' : true;
+                if (doScroll) {
+                    const scrollBehavior = triggerElement ? (triggerElement.getAttribute('data-fst-scroll') === 'smooth' ? 'smooth' : 'instant') : 'instant';
+                    const behavior = scrollBehavior;
                     
                     if (window.location.hash) {
                         const targetAnchor = document.querySelector(window.location.hash);
                         if (targetAnchor) {
                             targetAnchor.scrollIntoView({ behavior });
                         } else {
-                            if (targetSelector === 'body') window.scrollTo({ top: 0, behavior });
+                            if (fragmentSelector === 'body') window.scrollTo({ top: 0, behavior });
                             else targetElement.scrollTo({ top: 0, behavior });
                         }
                     } else {
-                        if (targetSelector === 'body') window.scrollTo({ top: 0, behavior });
+                        if (fragmentSelector === 'body') window.scrollTo({ top: 0, behavior });
                         else targetElement.scrollTo({ top: 0, behavior });
                     }
                 }
@@ -382,12 +382,12 @@ class fst_agent {
         }
     }
 
-    processFragmentResponse(html, targetSelector, targetElement, response, triggerElement, pushHistory, url, method, isPopstate = false) {
+    processFragmentResponse(html, fragmentSelector, targetElement, response, triggerElement, pushHistory, url, method, isPopstate = false) {
         const newTitle = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
         if (newTitle) document.title = newTitle[1];
 
         const bodyAttrs = response.headers.get('X-FST-Body-Attrs');
-        if (bodyAttrs !== null && targetSelector === 'body') {
+        if (bodyAttrs !== null && fragmentSelector === 'body') {
             const parser = new DOMParser();
             const doc = parser.parseFromString(`<div ${bodyAttrs}></div>`, 'text/html');
             const newBody = doc.body.firstChild;
@@ -405,9 +405,9 @@ class fst_agent {
             const cacheFlag = triggerElement ? triggerElement.getAttribute('data-fst-cache') : null;
             const globalCache = document.querySelector('script#fst-agent')?.getAttribute('data-history-cache') === 'true';
             const fstCache = cacheFlag !== null ? cacheFlag === 'true' : globalCache;
-            window.history.pushState({ fstHtml: html, fstTarget: targetSelector, fstBodyAttrs: bodyAttrs, fstCache: fstCache }, '', url);
+            window.history.pushState({ fstHtml: html, fstFragment: fragmentSelector, fstBodyAttrs: bodyAttrs, fstCache: fstCache }, '', url);
         } else if (isPopstate) {
-            window.history.replaceState({ fstHtml: html, fstTarget: targetSelector, fstBodyAttrs: bodyAttrs, fstCache: window.history.state?.fstCache ?? false }, '', url);
+            window.history.replaceState({ fstHtml: html, fstFragment: fragmentSelector, fstBodyAttrs: bodyAttrs, fstCache: window.history.state?.fstCache ?? false }, '', url);
         }
 
         this.reexecuteScripts(targetElement);
@@ -442,23 +442,20 @@ class fst_agent {
     }
 
     go(url, options = {}) {
-        const defaultTarget = document.querySelector('script#fst-agent')?.getAttribute('data-default-target') || 'body';
-        const target = options.target || defaultTarget;
+        const defaultFragment = document.querySelector('script#fst-agent')?.getAttribute('data-default-fragment') || 'body';
+        const fragmentSelector = options.fragment || defaultFragment;
         const history = options.history !== false;
 
         const virtualTrigger = {
             getAttribute: (attr) => {
+                if (attr === 'data-fst-history') return history ? 'true' : 'false';
                 if (attr === 'data-fst-scroll') return options.scroll !== undefined ? String(options.scroll) : null;
                 if (attr === 'data-fst-indicator') return options.indicator || null;
                 if (attr === 'data-fst-cache') return options.cache !== undefined ? String(options.cache) : null;
-                if (attr === 'data-fst-fragment') return target;
+                if (attr === 'data-fst-fragment') return fragmentSelector;
                 return null;
             },
-            hasAttribute: (attr) => {
-                if (attr === 'data-fst-no-history') return !history;
-                if (attr === 'data-fst-no-scroll') return options.scroll === false;
-                return false;
-            }
+            hasAttribute: (attr) => false // deprecated, use getAttribute
         };
 
         const path = this.getPathFromHref(url);
@@ -470,7 +467,7 @@ class fst_agent {
             }
             this.route(path, virtualTrigger);
         } else {
-            this.fetchFragment(url, target, history, virtualTrigger);
+            this.fetchFragment(url, fragmentSelector, history, virtualTrigger);
         }
     }
     escape(str) {
