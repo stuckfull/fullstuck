@@ -17,36 +17,20 @@
             }
         }
     },
+    "require": ["globals"],
     "routing": {
         "base_path": "/",
-        "require": [],
         "public_folders": [
             "assets",
             "uploads",
             "storage/public"
-        ],
-        "routes_file": [
-            "router.php"
-        ],
-        "error_handlers": {
-            "404": "views/errors/404.php",
-            "403": "Sorry, you do not have permission.",
-            "405": "Method not allowed.",
-            "500": "views/errors/500.php"
-        },
-        "regex_shortcuts": {
-            "i": "([0-9]+)",
-            "a": "([a-zA-Z0-9]+)",
-            "s": "([a-zA-Z0-9\\-]+)",
-            "h": "([a-fA-F0-9]+)",
-            "any": "([^/]+)"
-        }
+        ]
     },
     "agent_js": true,
     "fragment": {
-        "default_target": "body",
+        "default_fragment": "body",
         "header_request": "X-FST-Request",
-        "header_target": "X-FST-Target",
+        "header_fragment": "X-FST-Fragment",
         "indicator_class": "fst-loading",
         "history_cache": false
     },
