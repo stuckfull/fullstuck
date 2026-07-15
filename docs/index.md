@@ -28,7 +28,7 @@ features:
     details: Navigasi perpindahan halaman secepat kilat tanpa full-page reload. HTML-over-the-wire bawaan.
   - icon: 🎨
     title: Blade-like Templating
-    details: Tulis view Anda menggunakan file .fst.php dengan sintaks intuitif {{ $var }}, @foreach, dan @component.
+    details: Tulis view Anda menggunakan file .fst.php dengan sintaks intuitif <code v-pre>{{ $var }}</code>, @foreach, dan @component.
   - icon: 🤖
     title: Zero-Grep AI Architecture
     details: Dokumentasi dan struktur folder dirancang khusus untuk meminimalkan token context asisten AI (Vibe Coding).

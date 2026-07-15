@@ -402,7 +402,7 @@ if ($result['success']) {
 Ekstensi berbahaya (`.php`, `.exe`, dll) di-*block* secara hardcoded dan tidak bisa di-override.
 
 ### XSS Prevention
-- **Backend:** Gunakan `{{ $var }}` di template (auto-escape) atau `e($var)` di PHP murni.
+- **Backend:** Gunakan <code v-pre>{{ $var }}</code> di template (auto-escape) atau `e($var)` di PHP murni.
 - **Frontend:** Gunakan `fst.e(string)` sebelum menyuntikkan ke `innerHTML`.
 
 ---

@@ -210,7 +210,7 @@ String value mendukung env interpolation: `"${DB_HOST}"`.
 - Form dilindungi `SameSite=Lax` cookie + header `X-FST-Request` (otomatis).
 - `fst_session_regenerate(true)` wajib dipanggil setelah login.
 - `fst_upload()` memblokir ekstensi `.php/.exe/.phar` secara hardcoded.
-- `{{ $var }}` auto XSS-safe. Output mentah: `{!! $html !!}`.
+- <code v-pre>{{ $var }}</code> auto XSS-safe. Output mentah: `{!! $html !!}`.
 - `fst_redirect()` mencegah open redirect. Untuk domain luar gunakan parameter `$allow_external = true`.
 
 ## Error
