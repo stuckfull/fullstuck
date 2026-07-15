@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Template**: Upgraded all structural logic markers (`@if`, `@foreach`, `@prepend`, `@append`) from Text Nodes to Comment Nodes. This completely eliminates libxml "foster parenting" bugs and `HierarchyRequestError` exceptions when modifying strict elements like `<table>` or `<tbody>`.
 
 ### Fixed
+- **Security**: Fixed Path Traversal vulnerability in `fst_serve_static_file()` by enforcing strict `realpath()` boundary checks against `FST_ROOT_DIR`.
+- **Security**: Added `FST_CORE` direct-access lock protection to the first line of all auto-generated template cache files.
+- **Core**: Upgraded procedural auto-require in `fst_run()` (`bootstrap.php`) to support recursive directory scanning (e.g. `/globals/db/*.php`), eliminating the "God Folder" limitation.
+- **Router**: Fixed strict requirement for `router.php` triggering a 500 Internal Server Error in production, enabling true Zero-Config Path-Based Colocation.
+- **Router**: Fixed `action.php` (Headless API) scanner ignoring `GET` requests when `content.fst.php` is missing, allowing `action.php` to handle all standard HTTP methods.
+- **Router**: Fixed `cache-router.php` creation logic to consistently generate the cache file in development mode and rely on `filemtime` for regeneration, improving transparency and debugging.
 - **Template**: Fixed critical bug where `\Dom\HTMLDocument` (PHP 8.4+) automatically encoded `<` and `>` entities inside `<script>` and `<style>` blocks, breaking client-side logic. (Hotfix applied via regex decoder).
 - **Template**: Fixed HTML5 parser generating invalid explicit closing tags for void elements (e.g., `</img>`, `</input>`) by introducing a regex cleanup pass.
 - **Template**: Fixed severe performance bottleneck and potential double-replace corruption by replacing the `str_replace` loop with a single-pass `strtr()` (Aho-Corasick algorithm) for marker substitutions.

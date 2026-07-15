@@ -1,21 +1,60 @@
 <?php
 function fst_abort($code, $message = '') {
-    $fst_config = fst_app('config');
     http_response_code($code);
-    $handler_path = $fst_config['routing']['error_handlers'][$code] ?? null;
-    if ($handler_path) {
-        if (preg_match('/\.php$|\.html$/', $handler_path)) {
-            if (file_exists(FST_ROOT_DIR . '/' . $handler_path)) {
-                if (function_exists('fst_view')) fst_view($handler_path, ['error_code' => $code, 'error_message' => $message]);
-                else require FST_ROOT_DIR . '/' . $handler_path;
-                die();
-            }
-        } else {
-            echo htmlspecialchars($handler_path); die();
-        }
+    
+    $uri = function_exists('fst_uri') ? fst_uri() : ($_SERVER['REQUEST_URI'] ?? '/');
+    $isApi = str_starts_with($uri, '/api') || (isset($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json'));
+
+    if ($isApi) {
+        header('Content-Type: application/json');
+        echo json_encode([
+            'status' => 'error',
+            'code' => $code,
+            'message' => $message ?: "HTTP Error {$code}"
+        ]);
+        die();
     }
+    
+    // Default fallback UI
     $default_titles = [404 => 'Not Found', 403 => 'Forbidden', 405 => 'Method Not Allowed', 500 => 'Internal Server Error'];
     $title = $default_titles[$code] ?? 'Error';
+    
+    $route = fst_app('current_route');
+    $view_path = $route['view'] ?? '';
+    $layouts = $route['layouts'] ?? [];
+    
+    // 1. Search for {$code}.fst.php traversing up from the error folder to the app/ folder
+    if (!empty($view_path)) {
+        $dir = dirname(FST_ROOT_DIR . '/' . $view_path);
+        while ($dir && str_starts_with($dir, FST_ROOT_DIR . '/app')) {
+            $error_file = $dir . "/{$code}.fst.php";
+            if (file_exists($error_file)) {
+                $error_route = [
+                    'view' => str_replace(FST_ROOT_DIR . '/', '', $error_file),
+                    'layouts' => $layouts
+                ];
+                fst_app('shared_view_data', ['error_code' => $code, 'error_message' => $message]);
+                fst_render_view($error_route);
+                die();
+            }
+            if ($dir === FST_ROOT_DIR . '/app') break;
+            $dir = dirname($dir);
+        }
+    }
+    
+    // 2. Check root /app/ if no active route or not found
+    $error_file = FST_ROOT_DIR . "/app/{$code}.fst.php";
+    if (file_exists($error_file)) {
+        $error_route = [
+            'view' => "app/{$code}.fst.php",
+            'layouts' => file_exists(FST_ROOT_DIR . '/app/_layout.fst.php') ? ['app/_layout.fst.php'] : []
+        ];
+        fst_app('shared_view_data', ['error_code' => $code, 'error_message' => $message]);
+        fst_render_view($error_route);
+        die();
+    }
+    
+    // 3. Fallback to Hardcoded UI
     $message_safe = htmlspecialchars($message);
     $html = <<<HTML
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Error {$code}</title>
@@ -25,91 +64,7 @@ HTML;
     echo $html; die();
 }
 
-function _fst_route($method, $path, $callback, $middleware = []) {
-    $fst_config = fst_app('config');
-    $fst_routes = fst_app('routes');
-    $fst_route_prefix = fst_app('route_prefix');
-    $fst_group_middleware = fst_app('group_middleware');
-    
-    $full_original_path = $fst_route_prefix . $path;
-    if ($full_original_path !== '/' && str_ends_with($full_original_path, '/')) {
-        $full_original_path = rtrim($full_original_path, '/');
-    }
-     if (!str_starts_with($full_original_path, '/')) {
-        $full_original_path = '/' . $full_original_path;
-    }
 
-    $path_for_regex = $full_original_path;
-
-    $shortcuts = $fst_config['routing']['regex_shortcuts'] ?? ['i'=>'([0-9]+)','a'=>'([a-zA-Z0-9]+)','s'=>'([a-zA-Z0-9\-]+)','any'=>'([^/]+)'];
-    $default_regex = $shortcuts['any'] ?? '([^/]+)';
-
-    // 1. Eksekusi pola parameter opsional DULU
-    $final_pattern = preg_replace_callback(
-        '/\{([a-zA-Z0-9_]+)(?::([a-z]))?\}\?/',
-        function ($matches) use ($shortcuts, $default_regex) {
-             $type = $matches[2] ?? 'any';
-             $regex = $shortcuts[$type] ?? $default_regex;
-             $regex = str_starts_with($regex, '(') ? $regex : '(' . $regex . ')';
-             return "(?:/" . $regex . ")?";
-        },
-        $path_for_regex);
-    
-    // 2. Eksekusi pola parameter wajib
-    $final_pattern = preg_replace_callback(
-        '/\{([a-zA-Z0-9_]+)(?::([a-z]))?\}/',
-        function ($matches) use ($shortcuts, $default_regex) {
-             $type = $matches[2] ?? 'any';
-             $regex = $shortcuts[$type] ?? $default_regex;
-             return str_starts_with($regex, '(') ? $regex : '(' . $regex . ')';
-        },
-        $final_pattern);
-
-    $final_pattern = '#^' . str_replace('/', '\/', $final_pattern) . '$#';
-
-    // Strict Mode: Detect Duplicates
-    foreach ($fst_routes[$method] ?? [] as $existing) {
-        if ($existing[1] === $final_pattern) {
-            fst_abort(500, "Duplicate route pattern detected: [{$method}] {$full_original_path} conflicts with an existing route pattern. Each route pattern must be unique.");
-        }
-    }
-
-    if (!is_array($middleware)) $middleware = [$middleware];
-    $combined_middleware = array_merge($fst_group_middleware ?? [], $middleware);
-
-    if (!isset($fst_routes[$method])) $fst_routes[$method] = [];
-    $fst_routes[$method][] = [$method, $final_pattern, $callback, $full_original_path, $combined_middleware];
-    fst_app('routes', $fst_routes);
-}
-
-function fst_get($path, $callback, $middleware = []) { _fst_route('GET', $path, $callback, $middleware); }
-function fst_post($path, $callback, $middleware = []) { _fst_route('POST', $path, $callback, $middleware); }
-function fst_put($path, $callback, $middleware = []) { _fst_route('PUT', $path, $callback, $middleware); }
-function fst_patch($path, $callback, $middleware = []) { _fst_route('PATCH', $path, $callback, $middleware); }
-function fst_delete($path, $callback, $middleware = []) { _fst_route('DELETE', $path, $callback, $middleware); }
-function fst_any($path, $callback, $middleware = []) { _fst_route('ANY', $path, $callback, $middleware); }
-
-function fst_group($prefix, $callback, $middleware = []) {
-    $parent_prefix = fst_app('route_prefix');
-    $parent_middleware = fst_app('group_middleware') ?? [];
-    
-    $trimmed_prefix = trim($prefix, '/');
-    if ($trimmed_prefix === '') {
-        $fst_route_prefix = $parent_prefix;
-    } else {
-        $fst_route_prefix = rtrim($parent_prefix, '/') . '/' . $trimmed_prefix;
-    }
-    fst_app('route_prefix', $fst_route_prefix);
-    
-    if (!is_array($middleware)) $middleware = [$middleware];
-    $fst_group_middleware = array_merge($parent_middleware, $middleware);
-    fst_app('group_middleware', $fst_group_middleware);
-    
-    call_user_func($callback);
-    
-    fst_app('route_prefix', $parent_prefix);
-    fst_app('group_middleware', $parent_middleware);
-}
 
 function _fst_get_request_paths() {
     $fst_config = fst_app('config');
@@ -139,11 +94,14 @@ function _fst_is_protected_file($absolute_path) {
 function _fst_serve_static_asset($request_uri_path, $absolute_path) {
     $fst_config = fst_app('config');
     $public_folders = $fst_config['routing']['public_folders'] ?? [];
+    $root = realpath(FST_ROOT_DIR);
+    
     foreach ($public_folders as $folder) {
         $clean_folder = trim($folder, '/');
         if (str_starts_with(ltrim($request_uri_path, '/'), $clean_folder . '/')) {
-            if (is_file($absolute_path)) {
-                fst_serve_static_file($absolute_path); 
+            $real = realpath($absolute_path);
+            if ($real && $root && str_starts_with($real, $root . DIRECTORY_SEPARATOR . $clean_folder . DIRECTORY_SEPARATOR) && is_file($real)) {
+                fst_serve_static_file($real); 
                 die(); // Halt execution after serving static file
             }
             break; // Stop checking other public folders if prefix matches but file doesn't exist
@@ -152,75 +110,194 @@ function _fst_serve_static_asset($request_uri_path, $absolute_path) {
     return false;
 }
 
-function _fst_match_static_routes() {
-    $fst_routes = fst_app('routes');
-    $uri = fst_uri();
-    $method = fst_method();
+function _fst_get_route_cache() {
+    $cache_dir = FST_ROOT_DIR . '/cache';
+    $cache_file = $cache_dir . '/cache-router.php';
     
-    // AMBIL BUCKET YANG SESUAI SAJA:
-    $routes_to_check = array_merge($fst_routes[$method] ?? [], $fst_routes['ANY'] ?? []);
+    $is_dev = fst_is_dev();
     
-    foreach ($routes_to_check as $route) {
-        list($route_method, $pattern, $callback) = $route;
-        if ($route_method !== 'ANY' && $route_method !== $method) continue;
-        
-        if (preg_match($pattern, $uri, $matches)) {
-            array_shift($matches); // Remove the full match string
+    if (file_exists($cache_file)) {
+        if (!$is_dev) {
+            return require $cache_file;
+        } else {
+            $app_dir = FST_ROOT_DIR . '/app';
+            $cache_time = filemtime($cache_file);
+            $needs_rebuild = false;
             
-            $middleware_list = $route[4] ?? [];
-
-            // 1. Definisikan INTI bawang (eksekusi callback rute utama)
-            $next = function() use ($callback, $matches) {
-                return call_user_func_array($callback, $matches);
-            };
-
-            // 2. Balik urutan middleware agar dibungkus rapi dari luar ke dalam
-            $middleware_list = array_reverse($middleware_list);
-
-            // 3. Bungkus inti dengan lapisan middleware
-            foreach ($middleware_list as $mw) {
-                if (is_callable($mw)) {
-                    $current_next = $next;
-                    
-                    $next = function() use ($mw, $current_next) {
-                        $called = false;
-                        $next_wrapper = function() use ($current_next, &$called) {
-                            $called = true;
-                            return $current_next();
-                        };
-
-                        // Eksekusi middleware, kirim fungsi next ke dalamnya
-                        $result = call_user_func($mw, $next_wrapper);
-                        
-                        // --- MAGIC FULLSTUCK (BACKWARD COMPATIBILITY & SECURITY) ---
-                        // Jika middleware mengembalikan false secara eksplisit, hentikan dan tolak akses.
-                        if ($result === false) {
-                            fst_abort(403, 'Forbidden by Middleware');
+            if (is_dir($app_dir)) {
+                $iterator = new RecursiveIteratorIterator(
+                    new RecursiveDirectoryIterator($app_dir, FilesystemIterator::SKIP_DOTS),
+                    RecursiveIteratorIterator::SELF_FIRST
+                );
+                if (filemtime($app_dir) > $cache_time) {
+                    $needs_rebuild = true;
+                } else {
+                    foreach ($iterator as $item) {
+                        if ($item->isDir() && $item->getMTime() > $cache_time) {
+                            $needs_rebuild = true;
+                            break;
                         }
-                        
-                        // STRICT MODE: Jika middleware tidak memanggil $next() dan hanya mengembalikan null (lupa return), lemparkan error 500!
-                        if (!$called && $result === null) {
-                            fst_abort(500, "Middleware Logic Error: Middleware did not explicitly return a value or call \$next(). Security check failed."); 
-                        }
-                        
-                        return $result;
-                    };
+                    }
                 }
             }
-
-            // 4. Jalankan seluruh bungkusan dari lapisan terluar
-            $next();
-            
-            fst_app('route_found', true); 
-            return true; 
+            if (!$needs_rebuild) {
+                return require $cache_file;
+            }
         }
     }
+    
+    $routes = ['STATIC' => [], 'DYNAMIC' => []];
+    
+    $scan = function($dir, $route_path, $layouts, $guards) use (&$scan, &$routes) {
+        if (!is_dir($dir)) return;
+        
+        $rel = function($p) {
+            $nP = str_replace('\\', '/', $p);
+            $nR = str_replace('\\', '/', FST_ROOT_DIR);
+            return str_starts_with($nP, $nR . '/') ? substr($nP, strlen($nR) + 1) : $nP;
+        };
+        
+        $local_layout = $dir . '/_layout.fst.php';
+        if (file_exists($local_layout)) {
+            $layouts[] = $rel($local_layout);
+        }
+        
+        $local_guard = $dir . '/_guard.php';
+        if (file_exists($local_guard)) {
+            $guards[] = $rel($local_guard);
+        }
+        
+        $is_dynamic = strpos($route_path, '[') !== false;
+        $clean_route = $route_path === '' ? '/' : $route_path;
+        
+        $content_file = $dir . '/content.fst.php';
+        $client_file = $dir . '/client.js';
+        $has_client = file_exists($client_file) ? $rel($client_file) : null;
+        
+        if (file_exists($content_file)) {
+            $rel_content = $rel($content_file);
+            $route_data = ['view' => $rel_content, 'layouts' => $layouts, 'guards' => $guards];
+            if ($has_client) $route_data['client'] = $has_client;
+            
+            if ($is_dynamic) {
+                $regex = preg_replace('/\[([^\]]+)\]/', '([^/]+)', $clean_route);
+                $regex = '#^' . $regex . '$#';
+                preg_match_all('/\[([^\]]+)\]/', $clean_route, $matches);
+                $route_data['params'] = $matches[1];
+                $routes['DYNAMIC']['GET'][$regex] = $route_data;
+            } else {
+                $routes['STATIC']['GET'][$clean_route] = $route_data;
+            }
+        }
+        
+        $action_file = $dir . '/action.php';
+        if (file_exists($action_file)) {
+            $rel_action = $rel($action_file);
+            $route_data = ['handler' => $rel_action, 'guards' => $guards];
+            
+            $allowed_methods = !file_exists($content_file) ? ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'] : ['POST', 'PUT', 'DELETE', 'PATCH'];
+            
+            if ($is_dynamic) {
+                $regex = preg_replace('/\[([^\]]+)\]/', '([^/]+)', $clean_route);
+                $regex = '#^' . $regex . '$#';
+                preg_match_all('/\[([^\]]+)\]/', $clean_route, $matches);
+                $route_data['params'] = $matches[1];
+                foreach ($allowed_methods as $m) {
+                    $routes['DYNAMIC'][$m][$regex] = $route_data;
+                }
+            } else {
+                foreach ($allowed_methods as $m) {
+                    $routes['STATIC'][$m][$clean_route] = $route_data;
+                }
+            }
+        }
+        
+        $items = scandir($dir);
+        foreach ($items as $item) {
+            if ($item === '.' || $item === '..') continue;
+            $path = $dir . DIRECTORY_SEPARATOR . $item;
+            if (is_dir($path)) {
+                $scan($path, $route_path . '/' . $item, $layouts, $guards);
+            }
+        }
+    };
+    
+    if (is_dir(FST_ROOT_DIR . '/app')) {
+        $scan(FST_ROOT_DIR . '/app', '', [], []);
+    }
+    
+    if (!is_dir($cache_dir)) mkdir($cache_dir, 0755, true);
+    $export = var_export($routes, true);
+    $content = "<?php\nif(!defined('FST_ROOT_DIR')) { http_response_code(403); exit('Forbidden'); }\n// Auto-generated by FullStuck v0.4\nreturn " . $export . ";\n";
+    file_put_contents($cache_file, $content, LOCK_EX);
+    
+    return $routes;
+}
+
+function _fst_execute_route($route, $matches = []) {
+    // 1. Execute Guards (Russian Doll level outside-in)
+    if (!empty($route['guards'])) {
+        foreach ($route['guards'] as $guard) {
+            $guard_path = FST_ROOT_DIR . '/' . $guard;
+            if (file_exists($guard_path)) {
+                require $guard_path;
+            }
+        }
+    }
+    
+    // 2. Execute Action / Handler
+    if (isset($route['handler'])) {
+        require FST_ROOT_DIR . '/' . $route['handler'];
+        fst_app('route_found', true);
+        return true;
+    } 
+    // 3. Execute View & Layouts
+    elseif (isset($route['view'])) {
+        fst_app('current_route', $route);
+        fst_render_view($route);
+        fst_app('route_found', true);
+        return true;
+    }
+    
+    return false;
+}
+
+function _fst_match_colocation_routes() {
+    $routes = _fst_get_route_cache();
+    $uri = fst_uri();
+    $method = $_SERVER['REQUEST_METHOD'];
+    
+    // 1. Check static routes
+    if (isset($routes['STATIC'][$method][$uri])) {
+        $route = $routes['STATIC'][$method][$uri];
+        return _fst_execute_route($route, []);
+    }
+    
+    // 2. Check dynamic routes
+    if (isset($routes['DYNAMIC'][$method])) {
+        foreach ($routes['DYNAMIC'][$method] as $regex => $route) {
+            if (preg_match($regex, $uri, $matches)) {
+                array_shift($matches); // discard full match
+                
+                // Inject param into $_GET and $_REQUEST (Per Addendum #1)
+                $params = $route['params'] ?? [];
+                foreach ($params as $idx => $key) {
+                    if (isset($matches[$idx])) {
+                        $_GET[$key] = $matches[$idx];
+                        $_REQUEST[$key] = $matches[$idx];
+                    }
+                }
+                
+                return _fst_execute_route($route, $matches);
+            }
+        }
+    }
+    
     return false;
 }
 
 function fst_run() {
-    // TAMBAHKAN BARIS INI:
-    fst_app('route_found', false); 
+    fst_app('route_found', false);
 
     // [PATCH] Security Headers Global
     if (!headers_sent()) {
@@ -256,7 +333,7 @@ function fst_run() {
         }
     }
     if (!$handled) {
-        if (_fst_match_static_routes()) {
+        if (_fst_match_colocation_routes()) {
             $handled = true;
         }
     }
@@ -266,9 +343,9 @@ function fst_run() {
     }
     
     $output = ob_get_clean();
-    if ($output === false) $output = ''; // Guard: buffer sudah di-flush oleh exception handler
+    if ($output === false) $output = ''; // Guard: buffer already flushed by exception handler
 
-    // Evaluasi Opsi Agent JS
+    // Evaluate Agent JS Option
     $agent_mode = fst_config('agent_js', false);
     $should_inject_agent = false;
 
@@ -276,7 +353,7 @@ function fst_run() {
         $should_inject_agent = true;
     }
     
-    // Whitelist HTML: Hanya inject script jika tidak ada Content-Type spesifik atau Content-Type adalah text/html
+    // HTML Whitelist: Only inject script if no specific Content-Type or Content-Type is text/html
     foreach (headers_list() as $header) {
         if (stripos($header, 'Content-Type:') === 0) {
             if (stripos($header, 'text/html') === false) {
@@ -288,33 +365,28 @@ function fst_run() {
     if (fst_is_fragment_request()) {
         $target = fst_fragment_target();
         
-        // 1. Selamatkan tag <title> dari output asli sebelum dipotong
+        // 1. Rescue <title> tag from original output before truncating
         $title_tag = '';
         if (preg_match('/<title[^>]*>.*?<\/title>/is', $output, $matches)) {
             $title_tag = $matches[0];
         }
 
-        // [PATCH] Ambil atribut dari tag <body> asli dan kirim via Header
+        // [PATCH] Get attributes from original <body> tag and send via Header
         if ($target === 'body' && preg_match('/<body([^>]*)>/is', $output, $matches)) {
             header('X-FST-Body-Attrs: ' . trim($matches[1]));
         }
 
-        // 2. Potong HTML sesuai target (biasanya 'body')
+        // 2. Truncate HTML according to target (usually 'body')
         $output = fst_extract_html_fragment($output, $target); 
 
-        // 3. Sisipkan kembali tag <title> ke puncak fragmen agar terbaca oleh SPA Agent
+        // 3. Re-insert <title> tag to the top of the fragment so it is read by the SPA Agent
         if (!empty($title_tag)) {
             $output = $title_tag . "\n" . $output;
         }
     } 
     else if ($should_inject_agent) {
-        $script_id = fst_config('fragment.script_id', 'fst-agent');
-        $req_header = fst_config('fragment.header_request', 'X-FST-Request');
-        $target_header = fst_config('fragment.header_target', 'X-FST-Target');
-        $indicator_class = fst_config('fragment.indicator_class', 'fst-loading');
         $history_cache = fst_config('fragment.history_cache', false) ? ' data-history-cache="true"' : '';
-        $inject_id = $script_id ? 'id="'.$script_id.'" data-req-header="'.$req_header.'" data-target-header="'.$target_header.'" data-indicator-class="'.$indicator_class.'"'.$history_cache : '';
-        $script_tag = "<script src=\"/fst-agent.js\" {$inject_id}></script>";
+        $script_tag = '<script src="/fst-agent.js" id="fst-agent"' . $history_cache . '></script>';
         
         if (stripos($output, '</head>') !== false) {
             $output = str_ireplace('</head>', $script_tag . "\n</head>", $output);

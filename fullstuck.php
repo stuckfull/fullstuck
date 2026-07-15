@@ -1,12 +1,14 @@
 <?php
 /**
- * 🚀 FULLSTUCK.PHP (v0.3.0)
- * 🛡️ FST_HASH: 89dd19151f29dec14e0258b486e99b122f43f3fcd80288b6c7c43ca1630af4c8
+ * 🚀 FULLSTUCK.PHP (v0.4.0)
+ * 🛡️ FST_HASH: 59794c8b562dea6b612267bc9ea4a85d22fd57db75479838f174b4c1eef4bf47
+ * 🔗 https://github.com/stuckfull/fullstuck
  *
  * 🤖 AI ASSISTANT: DO NOT READ OR MODIFY THIS COMPILED CORE FILE!
- * To learn the API and framework rules, run `php fullstuck.php docs` in your terminal.
+ * To learn the API and framework rules, run `php fullstuck.php docs` in your terminal,
+ * or read the `brain_fullstuck.md` file in the project root.
  */
-define('FST_AGENT_JS_CODE', 'class fst_agent { constructor() { this.routes = []; this.baseUrl = \'\'; this.notFoundCallback = null; this.beforeHook = null; this.afterHook = null; this.fetchInterceptor = null; this._currentGroupPrefix = \'\'; this.init(); } init() { document.addEventListener(\'click\', (e) => { if (e.defaultPrevented) return; const link = e.target.closest(\'a\'); if (!link || !link.href) return; if (link.hasAttribute(\'data-fst-normal-load\') || link.target === \'_blank\' || link.hasAttribute(\'download\') || link.hostname !== window.location.hostname || e.ctrlKey || e.metaKey || e.shiftKey) return; const href = link.getAttribute(\'href\'); if (href && (href.startsWith(\'#\') || (link.pathname === window.location.pathname && link.search === window.location.search && link.hash !== \'\'))) { return; } e.preventDefault(); this.handleLinkClick(link); }); window.addEventListener(\'popstate\', async (e) => { const target = (e.state && e.state.fstTarget) || \'body\'; const savedScrollX = e.state?.scrollX; const savedScrollY = e.state?.scrollY; const useCache = e.state?.fstCache ?? (document.querySelector(\'script#fst-agent\')?.getAttribute(\'data-history-cache\') === \'true\'); const path = window.location.pathname + window.location.search; const matchedRoute = this.matchRoute(path); if (matchedRoute) { this.route(path); return; } if (useCache && e.state && e.state.fstHtml) { const targetElement = document.querySelector(target); if (targetElement) { document.dispatchEvent(new Event(\'fst:unload\')); if (e.state.fstBodyAttrs && target === \'body\') { const parser = new DOMParser(); const doc = parser.parseFromString(`<div ${e.state.fstBodyAttrs}></div>`, \'text/html\'); const newBody = doc.body.firstChild; Array.from(document.body.attributes).forEach(attr => document.body.removeAttribute(attr.name)); Array.from(newBody.attributes).forEach(attr => document.body.setAttribute(attr.name, attr.value)); } targetElement.innerHTML = e.state.fstHtml; this.reexecuteScripts(targetElement); document.dispatchEvent(new Event(\'fst:load\')); } else { window.location.reload(); return; } } else { await this.fetchFragment(window.location.href, target, false, null, true); } if (savedScrollX !== undefined && savedScrollY !== undefined) { window.scrollTo({ left: savedScrollX, top: savedScrollY, behavior: \'instant\' }); } else if (window.location.hash) { const targetAnchor = document.querySelector(window.location.hash); if (targetAnchor) targetAnchor.scrollIntoView({ behavior: \'smooth\' }); } }); document.addEventListener(\'submit\', async (e) => { if (e.defaultPrevented) return; const form = e.target; if (form.hasAttribute(\'data-fst-normal-load\')) return; e.preventDefault(); this.handleFormSubmit(form); }); this.setNotFound((path, triggerElement) => { let targetSelector = \'body\'; let isHistoryOptOut = false; if (triggerElement) { targetSelector = triggerElement.getAttribute(\'data-fst-fragment\') || \'body\'; isHistoryOptOut = triggerElement.hasAttribute(\'data-fst-no-history\'); } this.fetchFragment(path, targetSelector, !isHistoryOptOut, triggerElement); }); window.addEventListener(\'DOMContentLoaded\', () => { if (!window.history.state) { const bodyAttrs = Array.from(document.body.attributes).map(a => `${a.name}="${a.value}"`).join(\' \'); window.history.replaceState({ fstHtml: document.body.innerHTML, fstTarget: \'body\', fstBodyAttrs: bodyAttrs }, \'\', window.location.href); } document.dispatchEvent(new Event(\'fst:load\')); const path = window.location.pathname + window.location.search; if (this.matchRoute(path)) { this.route(path); } }); } handleLinkClick(link) { const href = link.href; const path = this.getPathFromHref(href); if (path.startsWith(this.baseUrl)) { this.navigate(path, link); } else { window.location.href = href; } } async handleFormSubmit(form) { const targetSelector = form.getAttribute(\'data-fst-fragment\') || \'body\'; const isHistoryOptOut = form.hasAttribute(\'data-fst-no-history\'); const indicator = this.getIndicatorClass(form); const targetElement = document.querySelector(targetSelector); if (targetElement) targetElement.classList.add(...indicator.split(\' \')); try { const method = (form.getAttribute(\'method\') || \'GET\').toUpperCase(); const action = form.getAttribute(\'action\') || window.location.href; const formData = new FormData(form); const reqHeader = document.querySelector(\'script#fst-agent\')?.getAttribute(\'data-req-header\') || \'X-FST-Request\'; const targetHeader = document.querySelector(\'script#fst-agent\')?.getAttribute(\'data-target-header\') || \'X-FST-Target\'; const headers = { [reqHeader]: \'true\', [targetHeader]: targetSelector }; let fetchOptions = { method, headers }; let finalUrl = action; if (method === \'GET\') { const params = new URLSearchParams(formData); finalUrl = action.includes(\'?\') ? `${action}&${params.toString()}` : `${action}?${params.toString()}`; } else { fetchOptions.body = formData; } const loadingEvent = new CustomEvent(\'fst:loading\', { detail: { url: finalUrl, targetSelector, triggerElement: form }, cancelable: true }); if (!document.dispatchEvent(loadingEvent)) { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); return; } if (this.fetchInterceptor) { const intercepted = await this.fetchInterceptor(finalUrl, fetchOptions); if (intercepted) fetchOptions = intercepted; } const response = await fetch(finalUrl, fetchOptions); const redirectUrl = response.headers.get(\'X-FST-Redirect\'); if (redirectUrl) { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); await this.fetchFragment(redirectUrl, targetSelector, !isHistoryOptOut); return; } if (response.redirected) { window.location.href = response.url; return; } if (!response.ok && response.status !== 400 && response.status !== 422) { const errorHtml = await response.text(); document.open(); document.write(errorHtml); document.close(); return; } const html = await response.text(); this.processFragmentResponse(html, targetSelector, targetElement, response, form, !isHistoryOptOut, finalUrl, method); } catch (err) { window.location.reload(); } finally { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); } } getPathFromHref(href) { const url = new URL(href, window.location.origin); let path = url.pathname; if (url.search) path += url.search; return path; } navigate(path, triggerElement) { if (this.beforeHook && this.beforeHook(path) === false) return; if (window.history.state) { const currentState = window.history.state; currentState.scrollX = window.scrollX; currentState.scrollY = window.scrollY; window.history.replaceState(currentState, \'\'); } const isHistoryOptOut = triggerElement ? triggerElement.hasAttribute(\'data-fst-no-history\') : false; const href = window.location.origin + path; let routePath = path.replace(this.baseUrl, "") || "/"; const match = this.matchRoute(routePath); if (match) { if (!isHistoryOptOut) { window.history.pushState({}, "", href); } this.route(routePath, triggerElement); } else { this.notFoundCallback ? this.notFoundCallback(href, triggerElement) : console.log(`No route matched for: ${href}`); } } route(path, triggerElement) { for (const { pattern, callback } of this.routes) { const match = this.matchRouteCheck(pattern, path); if (match) { callback(match, triggerElement); if (this.afterHook) this.afterHook(path, triggerElement); return; } } } matchRoute(path) { for (const { pattern } of this.routes) { const match = this.matchRouteCheck(pattern, path); if (match) return match; } return null; } matchRouteCheck(pattern, path) { const [patternPath, patternQuery] = pattern.split("?"); const [urlPath, urlQuery] = path.split("?"); const regex = new RegExp("^" + patternPath.replace(/:\\w+/g, "([^/]+)") + "$"); const match = urlPath.match(regex); if (match) { const params = { param: path, query: {} }; const keys = patternPath.match(/:\\w+/g) || []; keys.forEach((key, i) => { params[key.substring(1)] = match[i + 1]; }); if (urlQuery) { const searchParams = new URLSearchParams(urlQuery); for (const [key, value] of searchParams) { params.query[key] = value; } } return params; } return null; } set(pattern, callback) { this.routes.push({ pattern: this._currentGroupPrefix + pattern, callback }); } group(prefix, callback) { const prevPrefix = this._currentGroupPrefix; this._currentGroupPrefix += prefix; callback(); this._currentGroupPrefix = prevPrefix; } setNotFound(callback) { this.notFoundCallback = callback; } setBefore(callback) { this.beforeHook = callback; } setAfter(callback) { this.afterHook = callback; } setInterceptor(callback) { this.fetchInterceptor = callback; } getIndicatorClass(triggerElement) { return (triggerElement && triggerElement.getAttribute("data-fst-indicator")) || document.querySelector("script#fst-agent")?.getAttribute("data-indicator-class") || "fst-loading"; } async fetchFragment(url, targetSelector, pushHistory, triggerElement = null, isPopstate = false) { const reqHeader = document.querySelector(\'script#fst-agent\')?.getAttribute(\'data-req-header\') || \'X-FST-Request\'; const targetHeader = document.querySelector(\'script#fst-agent\')?.getAttribute(\'data-target-header\') || \'X-FST-Target\'; const targetElement = document.querySelector(targetSelector); const indicator = this.getIndicatorClass(triggerElement); if (targetElement) targetElement.classList.add(...indicator.split(\' \')); const loadingEvent = new CustomEvent(\'fst:loading\', { detail: { url, targetSelector, triggerElement }, cancelable: !isPopstate }); if (!isPopstate && !document.dispatchEvent(loadingEvent)) { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); return; } try { const headers = { [reqHeader]: \'true\', [targetHeader]: targetSelector }; let fetchOptions = { headers }; if (this.fetchInterceptor) { const intercepted = await this.fetchInterceptor(url, fetchOptions); if (intercepted) fetchOptions = intercepted; } const response = await fetch(url, fetchOptions); if (!response.ok) { const errorHtml = await response.text(); document.open(); document.write(errorHtml); document.close(); return; } const redirectUrl = response.headers.get(\'X-FST-Redirect\'); if (redirectUrl) { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); if (isPopstate) { window.location.href = redirectUrl; return; } await this.fetchFragment(redirectUrl, targetSelector, pushHistory); return; } if (response.redirected) { window.location.href = response.url; return; } const contentType = response.headers.get(\'content-type\'); if (!contentType || !contentType.includes(\'text/html\')) { window.location.href = url; return; } const html = await response.text(); this.processFragmentResponse(html, targetSelector, targetElement, response, triggerElement, pushHistory, url, \'GET\', isPopstate); if (!isPopstate) { const noScroll = triggerElement ? triggerElement.hasAttribute(\'data-fst-no-scroll\') : false; if (!noScroll) { const scrollBehavior = triggerElement ? (triggerElement.getAttribute(\'data-fst-scroll\') || \'instant\') : \'instant\'; const behavior = scrollBehavior === \'smooth\' ? \'smooth\' : \'instant\'; if (window.location.hash) { const targetAnchor = document.querySelector(window.location.hash); if (targetAnchor) { targetAnchor.scrollIntoView({ behavior }); } else { if (targetSelector === \'body\') window.scrollTo({ top: 0, behavior }); else targetElement.scrollTo({ top: 0, behavior }); } } else { if (targetSelector === \'body\') window.scrollTo({ top: 0, behavior }); else targetElement.scrollTo({ top: 0, behavior }); } } } } catch (err) { window.location.href = url; } finally { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); } } processFragmentResponse(html, targetSelector, targetElement, response, triggerElement, pushHistory, url, method, isPopstate = false) { const newTitle = html.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i); if (newTitle) document.title = newTitle[1]; const bodyAttrs = response.headers.get(\'X-FST-Body-Attrs\'); if (bodyAttrs !== null && targetSelector === \'body\') { const parser = new DOMParser(); const doc = parser.parseFromString(`<div ${bodyAttrs}></div>`, \'text/html\'); const newBody = doc.body.firstChild; Array.from(document.body.attributes).forEach(attr => document.body.removeAttribute(attr.name)); Array.from(newBody.attributes).forEach(attr => document.body.setAttribute(attr.name, attr.value)); } if (!targetElement) throw new Error(\'Target not found\'); document.dispatchEvent(new Event(\'fst:unload\')); targetElement.innerHTML = html; if (pushHistory && method === \'GET\') { const cacheFlag = triggerElement ? triggerElement.getAttribute(\'data-fst-cache\') : null; const globalCache = document.querySelector(\'script#fst-agent\')?.getAttribute(\'data-history-cache\') === \'true\'; const fstCache = cacheFlag !== null ? cacheFlag === \'true\' : globalCache; window.history.pushState({ fstHtml: html, fstTarget: targetSelector, fstBodyAttrs: bodyAttrs, fstCache: fstCache }, \'\', url); } else if (isPopstate) { window.history.replaceState({ fstHtml: html, fstTarget: targetSelector, fstBodyAttrs: bodyAttrs, fstCache: window.history.state?.fstCache ?? false }, \'\', url); } this.reexecuteScripts(targetElement); document.dispatchEvent(new Event(\'fst:load\')); } reexecuteScripts(targetElement) { if (!window._fst_executed_scripts) { window._fst_executed_scripts = new Set(); document.querySelectorAll(\'script[src]\').forEach(s => window._fst_executed_scripts.add(s.src)); } const scripts = targetElement.querySelectorAll(\'script\'); scripts.forEach(oldScript => { if (oldScript.id === \'fst-agent\' || oldScript.hasAttribute(\'data-fst-ignore\')) return; if (oldScript.src) { if (window._fst_executed_scripts.has(oldScript.src)) return; window._fst_executed_scripts.add(oldScript.src); } const newScript = document.createElement(\'script\'); Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value)); newScript.appendChild(document.createTextNode(oldScript.innerHTML)); oldScript.parentNode.replaceChild(newScript, oldScript); }); } go(url, options = {}) { const defaultTarget = document.querySelector(\'script#fst-agent\')?.getAttribute(\'data-default-target\') || \'body\'; const target = options.target || defaultTarget; const history = options.history !== false; const virtualTrigger = { getAttribute: (attr) => { if (attr === \'data-fst-scroll\') return options.scroll !== undefined ? String(options.scroll) : null; if (attr === \'data-fst-indicator\') return options.indicator || null; if (attr === \'data-fst-cache\') return options.cache !== undefined ? String(options.cache) : null; if (attr === \'data-fst-fragment\') return target; return null; }, hasAttribute: (attr) => { if (attr === \'data-fst-no-history\') return !history; if (attr === \'data-fst-no-scroll\') return options.scroll === false; return false; } }; const path = this.getPathFromHref(url); const match = this.matchRoute(path); if (match) { if (history) { window.history.pushState({}, "", url); } this.route(path, virtualTrigger); } else { this.fetchFragment(url, target, history, virtualTrigger); } } escape(str) { if (str === null || str === undefined) return \'\'; return String(str) .replace(/&/g, \'&amp;\') .replace(/</g, \'&lt;\') .replace(/>/g, \'&gt;\') .replace(/"/g, \'&quot;\') .replace(/\'/g, \'&#039;\'); } } window.fst = new fst_agent(); window.fst.e = window.fst.escape;');
+define('FST_AGENT_JS_CODE', 'class fst_agent { constructor() { this.routes = []; this.baseUrl = \'\'; this.notFoundCallback = null; this.beforeHook = null; this.afterHook = null; this.fetchInterceptor = null; this._currentGroupPrefix = \'\'; this._activeListeners = []; this._mountCleanups = []; this.store = {}; this.init(); } init() { document.addEventListener(\'click\', (e) => { if (e.defaultPrevented) return; const link = e.target.closest(\'a\'); if (!link || !link.href) return; if (link.hasAttribute(\'data-fst-normal-load\') || link.target === \'_blank\' || link.hasAttribute(\'download\') || link.hostname !== window.location.hostname || e.ctrlKey || e.metaKey || e.shiftKey) return; const href = link.getAttribute(\'href\'); if (href && (href.startsWith(\'#\') || (link.pathname === window.location.pathname && link.search === window.location.search && link.hash !== \'\'))) { return; } e.preventDefault(); this.handleLinkClick(link); }); window.addEventListener(\'popstate\', async (e) => { const target = (e.state && e.state.fstTarget) || \'body\'; const savedScrollX = e.state?.scrollX; const savedScrollY = e.state?.scrollY; const useCache = e.state?.fstCache ?? (document.querySelector(\'script#fst-agent\')?.getAttribute(\'data-history-cache\') === \'true\'); const path = window.location.pathname + window.location.search; const matchedRoute = this.matchRoute(path); if (matchedRoute) { this.route(path); return; } if (useCache && e.state && e.state.fstHtml) { const targetElement = document.querySelector(target); if (targetElement) { document.dispatchEvent(new Event(\'fst:unload\')); this.cleanup(); if (e.state.fstBodyAttrs && target === \'body\') { const parser = new DOMParser(); const doc = parser.parseFromString(`<div ${e.state.fstBodyAttrs}></div>`, \'text/html\'); const newBody = doc.body.firstChild; Array.from(document.body.attributes).forEach(attr => document.body.removeAttribute(attr.name)); Array.from(newBody.attributes).forEach(attr => document.body.setAttribute(attr.name, attr.value)); } targetElement.innerHTML = e.state.fstHtml; this.reexecuteScripts(targetElement); document.dispatchEvent(new Event(\'fst:load\')); } else { window.location.reload(); return; } } else { await this.fetchFragment(window.location.href, target, false, null, true); } if (savedScrollX !== undefined && savedScrollY !== undefined) { window.scrollTo({ left: savedScrollX, top: savedScrollY, behavior: \'instant\' }); } else if (window.location.hash) { const targetAnchor = document.querySelector(window.location.hash); if (targetAnchor) targetAnchor.scrollIntoView({ behavior: \'smooth\' }); } }); document.addEventListener(\'submit\', async (e) => { if (e.defaultPrevented) return; const form = e.target; if (form.hasAttribute(\'data-fst-normal-load\')) return; e.preventDefault(); this.handleFormSubmit(form); }); this.setNotFound((path, triggerElement) => { let targetSelector = \'body\'; let isHistoryOptOut = false; if (triggerElement) { targetSelector = triggerElement.getAttribute(\'data-fst-fragment\') || \'body\'; isHistoryOptOut = triggerElement.hasAttribute(\'data-fst-no-history\'); } this.fetchFragment(path, targetSelector, !isHistoryOptOut, triggerElement); }); window.addEventListener(\'DOMContentLoaded\', () => { if (!window.history.state) { const bodyAttrs = Array.from(document.body.attributes).map(a => `${a.name}="${a.value}"`).join(\' \'); window.history.replaceState({ fstHtml: document.body.innerHTML, fstTarget: \'body\', fstBodyAttrs: bodyAttrs }, \'\', window.location.href); } document.dispatchEvent(new Event(\'fst:load\')); const path = window.location.pathname + window.location.search; if (this.matchRoute(path)) { this.route(path); } }); } handleLinkClick(link) { const href = link.href; const path = this.getPathFromHref(href); if (path.startsWith(this.baseUrl)) { this.navigate(path, link); } else { window.location.href = href; } } async handleFormSubmit(form) { const targetSelector = form.getAttribute(\'data-fst-fragment\') || \'body\'; const isHistoryOptOut = form.hasAttribute(\'data-fst-no-history\'); const indicator = this.getIndicatorClass(form); const targetElement = document.querySelector(targetSelector); if (targetElement) targetElement.classList.add(...indicator.split(\' \')); try { const method = (form.getAttribute(\'method\') || \'GET\').toUpperCase(); const action = form.getAttribute(\'action\') || window.location.href; const formData = new FormData(form); const reqHeader = document.querySelector(\'script#fst-agent\')?.getAttribute(\'data-req-header\') || \'X-FST-Request\'; const targetHeader = document.querySelector(\'script#fst-agent\')?.getAttribute(\'data-target-header\') || \'X-FST-Target\'; const headers = { [reqHeader]: \'true\', [targetHeader]: targetSelector }; let fetchOptions = { method, headers }; let finalUrl = action; if (method === \'GET\') { const params = new URLSearchParams(formData); finalUrl = action.includes(\'?\') ? `${action}&${params.toString()}` : `${action}?${params.toString()}`; } else { fetchOptions.body = formData; } const loadingEvent = new CustomEvent(\'fst:loading\', { detail: { url: finalUrl, targetSelector, triggerElement: form }, cancelable: true }); if (!document.dispatchEvent(loadingEvent)) { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); return; } if (this.fetchInterceptor) { const intercepted = await this.fetchInterceptor(finalUrl, fetchOptions); if (intercepted) fetchOptions = intercepted; } const response = await fetch(finalUrl, fetchOptions); const redirectUrl = response.headers.get(\'X-FST-Redirect\'); if (redirectUrl) { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); await this.fetchFragment(redirectUrl, targetSelector, !isHistoryOptOut); return; } if (response.redirected) { window.location.href = response.url; return; } if (!response.ok && response.status !== 400 && response.status !== 422) { const errorHtml = await response.text(); document.open(); document.write(errorHtml); document.close(); return; } const html = await response.text(); this.processFragmentResponse(html, targetSelector, targetElement, response, form, !isHistoryOptOut, finalUrl, method); } catch (err) { window.location.reload(); } finally { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); } } getPathFromHref(href) { const url = new URL(href, window.location.origin); let path = url.pathname; if (url.search) path += url.search; return path; } navigate(path, triggerElement) { if (this.beforeHook && this.beforeHook(path) === false) return; if (window.history.state) { const currentState = window.history.state; currentState.scrollX = window.scrollX; currentState.scrollY = window.scrollY; window.history.replaceState(currentState, \'\'); } const isHistoryOptOut = triggerElement ? triggerElement.hasAttribute(\'data-fst-no-history\') : false; const href = window.location.origin + path; let routePath = path.replace(this.baseUrl, "") || "/"; const match = this.matchRoute(routePath); if (match) { if (!isHistoryOptOut) { window.history.pushState({}, "", href); } this.route(routePath, triggerElement); } else { this.notFoundCallback ? this.notFoundCallback(href, triggerElement) : console.log(`No route matched for: ${href}`); } } route(path, triggerElement) { for (const { pattern, callback } of this.routes) { const match = this.matchRouteCheck(pattern, path); if (match) { callback(match, triggerElement); if (this.afterHook) this.afterHook(path, triggerElement); return; } } } matchRoute(path) { for (const { pattern } of this.routes) { const match = this.matchRouteCheck(pattern, path); if (match) return match; } return null; } matchRouteCheck(pattern, path) { const [patternPath, patternQuery] = pattern.split("?"); const [urlPath, urlQuery] = path.split("?"); const regex = new RegExp("^" + patternPath.replace(/:\\w+/g, "([^/]+)") + "$"); const match = urlPath.match(regex); if (match) { const params = { param: path, query: {} }; const keys = patternPath.match(/:\\w+/g) || []; keys.forEach((key, i) => { params[key.substring(1)] = match[i + 1]; }); if (urlQuery) { const searchParams = new URLSearchParams(urlQuery); for (const [key, value] of searchParams) { params.query[key] = value; } } return params; } return null; } set(pattern, callback) { this.routes.push({ pattern: this._currentGroupPrefix + pattern, callback }); } group(prefix, callback) { const prevPrefix = this._currentGroupPrefix; this._currentGroupPrefix += prefix; callback(); this._currentGroupPrefix = prevPrefix; } setNotFound(callback) { this.notFoundCallback = callback; } setBefore(callback) { this.beforeHook = callback; } setAfter(callback) { this.afterHook = callback; } setInterceptor(callback) { this.fetchInterceptor = callback; } getIndicatorClass(triggerElement) { return (triggerElement && triggerElement.getAttribute("data-fst-indicator")) || document.querySelector("script#fst-agent")?.getAttribute("data-indicator-class") || "fst-loading"; } async fetchFragment(url, targetSelector, pushHistory, triggerElement = null, isPopstate = false) { const reqHeader = document.querySelector(\'script#fst-agent\')?.getAttribute(\'data-req-header\') || \'X-FST-Request\'; const targetHeader = document.querySelector(\'script#fst-agent\')?.getAttribute(\'data-target-header\') || \'X-FST-Target\'; const targetElement = document.querySelector(targetSelector); const indicator = this.getIndicatorClass(triggerElement); if (targetElement) targetElement.classList.add(...indicator.split(\' \')); const loadingEvent = new CustomEvent(\'fst:loading\', { detail: { url, targetSelector, triggerElement }, cancelable: !isPopstate }); if (!isPopstate && !document.dispatchEvent(loadingEvent)) { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); return; } try { const headers = { [reqHeader]: \'true\', [targetHeader]: targetSelector }; let fetchOptions = { headers }; if (this.fetchInterceptor) { const intercepted = await this.fetchInterceptor(url, fetchOptions); if (intercepted) fetchOptions = intercepted; } const response = await fetch(url, fetchOptions); if (!response.ok) { const errorHtml = await response.text(); document.open(); document.write(errorHtml); document.close(); return; } const redirectUrl = response.headers.get(\'X-FST-Redirect\'); if (redirectUrl) { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); if (isPopstate) { window.location.href = redirectUrl; return; } await this.fetchFragment(redirectUrl, targetSelector, pushHistory); return; } if (response.redirected) { window.location.href = response.url; return; } const contentType = response.headers.get(\'content-type\'); if (!contentType || !contentType.includes(\'text/html\')) { window.location.href = url; return; } const html = await response.text(); this.processFragmentResponse(html, targetSelector, targetElement, response, triggerElement, pushHistory, url, \'GET\', isPopstate); if (!isPopstate) { const noScroll = triggerElement ? triggerElement.hasAttribute(\'data-fst-no-scroll\') : false; if (!noScroll) { const scrollBehavior = triggerElement ? (triggerElement.getAttribute(\'data-fst-scroll\') || \'instant\') : \'instant\'; const behavior = scrollBehavior === \'smooth\' ? \'smooth\' : \'instant\'; if (window.location.hash) { const targetAnchor = document.querySelector(window.location.hash); if (targetAnchor) { targetAnchor.scrollIntoView({ behavior }); } else { if (targetSelector === \'body\') window.scrollTo({ top: 0, behavior }); else targetElement.scrollTo({ top: 0, behavior }); } } else { if (targetSelector === \'body\') window.scrollTo({ top: 0, behavior }); else targetElement.scrollTo({ top: 0, behavior }); } } } } catch (err) { window.location.href = url; } finally { if (targetElement) targetElement.classList.remove(...indicator.split(\' \')); } } processFragmentResponse(html, targetSelector, targetElement, response, triggerElement, pushHistory, url, method, isPopstate = false) { const newTitle = html.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i); if (newTitle) document.title = newTitle[1]; const bodyAttrs = response.headers.get(\'X-FST-Body-Attrs\'); if (bodyAttrs !== null && targetSelector === \'body\') { const parser = new DOMParser(); const doc = parser.parseFromString(`<div ${bodyAttrs}></div>`, \'text/html\'); const newBody = doc.body.firstChild; Array.from(document.body.attributes).forEach(attr => document.body.removeAttribute(attr.name)); Array.from(newBody.attributes).forEach(attr => document.body.setAttribute(attr.name, attr.value)); } if (!targetElement) throw new Error(\'Target not found\'); document.dispatchEvent(new Event(\'fst:unload\')); this.cleanup(); targetElement.innerHTML = html; if (pushHistory && method === \'GET\') { const cacheFlag = triggerElement ? triggerElement.getAttribute(\'data-fst-cache\') : null; const globalCache = document.querySelector(\'script#fst-agent\')?.getAttribute(\'data-history-cache\') === \'true\'; const fstCache = cacheFlag !== null ? cacheFlag === \'true\' : globalCache; window.history.pushState({ fstHtml: html, fstTarget: targetSelector, fstBodyAttrs: bodyAttrs, fstCache: fstCache }, \'\', url); } else if (isPopstate) { window.history.replaceState({ fstHtml: html, fstTarget: targetSelector, fstBodyAttrs: bodyAttrs, fstCache: window.history.state?.fstCache ?? false }, \'\', url); } this.reexecuteScripts(targetElement); document.dispatchEvent(new Event(\'fst:load\')); } reexecuteScripts(targetElement) { if (!window._fst_executed_scripts) { window._fst_executed_scripts = new Set(); document.querySelectorAll(\'script[src]\').forEach(s => window._fst_executed_scripts.add(s.src)); } const scripts = targetElement.querySelectorAll(\'script\'); scripts.forEach(oldScript => { if (oldScript.id === \'fst-agent\' || oldScript.hasAttribute(\'data-fst-ignore\')) return; if (oldScript.src) { if (window._fst_executed_scripts.has(oldScript.src)) { oldScript.remove(); return; } window._fst_executed_scripts.add(oldScript.src); } const newScript = document.createElement(\'script\'); Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value)); newScript.appendChild(document.createTextNode(oldScript.innerHTML)); oldScript.parentNode.replaceChild(newScript, oldScript); }); } go(url, options = {}) { const defaultTarget = document.querySelector(\'script#fst-agent\')?.getAttribute(\'data-default-target\') || \'body\'; const target = options.target || defaultTarget; const history = options.history !== false; const virtualTrigger = { getAttribute: (attr) => { if (attr === \'data-fst-scroll\') return options.scroll !== undefined ? String(options.scroll) : null; if (attr === \'data-fst-indicator\') return options.indicator || null; if (attr === \'data-fst-cache\') return options.cache !== undefined ? String(options.cache) : null; if (attr === \'data-fst-fragment\') return target; return null; }, hasAttribute: (attr) => { if (attr === \'data-fst-no-history\') return !history; if (attr === \'data-fst-no-scroll\') return options.scroll === false; return false; } }; const path = this.getPathFromHref(url); const match = this.matchRoute(path); if (match) { if (history) { window.history.pushState({}, "", url); } this.route(path, virtualTrigger); } else { this.fetchFragment(url, target, history, virtualTrigger); } } escape(str) { if (str === null || str === undefined) return \'\'; return String(str) .replace(/&/g, \'&amp;\') .replace(/</g, \'&lt;\') .replace(/>/g, \'&gt;\') .replace(/"/g, \'&quot;\') .replace(/\'/g, \'&#039;\'); } emit(eventName, detail = {}) { window.dispatchEvent(new CustomEvent(\'fst:\' + eventName, { detail })); } on(event, arg2, arg3) { let selector = typeof arg2 === \'string\' ? arg2 : null; let callback = selector ? arg3 : arg2; let options = (selector ? arguments[3] : arg3) || {}; let target = window; let eventName = event; let wrapper; if (selector) { target = document; wrapper = (e) => { const el = e.target.closest(selector); if (el) callback(e, el); }; } else if (!event.startsWith(\'fst:\') && ![\'click\', \'scroll\', \'resize\', \'keydown\', \'keyup\', \'submit\', \'change\', \'input\'].includes(event)) { eventName = \'fst:\' + event; wrapper = (e) => callback(e.detail); } else { wrapper = callback; } target.addEventListener(eventName, wrapper, options); if (!options.global) { this._activeListeners.push({ target, event: eventName, wrapper, options }); } } onMount(callback) { const wrapper = () => { const cleanup = callback(); if (typeof cleanup === \'function\') { this._mountCleanups.push(cleanup); } }; document.addEventListener(\'fst:load\', wrapper); this._activeListeners.push({ target: document, event: \'fst:load\', wrapper, options: {} }); } cleanup() { this._activeListeners.forEach(({ target, event, wrapper, options }) => { target.removeEventListener(event, wrapper, options); }); this._activeListeners = []; this._mountCleanups.forEach(cleanupFn => cleanupFn()); this._mountCleanups = []; } } window.fst = new fst_agent(); window.fst.e = window.fst.escape;');
 
 
 // FILE: core.php
@@ -24,8 +26,8 @@ if (session_status() === PHP_SESSION_NONE) {
     ]);
     session_start(); 
 }
-define('FST_VERSION', '0.3.0');
-define('FST_DOCS_URL', 'https://raw.githubusercontent.com/stuckfull/fullstuck/refs/heads/main/docs/v0.3/index.md');
+define('FST_VERSION', '0.4.0');
+define('FST_DOCS_URL', 'https://raw.githubusercontent.com/stuckfull/fullstuck/refs/heads/main/docs/v0.4/index.md');
 if (!defined('FST_ROOT_DIR')) {
     $root = __DIR__;
     if (php_sapi_name() === 'cli-server') {
@@ -59,20 +61,8 @@ if (php_sapi_name() === 'cli') {
             exit(0);
         }
         if (strpos($argv[1], 'docs') === 0) {
-            $base_url = 'https://raw.githubusercontent.com/stuckfull/fullstuck/refs/heads/main/docs/v0.3/';
-            $map = [
-                'docs' => 'index.md',
-                'docs:1' => '01-getting-started.md',
-                'docs:2' => '02-routing.md',
-                'docs:3' => '03-database.md',
-                'docs:4' => '04-security.md',
-                'docs:5' => '05-templates.md',
-                'docs:6' => '06-fst-agent.md',
-                'docs:7' => '07-logging.md',
-                'docs:8' => '08-advanced-cookbook.md',
-                'docs:9' => '09-api-reference.md',
-                'docs:full' => 'FULL.md'
-            ];
+            $base_url = 'https://raw.githubusercontent.com/stuckfull/fullstuck/refs/heads/main/docs/v0.4/';
+            $map = ['docs'=>'index.md', 'docs:1'=>'01-getting-started.md', 'docs:2'=>'02-routing.md', 'docs:3'=>'03-templates.md', 'docs:4'=>'04-components.md', 'docs:5'=>'05-fst-agent.md', 'docs:6'=>'06-action-api.md', 'docs:7'=>'07-security.md', 'docs:8'=>'08-database.md', 'docs:9'=>'09-config.md', 'docs:10'=>'10-logging.md', 'docs:11'=>'11-api-reference.md', 'docs:12'=>'12-cookbook.md', 'docs:13'=>'13-monolith-spa.md', 'docs:full'=>'FULL.md'];
             $cmd = $argv[1];
             if (isset($map[$cmd])) {
                 $context = stream_context_create(['http' => ['header' => "User-Agent: FullStuck CLI\r\n"]]);
@@ -119,17 +109,9 @@ function fst_app($key = null, $value = null) {
 }
 
 
-function fst_is_safe_to_debug() {
-    return fst_is_dev();
-}
-
 $config_content = @file_get_contents(FST_CONFIG_FILE);
 $decoded_config = $config_content ? json_decode($config_content, true) : null;
 if (fst_app('config') === null) fst_app('config', $decoded_config);
-if (fst_app('routes') === null) fst_app('routes', []);
-if (fst_app('route_prefix') === null) fst_app('route_prefix', '');
-if (fst_app('route_found') === null) fst_app('route_found', false);
-
 if ($decoded_config === null && file_exists(FST_CONFIG_FILE)) {
     if (function_exists('fst_abort')) fst_abort(500, "Failed to decode `fullstuck.json`. Check for syntax errors.");
     else die("Error: Failed to decode `fullstuck.json`. Check for syntax errors.");
@@ -157,10 +139,7 @@ function fst_log($level, $message, $context = []) {
     }
 }
 
-function _fst_error_handler($errno, $errstr, $errfile, $errline) {
-    if (!(error_reporting() & $errno)) return false;
-    throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
-}
+function _fst_error_handler($errno, $errstr, $errfile, $errline) { if (!(error_reporting() & $errno)) return false; throw new ErrorException($errstr, 0, $errno, $errfile, $errline); }
 
 function _fst_exception_handler($e) {
     while (ob_get_level() > 0) { ob_end_clean(); } 
@@ -187,24 +166,42 @@ function _fst_exception_handler($e) {
     
     
     $message = htmlspecialchars($e->getMessage());
-    $file = htmlspecialchars($e->getFile());
+    $file = $e->getFile();
     $line = $e->getLine();
     $trace = htmlspecialchars($e->getTraceAsString());
     
+    $source_file = $file;
+    $source_line = $line;
+    if (strpos($file, 'cache' . DIRECTORY_SEPARATOR . 'views') !== false && file_exists($file)) {
+        $first_line = fgets(fopen($file, 'r'));
+        if (preg_match('/FST_SOURCE_FILE:\s*(.+?)\s*\*\//', $first_line, $m)) {
+            $source_file = trim($m[1]);
+            $source_line = max(1, $line - 1);
+        }
+    }
+    
+    $file_display = htmlspecialchars($source_file);
+    
     $code_snippet = '';
-    if (file_exists($e->getFile())) {
-        $lines = file($e->getFile());
-        $start = max(0, $line - 5);
-        $end = min(count($lines), $line + 4);
+    if (file_exists($source_file)) {
+        $lines = file($source_file);
+        $start = max(0, $source_line - 5);
+        $end = min(count($lines), $source_line + 4);
         for ($i = $start; $i < $end; $i++) {
             $current_line = $i + 1;
             $line_content = htmlspecialchars($lines[$i]);
-            $highlight = ($current_line === $line) ? 'background-color: rgba(239, 68, 68, 0.2); border-left: 3px solid var(--error);' : 'border-left: 3px solid transparent;';
+            $highlight = ($current_line === $source_line) ? 'background-color: rgba(239, 68, 68, 0.2); border-left: 3px solid var(--error);' : 'border-left: 3px solid transparent;';
             $code_snippet .= "<div style='{$highlight} padding: 2px 5px;'><strong>" . str_pad($current_line, 4, ' ', STR_PAD_LEFT) . " |</strong> {$line_content}</div>";
         }
     }
 
     $class_name = get_class($e);
+
+    $is_localhost = in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1']) || str_contains($_SERVER['HTTP_HOST'] ?? '', 'localhost');
+    $exposure_warning = '';
+    if (!$is_localhost) {
+        $exposure_warning = "<div style='background: #f59e0b; color: black; padding: 10px; font-weight: bold; text-align: center; border-radius: 4px; margin-bottom: 20px;'>⚠️ WARNING: You are exposing sensitive error details on a public domain. Please set &quot;production&quot;: true in fullstuck.json!</div>";
+    }
 
     echo <<<HTML
     <!DOCTYPE html>
@@ -238,11 +235,12 @@ function _fst_exception_handler($e) {
     </head>
     <body>
         <div class="container fst-error-container">
+            {$exposure_warning}
             <span class="badge">{$class_name}</span>
             <h1>{$message}</h1>
             <div class="meta">
-                <strong>File:</strong> {$file}<br>
-                <strong>Line:</strong> {$line}
+                <strong>File:</strong> {$file_display}<br>
+                <strong>Line:</strong> {$source_line}
             </div>
             
             <h3>Code Snippet</h3>
@@ -268,14 +266,8 @@ set_error_handler('_fst_error_handler');
 set_exception_handler('_fst_exception_handler');
 register_shutdown_function('_fst_fatal_error_handler');
 
-function fst_error_handler(callable $callback) {
-    fst_app('error_handler_callback', $callback);
-}
-
-function fst_is_dev() {
-    $fst_config = fst_app('config');
-    return !($fst_config['production'] ?? true);
-}
+function fst_error_handler(callable $callback) { fst_app('error_handler_callback', $callback); }
+function fst_is_dev() { $fst_config = fst_app('config'); return !($fst_config['production'] ?? true); }
 
 function _fst_interpolate_env($val) {
     if (is_string($val) && strpos($val, '${') !== false) {
@@ -306,17 +298,8 @@ function fst_config($key = null, $default = null) {
     return _fst_interpolate_env($val);
 }
 
-function fst_is_fragment_request(): bool {
-    $header_name = fst_config('fragment.header_request', 'X-FST-Request');
-    $req_header = 'HTTP_' . str_replace('-', '_', strtoupper($header_name));
-    return isset($_SERVER[$req_header]);
-}
-
-function fst_fragment_target(): string {
-    $header_name = fst_config('fragment.header_target', 'X-FST-Target');
-    $target_header = 'HTTP_' . str_replace('-', '_', strtoupper($header_name));
-    return $_SERVER[$target_header] ?? 'body';
-}
+function fst_is_fragment_request(): bool { return isset($_SERVER['HTTP_X_FST_REQUEST']); }
+function fst_fragment_target(): string { return $_SERVER['HTTP_X_FST_TARGET'] ?? 'body'; }
 
 function fst_extract_html_fragment($html, $selector = 'body') {
     if (empty(trim($html))) return '';
@@ -335,13 +318,6 @@ function fst_extract_html_fragment($html, $selector = 'body') {
         }
         
     }
-
-    
-    
-    libxml_use_internal_errors(true);
-    $dom = new DOMDocument();
-    $dom->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_NOERROR | LIBXML_NOWARNING | LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
-    libxml_clear_errors();
 
     
     
@@ -373,7 +349,24 @@ function fst_extract_html_fragment($html, $selector = 'body') {
     }
     $xpath_query = implode(' | ', $paths);
 
-    $xpath = new DOMXPath($dom);
+    
+    if (class_exists('Dom\HTMLDocument')) {
+        
+        try {
+            $dom = \Dom\HTMLDocument::createFromString($html, LIBXML_NOERROR | LIBXML_NOWARNING);
+            $xpath = new \Dom\XPath($dom);
+        } catch (\Throwable $e) {
+            return $html;
+        }
+    } else {
+        
+        libxml_use_internal_errors(true);
+        $dom = new DOMDocument();
+        $dom->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_NOERROR | LIBXML_NOWARNING | LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        libxml_clear_errors();
+        $xpath = new DOMXPath($dom);
+    }
+    
     $nodes = $xpath->query($xpath_query);
     if ($nodes && $nodes->length > 0) {
         $inner_html = '';
@@ -460,24 +453,16 @@ function _fst_get_pdo($connection = null) {
             
             $fst_pdo_pool[$conn_name] = $pdo_instance;
         } catch (PDOException $e) {
-            fst_abort(500, "Database Connection Failed [{$conn_name}]: " . (fst_is_safe_to_debug() ? $e->getMessage() : 'Error.'));
+            fst_abort(500, "Database Connection Failed [{$conn_name}]: " . (fst_is_dev() ? $e->getMessage() : 'Error.'));
         }
     }
     
     return $fst_pdo_pool[$conn_name];
 }
 
-function fst_db_begin($connection = null) {
-    return _fst_get_pdo($connection)->beginTransaction();
-}
-
-function fst_db_commit($connection = null) {
-    return _fst_get_pdo($connection)->commit();
-}
-
-function fst_db_rollback($connection = null) {
-    return _fst_get_pdo($connection)->rollBack();
-}
+function fst_db_begin($connection = null) { return _fst_get_pdo($connection)->beginTransaction(); }
+function fst_db_commit($connection = null) { return _fst_get_pdo($connection)->commit(); }
+function fst_db_rollback($connection = null) { return _fst_get_pdo($connection)->rollBack(); }
 
 function fst_db($mode, $sql, $params = [], $connection = null) {
     $pdo = _fst_get_pdo($connection);
@@ -594,36 +579,66 @@ function fst_db_delete($table, $conditions, $options = []) {
     return $res['affected_rows'];
 }
 
-function fst_db_row($table, $conditions = [], $options = []) {
-    $options['limit'] = 1;
-    $options['mode'] = 'ROW';
-    return fst_db_select($table, $conditions, $options);
-}
-
-function fst_db_exists($table, $conditions = [], $options = []) {
-    $options['select'] = '1';
-    $row = fst_db_row($table, $conditions, $options);
-    return !empty($row);
-}
+function fst_db_row($table, $conditions = [], $options = []) { $options['limit'] = 1; $options['mode'] = 'ROW'; return fst_db_select($table, $conditions, $options); }
+function fst_db_exists($table, $conditions = [], $options = []) { $options['select'] = '1'; return !empty(fst_db_row($table, $conditions, $options)); }
 
 // FILE: router.php
 function fst_abort($code, $message = '') {
-    $fst_config = fst_app('config');
     http_response_code($code);
-    $handler_path = $fst_config['routing']['error_handlers'][$code] ?? null;
-    if ($handler_path) {
-        if (preg_match('/\.php$|\.html$/', $handler_path)) {
-            if (file_exists(FST_ROOT_DIR . '/' . $handler_path)) {
-                if (function_exists('fst_view')) fst_view($handler_path, ['error_code' => $code, 'error_message' => $message]);
-                else require FST_ROOT_DIR . '/' . $handler_path;
-                die();
-            }
-        } else {
-            echo htmlspecialchars($handler_path); die();
-        }
+    
+    $uri = function_exists('fst_uri') ? fst_uri() : ($_SERVER['REQUEST_URI'] ?? '/');
+    $isApi = str_starts_with($uri, '/api') || (isset($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json'));
+
+    if ($isApi) {
+        header('Content-Type: application/json');
+        echo json_encode([
+            'status' => 'error',
+            'code' => $code,
+            'message' => $message ?: "HTTP Error {$code}"
+        ]);
+        die();
     }
+    
+    
     $default_titles = [404 => 'Not Found', 403 => 'Forbidden', 405 => 'Method Not Allowed', 500 => 'Internal Server Error'];
     $title = $default_titles[$code] ?? 'Error';
+    
+    $route = fst_app('current_route');
+    $view_path = $route['view'] ?? '';
+    $layouts = $route['layouts'] ?? [];
+    
+    
+    if (!empty($view_path)) {
+        $dir = dirname(FST_ROOT_DIR . '/' . $view_path);
+        while ($dir && str_starts_with($dir, FST_ROOT_DIR . '/app')) {
+            $error_file = $dir . "/{$code}.fst.php";
+            if (file_exists($error_file)) {
+                $error_route = [
+                    'view' => str_replace(FST_ROOT_DIR . '/', '', $error_file),
+                    'layouts' => $layouts
+                ];
+                fst_app('shared_view_data', ['error_code' => $code, 'error_message' => $message]);
+                fst_render_view($error_route);
+                die();
+            }
+            if ($dir === FST_ROOT_DIR . '/app') break;
+            $dir = dirname($dir);
+        }
+    }
+    
+    
+    $error_file = FST_ROOT_DIR . "/app/{$code}.fst.php";
+    if (file_exists($error_file)) {
+        $error_route = [
+            'view' => "app/{$code}.fst.php",
+            'layouts' => file_exists(FST_ROOT_DIR . '/app/_layout.fst.php') ? ['app/_layout.fst.php'] : []
+        ];
+        fst_app('shared_view_data', ['error_code' => $code, 'error_message' => $message]);
+        fst_render_view($error_route);
+        die();
+    }
+    
+    
     $message_safe = htmlspecialchars($message);
     $html = <<<HTML
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Error {$code}</title>
@@ -633,91 +648,7 @@ HTML;
     echo $html; die();
 }
 
-function _fst_route($method, $path, $callback, $middleware = []) {
-    $fst_config = fst_app('config');
-    $fst_routes = fst_app('routes');
-    $fst_route_prefix = fst_app('route_prefix');
-    $fst_group_middleware = fst_app('group_middleware');
-    
-    $full_original_path = $fst_route_prefix . $path;
-    if ($full_original_path !== '/' && str_ends_with($full_original_path, '/')) {
-        $full_original_path = rtrim($full_original_path, '/');
-    }
-     if (!str_starts_with($full_original_path, '/')) {
-        $full_original_path = '/' . $full_original_path;
-    }
 
-    $path_for_regex = $full_original_path;
-
-    $shortcuts = $fst_config['routing']['regex_shortcuts'] ?? ['i'=>'([0-9]+)','a'=>'([a-zA-Z0-9]+)','s'=>'([a-zA-Z0-9\-]+)','any'=>'([^/]+)'];
-    $default_regex = $shortcuts['any'] ?? '([^/]+)';
-
-    
-    $final_pattern = preg_replace_callback(
-        '/\{([a-zA-Z0-9_]+)(?::([a-z]))?\}\?/',
-        function ($matches) use ($shortcuts, $default_regex) {
-             $type = $matches[2] ?? 'any';
-             $regex = $shortcuts[$type] ?? $default_regex;
-             $regex = str_starts_with($regex, '(') ? $regex : '(' . $regex . ')';
-             return "(?:/" . $regex . ")?";
-        },
-        $path_for_regex);
-    
-    
-    $final_pattern = preg_replace_callback(
-        '/\{([a-zA-Z0-9_]+)(?::([a-z]))?\}/',
-        function ($matches) use ($shortcuts, $default_regex) {
-             $type = $matches[2] ?? 'any';
-             $regex = $shortcuts[$type] ?? $default_regex;
-             return str_starts_with($regex, '(') ? $regex : '(' . $regex . ')';
-        },
-        $final_pattern);
-
-    $final_pattern = '#^' . str_replace('/', '\/', $final_pattern) . '$#';
-
-    
-    foreach ($fst_routes[$method] ?? [] as $existing) {
-        if ($existing[1] === $final_pattern) {
-            fst_abort(500, "Duplicate route pattern detected: [{$method}] {$full_original_path} conflicts with an existing route pattern. Each route pattern must be unique.");
-        }
-    }
-
-    if (!is_array($middleware)) $middleware = [$middleware];
-    $combined_middleware = array_merge($fst_group_middleware ?? [], $middleware);
-
-    if (!isset($fst_routes[$method])) $fst_routes[$method] = [];
-    $fst_routes[$method][] = [$method, $final_pattern, $callback, $full_original_path, $combined_middleware];
-    fst_app('routes', $fst_routes);
-}
-
-function fst_get($path, $callback, $middleware = []) { _fst_route('GET', $path, $callback, $middleware); }
-function fst_post($path, $callback, $middleware = []) { _fst_route('POST', $path, $callback, $middleware); }
-function fst_put($path, $callback, $middleware = []) { _fst_route('PUT', $path, $callback, $middleware); }
-function fst_patch($path, $callback, $middleware = []) { _fst_route('PATCH', $path, $callback, $middleware); }
-function fst_delete($path, $callback, $middleware = []) { _fst_route('DELETE', $path, $callback, $middleware); }
-function fst_any($path, $callback, $middleware = []) { _fst_route('ANY', $path, $callback, $middleware); }
-
-function fst_group($prefix, $callback, $middleware = []) {
-    $parent_prefix = fst_app('route_prefix');
-    $parent_middleware = fst_app('group_middleware') ?? [];
-    
-    $trimmed_prefix = trim($prefix, '/');
-    if ($trimmed_prefix === '') {
-        $fst_route_prefix = $parent_prefix;
-    } else {
-        $fst_route_prefix = rtrim($parent_prefix, '/') . '/' . $trimmed_prefix;
-    }
-    fst_app('route_prefix', $fst_route_prefix);
-    
-    if (!is_array($middleware)) $middleware = [$middleware];
-    $fst_group_middleware = array_merge($parent_middleware, $middleware);
-    fst_app('group_middleware', $fst_group_middleware);
-    
-    call_user_func($callback);
-    
-    fst_app('route_prefix', $parent_prefix);
-    fst_app('group_middleware', $parent_middleware);
-}
 
 function _fst_get_request_paths() {
     $fst_config = fst_app('config');
@@ -747,11 +678,14 @@ function _fst_is_protected_file($absolute_path) {
 function _fst_serve_static_asset($request_uri_path, $absolute_path) {
     $fst_config = fst_app('config');
     $public_folders = $fst_config['routing']['public_folders'] ?? [];
+    $root = realpath(FST_ROOT_DIR);
+    
     foreach ($public_folders as $folder) {
         $clean_folder = trim($folder, '/');
         if (str_starts_with(ltrim($request_uri_path, '/'), $clean_folder . '/')) {
-            if (is_file($absolute_path)) {
-                fst_serve_static_file($absolute_path); 
+            $real = realpath($absolute_path);
+            if ($real && $root && str_starts_with($real, $root . DIRECTORY_SEPARATOR . $clean_folder . DIRECTORY_SEPARATOR) && is_file($real)) {
+                fst_serve_static_file($real); 
                 die(); 
             }
             break; 
@@ -760,75 +694,194 @@ function _fst_serve_static_asset($request_uri_path, $absolute_path) {
     return false;
 }
 
-function _fst_match_static_routes() {
-    $fst_routes = fst_app('routes');
-    $uri = fst_uri();
-    $method = fst_method();
+function _fst_get_route_cache() {
+    $cache_dir = FST_ROOT_DIR . '/cache';
+    $cache_file = $cache_dir . '/cache-router.php';
     
+    $is_dev = fst_is_dev();
     
-    $routes_to_check = array_merge($fst_routes[$method] ?? [], $fst_routes['ANY'] ?? []);
-    
-    foreach ($routes_to_check as $route) {
-        list($route_method, $pattern, $callback) = $route;
-        if ($route_method !== 'ANY' && $route_method !== $method) continue;
-        
-        if (preg_match($pattern, $uri, $matches)) {
-            array_shift($matches); 
+    if (file_exists($cache_file)) {
+        if (!$is_dev) {
+            return require $cache_file;
+        } else {
+            $app_dir = FST_ROOT_DIR . '/app';
+            $cache_time = filemtime($cache_file);
+            $needs_rebuild = false;
             
-            $middleware_list = $route[4] ?? [];
-
-            
-            $next = function() use ($callback, $matches) {
-                return call_user_func_array($callback, $matches);
-            };
-
-            
-            $middleware_list = array_reverse($middleware_list);
-
-            
-            foreach ($middleware_list as $mw) {
-                if (is_callable($mw)) {
-                    $current_next = $next;
-                    
-                    $next = function() use ($mw, $current_next) {
-                        $called = false;
-                        $next_wrapper = function() use ($current_next, &$called) {
-                            $called = true;
-                            return $current_next();
-                        };
-
-                        
-                        $result = call_user_func($mw, $next_wrapper);
-                        
-                        
-                        
-                        if ($result === false) {
-                            fst_abort(403, 'Forbidden by Middleware');
+            if (is_dir($app_dir)) {
+                $iterator = new RecursiveIteratorIterator(
+                    new RecursiveDirectoryIterator($app_dir, FilesystemIterator::SKIP_DOTS),
+                    RecursiveIteratorIterator::SELF_FIRST
+                );
+                if (filemtime($app_dir) > $cache_time) {
+                    $needs_rebuild = true;
+                } else {
+                    foreach ($iterator as $item) {
+                        if ($item->isDir() && $item->getMTime() > $cache_time) {
+                            $needs_rebuild = true;
+                            break;
                         }
-                        
-                        
-                        if (!$called && $result === null) {
-                            fst_abort(500, "Middleware Logic Error: Middleware did not explicitly return a value or call \$next(). Security check failed."); 
-                        }
-                        
-                        return $result;
-                    };
+                    }
                 }
             }
-
-            
-            $next();
-            
-            fst_app('route_found', true); 
-            return true; 
+            if (!$needs_rebuild) {
+                return require $cache_file;
+            }
         }
     }
+    
+    $routes = ['STATIC' => [], 'DYNAMIC' => []];
+    
+    $scan = function($dir, $route_path, $layouts, $guards) use (&$scan, &$routes) {
+        if (!is_dir($dir)) return;
+        
+        $rel = function($p) {
+            $nP = str_replace('\\', '/', $p);
+            $nR = str_replace('\\', '/', FST_ROOT_DIR);
+            return str_starts_with($nP, $nR . '/') ? substr($nP, strlen($nR) + 1) : $nP;
+        };
+        
+        $local_layout = $dir . '/_layout.fst.php';
+        if (file_exists($local_layout)) {
+            $layouts[] = $rel($local_layout);
+        }
+        
+        $local_guard = $dir . '/_guard.php';
+        if (file_exists($local_guard)) {
+            $guards[] = $rel($local_guard);
+        }
+        
+        $is_dynamic = strpos($route_path, '[') !== false;
+        $clean_route = $route_path === '' ? '/' : $route_path;
+        
+        $content_file = $dir . '/content.fst.php';
+        $client_file = $dir . '/client.js';
+        $has_client = file_exists($client_file) ? $rel($client_file) : null;
+        
+        if (file_exists($content_file)) {
+            $rel_content = $rel($content_file);
+            $route_data = ['view' => $rel_content, 'layouts' => $layouts, 'guards' => $guards];
+            if ($has_client) $route_data['client'] = $has_client;
+            
+            if ($is_dynamic) {
+                $regex = preg_replace('/\[([^\]]+)\]/', '([^/]+)', $clean_route);
+                $regex = '#^' . $regex . '$#';
+                preg_match_all('/\[([^\]]+)\]/', $clean_route, $matches);
+                $route_data['params'] = $matches[1];
+                $routes['DYNAMIC']['GET'][$regex] = $route_data;
+            } else {
+                $routes['STATIC']['GET'][$clean_route] = $route_data;
+            }
+        }
+        
+        $action_file = $dir . '/action.php';
+        if (file_exists($action_file)) {
+            $rel_action = $rel($action_file);
+            $route_data = ['handler' => $rel_action, 'guards' => $guards];
+            
+            $allowed_methods = !file_exists($content_file) ? ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'] : ['POST', 'PUT', 'DELETE', 'PATCH'];
+            
+            if ($is_dynamic) {
+                $regex = preg_replace('/\[([^\]]+)\]/', '([^/]+)', $clean_route);
+                $regex = '#^' . $regex . '$#';
+                preg_match_all('/\[([^\]]+)\]/', $clean_route, $matches);
+                $route_data['params'] = $matches[1];
+                foreach ($allowed_methods as $m) {
+                    $routes['DYNAMIC'][$m][$regex] = $route_data;
+                }
+            } else {
+                foreach ($allowed_methods as $m) {
+                    $routes['STATIC'][$m][$clean_route] = $route_data;
+                }
+            }
+        }
+        
+        $items = scandir($dir);
+        foreach ($items as $item) {
+            if ($item === '.' || $item === '..') continue;
+            $path = $dir . DIRECTORY_SEPARATOR . $item;
+            if (is_dir($path)) {
+                $scan($path, $route_path . '/' . $item, $layouts, $guards);
+            }
+        }
+    };
+    
+    if (is_dir(FST_ROOT_DIR . '/app')) {
+        $scan(FST_ROOT_DIR . '/app', '', [], []);
+    }
+    
+    if (!is_dir($cache_dir)) mkdir($cache_dir, 0755, true);
+    $export = var_export($routes, true);
+    $content = "<?php\nif(!defined('FST_ROOT_DIR')) { http_response_code(403); exit('Forbidden'); }\n// Auto-generated by FullStuck v0.4\nreturn " . $export . ";\n";
+    file_put_contents($cache_file, $content, LOCK_EX);
+    
+    return $routes;
+}
+
+function _fst_execute_route($route, $matches = []) {
+    
+    if (!empty($route['guards'])) {
+        foreach ($route['guards'] as $guard) {
+            $guard_path = FST_ROOT_DIR . '/' . $guard;
+            if (file_exists($guard_path)) {
+                require $guard_path;
+            }
+        }
+    }
+    
+    
+    if (isset($route['handler'])) {
+        require FST_ROOT_DIR . '/' . $route['handler'];
+        fst_app('route_found', true);
+        return true;
+    } 
+    
+    elseif (isset($route['view'])) {
+        fst_app('current_route', $route);
+        fst_render_view($route);
+        fst_app('route_found', true);
+        return true;
+    }
+    
+    return false;
+}
+
+function _fst_match_colocation_routes() {
+    $routes = _fst_get_route_cache();
+    $uri = fst_uri();
+    $method = $_SERVER['REQUEST_METHOD'];
+    
+    
+    if (isset($routes['STATIC'][$method][$uri])) {
+        $route = $routes['STATIC'][$method][$uri];
+        return _fst_execute_route($route, []);
+    }
+    
+    
+    if (isset($routes['DYNAMIC'][$method])) {
+        foreach ($routes['DYNAMIC'][$method] as $regex => $route) {
+            if (preg_match($regex, $uri, $matches)) {
+                array_shift($matches); 
+                
+                
+                $params = $route['params'] ?? [];
+                foreach ($params as $idx => $key) {
+                    if (isset($matches[$idx])) {
+                        $_GET[$key] = $matches[$idx];
+                        $_REQUEST[$key] = $matches[$idx];
+                    }
+                }
+                
+                return _fst_execute_route($route, $matches);
+            }
+        }
+    }
+    
     return false;
 }
 
 function fst_run() {
-    
-    fst_app('route_found', false); 
+    fst_app('route_found', false);
 
     
     if (!headers_sent()) {
@@ -864,7 +917,7 @@ function fst_run() {
         }
     }
     if (!$handled) {
-        if (_fst_match_static_routes()) {
+        if (_fst_match_colocation_routes()) {
             $handled = true;
         }
     }
@@ -916,13 +969,8 @@ function fst_run() {
         }
     } 
     else if ($should_inject_agent) {
-        $script_id = fst_config('fragment.script_id', 'fst-agent');
-        $req_header = fst_config('fragment.header_request', 'X-FST-Request');
-        $target_header = fst_config('fragment.header_target', 'X-FST-Target');
-        $indicator_class = fst_config('fragment.indicator_class', 'fst-loading');
         $history_cache = fst_config('fragment.history_cache', false) ? ' data-history-cache="true"' : '';
-        $inject_id = $script_id ? 'id="'.$script_id.'" data-req-header="'.$req_header.'" data-target-header="'.$target_header.'" data-indicator-class="'.$indicator_class.'"'.$history_cache : '';
-        $script_tag = "<script src=\"/fst-agent.js\" {$inject_id}></script>";
+        $script_tag = '<script src="/fst-agent.js" id="fst-agent"' . $history_cache . '></script>';
         
         if (stripos($output, '</head>') !== false) {
             $output = str_ireplace('</head>', $script_tag . "\n</head>", $output);
@@ -948,7 +996,6 @@ function fst_uri() {
     if ($uri !== '/' && str_ends_with($uri, '/')) $uri = rtrim($uri, '/');
     return $uri ?: '/';
 }
-function fst_method() { return $_SERVER['REQUEST_METHOD']; }
 function _fst_parsed_body() {
     static $cache = null;
     if ($cache !== null) return $cache;
@@ -972,6 +1019,7 @@ function _fst_parsed_body() {
 }
 function fst_input($key, $default = null) { $data = _fst_parsed_body(); return $data[$key] ?? $default; }
 function fst_request() { return _fst_parsed_body(); }
+function fst_method() { return strtoupper($_POST['_method'] ?? $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'] ?? $_SERVER['REQUEST_METHOD'] ?? 'GET'); }
 function fst_file($key) { return isset($_FILES[$key]) && $_FILES[$key]['error'] === UPLOAD_ERR_OK ? $_FILES[$key] : null; }
 function fst_escape($str) { return htmlspecialchars((string)$str, ENT_QUOTES, 'UTF-8'); }
 function e($str) { return fst_escape($str); }
@@ -1013,17 +1061,7 @@ function fst_status_code($code) { http_response_code($code); }
 function fst_session_set($key, $value) { $_SESSION[$key] = $value; }
 function fst_session_get($key, $default = null) { return $_SESSION[$key] ?? $default; }
 function fst_session_forget($key) { unset($_SESSION[$key]); }
-function fst_flash_set($key, $message) { $_SESSION['_flash'][$key] = $message; }
-function fst_flash_has($key) { return isset($_SESSION['_flash'][$key]); }
-function fst_flash_get($key, $default = null) { $message = $_SESSION['_flash'][$key] ?? $default; unset($_SESSION['_flash'][$key]); return $message; }
-
-function fst_csrf_token() { if (empty($_SESSION['_csrf_token'])) $_SESSION['_csrf_token'] = bin2hex(random_bytes(32)); return $_SESSION['_csrf_token']; }
-function fst_csrf_field() { return '<input type="hidden" name="_token" value="' . fst_csrf_token() . '">'; }
-function fst_csrf_check() {
-    $data = fst_request(); 
-    $submitted_token = $data['_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null;
-    if (!$submitted_token || !hash_equals(fst_csrf_token(), $submitted_token)) fst_abort(403, 'Invalid CSRF token.');
-}
+function fst_session_regenerate(bool $delete_old = true) { if (session_status() === PHP_SESSION_ACTIVE) session_regenerate_id($delete_old); }
 
 function fst_upload($key, $folder, $options = []) {
     if (!isset($_FILES[$key])) return ['success' => false, 'error' => 'No file uploaded.', 'path' => null];
@@ -1038,8 +1076,17 @@ function fst_upload($key, $folder, $options = []) {
         if ($size > $max_size_kb * 1024) return ['success' => false, 'error' => "File is too large (max {$max_size_kb} KB).", 'path' => null];
         
         $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
-        if (!empty($options['allowed_types']) && !in_array($ext, $options['allowed_types'])) {
+
+        $default_allowed = ['jpg','jpeg','png','gif','webp','svg','pdf','doc','docx','xls','xlsx','csv','txt','zip'];
+        $allowed_types = $options['allowed_types'] ?? $default_allowed;
+        
+        if (!in_array($ext, $allowed_types)) {
             return ['success' => false, 'error' => "Extension `{$ext}` is not allowed.", 'path' => null];
+        }
+
+        $blocked_ext = ['php','php3','php4','php5','php7','phtml','phar','pht','shtml','htaccess','asp','aspx','jsp','cgi','exe'];
+        if (in_array($ext, $blocked_ext)) {
+            return ['success' => false, 'error' => "Security Error: Executable extension blocked.", 'path' => null];
         }
         
         if (class_exists('finfo')) {
@@ -1056,6 +1103,10 @@ function fst_upload($key, $folder, $options = []) {
         
         $safe_basename = preg_replace("/[^a-zA-Z0-9\._-]/", "_", basename($name, ".".$ext));
         $filename = $safe_basename . '-' . uniqid() . '.' . $ext;
+        if (str_contains($folder, '..')) {
+            return ['success' => false, 'error' => 'Security Error: Path traversal detected.', 'path' => null];
+        }
+        
         $destination_folder = rtrim(FST_ROOT_DIR . '/' . trim($folder, '/'), '/');
         if (!is_dir($destination_folder) && !mkdir($destination_folder, 0755, true)) return ['success' => false, 'error' => "Failed to create upload directory.", 'path' => null];
         
@@ -1115,30 +1166,10 @@ function fst_view($path, $data = []) {
 function fst_partial($path, $data = []) { fst_view($path, $data); }
 
 function fst_serve_static_file($file_path) {
-    $fst_config = fst_app('config');
     $ext = strtolower(pathinfo($file_path, PATHINFO_EXTENSION));
     
-    $mime_types = $fst_config['mime_types'] ?? [
-        'css'  => 'text/css',
-        'js'   => 'application/javascript',
-        'json' => 'application/json',
-        'xml'  => 'application/xml',
-        'jpg'  => 'image/jpeg',
-        'jpeg' => 'image/jpeg',
-        'png'  => 'image/png',
-        'gif'  => 'image/gif',
-        'webp' => 'image/webp',
-        'ico'  => 'image/x-icon',
-        'svg'  => 'image/svg+xml',
-        'woff' => 'font/woff',
-        'woff2'=> 'font/woff2',
-        'ttf'  => 'font/ttf',
-        'mp4'  => 'video/mp4',
-        'webm' => 'video/webm',
-        'html' => 'text/html',
-        'txt'  => 'text/plain',
-        'map'  => 'application/json'
-    ];
+    static $mime_types = ['css'=>'text/css', 'js'=>'application/javascript', 'json'=>'application/json', 'xml'=>'application/xml', 'jpg'=>'image/jpeg', 'jpeg'=>'image/jpeg', 'png'=>'image/png', 'gif'=>'image/gif', 'webp'=>'image/webp', 'ico'=>'image/x-icon', 'svg'=>'image/svg+xml', 'woff'=>'font/woff', 'woff2'=>'font/woff2', 'ttf'=>'font/ttf', 'mp4'=>'video/mp4', 'webm'=>'video/webm', 'html'=>'text/html', 'txt'=>'text/plain', 'map'=>'application/json', 'pdf'=>'application/pdf', 'zip'=>'application/zip', 'avif'=>'image/avif'];
+
     
     $content_type = $mime_types[$ext] ?? 'application/octet-stream';
     
@@ -1167,10 +1198,6 @@ function fst_dump(...$vars) {
 }
 function fst_dd(...$vars) { fst_dump(...$vars); die(); }
 
-
-function _fst_strlen($str) {
-    return function_exists('mb_strlen') ? mb_strlen($str, 'UTF-8') : strlen($str);
-}
 
 function fst_validate($data, $rules) {
     $errors = [];
@@ -1208,13 +1235,15 @@ function fst_validate($data, $rules) {
                 }
             } elseif ($rule_name === 'min') {
                 $min = (int)($params[0] ?? 0);
-                if (_fst_strlen((string)$value) < $min) {
+                $len = function_exists('mb_strlen') ? mb_strlen((string)$value, 'UTF-8') : strlen((string)$value);
+                if ($len < $min) {
                     $errors[$field][] = "The field '{$field}' must be at least {$min} characters.";
                     $field_valid = false;
                 }
             } elseif ($rule_name === 'max') {
                 $max = (int)($params[0] ?? 0);
-                if (_fst_strlen((string)$value) > $max) {
+                $len = function_exists('mb_strlen') ? mb_strlen((string)$value, 'UTF-8') : strlen((string)$value);
+                if ($len > $max) {
                     $errors[$field][] = "The field '{$field}' must not exceed {$max} characters.";
                     $field_valid = false;
                 }
@@ -1281,8 +1310,8 @@ function fst_handle_installation() {
         echo "Options:\n";
         echo "  --db=sqlite|mysql|pgsql (default: sqlite)\n";
         echo "  --agent_js=yes|no (default: yes)\n";
-        echo "  --scaffold=yes|minimal|no (default: yes)\n";
-        echo "  --htaccess=yes|no (default: no)\n";
+        echo "  --scaffold=yes|no (default: yes)\n";
+        echo "  --htaccess=yes|no (default: yes)\n";
         exit(1);
     }
 
@@ -1296,8 +1325,11 @@ function fst_handle_installation() {
         $driver = $input_data['db'] ?? 'sqlite';
         $input_data['enable_agent'] = ($input_data['agent_js'] ?? 'yes') === 'yes' ? '1' : '0';
         $scaffold_opt = $input_data['scaffold'] ?? 'yes';
-        $input_data['generate_starter'] = $scaffold_opt === 'minimal' ? 'minimal' : ($scaffold_opt === 'yes' ? '1' : '0');
-        $server_type = ($input_data['htaccess'] ?? 'no') === 'yes' ? 'apache_litespeed' : 'other';
+        $input_data['generate_starter'] = $scaffold_opt === 'yes' ? '1' : '0';
+        $server_type = ($input_data['htaccess'] ?? 'yes') === 'yes' ? 'apache_litespeed' : 'other';
+        if ($server_type !== 'apache_litespeed') {
+            _fst_cli_output('info', 'WARNING: .htaccess was not created. Make sure your web server (Nginx/other) manually blocks direct access to *.sqlite, *.json, *.log, and the app/globals/components/cache folders — these files are NOT protected by PHP if rewrite rules are inactive.');
+        }
 
         if ($driver !== 'none') {
             $h = $input_data['db_host'] ?? 'localhost';
@@ -1342,9 +1374,9 @@ function fst_handle_installation() {
             "_ai_rules" => "Run `php fullstuck.php docs` in your terminal to read the framework API documentation.",
             "routing" => [
                 "base_path" => "/",
-                "public_folders" => ["assets", "uploads"],
-                "routes_file" => ["router.php"]
+                "public_folders" => ["assets", "uploads"]
             ],
+            "require" => ["globals"],
             "agent_js" => isset($input_data['enable_agent']) && $input_data['enable_agent'] === '1'
         ];
         
@@ -1353,381 +1385,51 @@ function fst_handle_installation() {
         }
         
         if ($server_type === 'apache_litespeed') {
-            $htaccess_code = implode("\n", [
-                '# 1. Nonaktifkan fitur "Index of" dan "MultiViews"',
-                'Options -Indexes -MultiViews',
-                '',
-                '# Blokir akses ke file hidden (dotfiles)',
-                '<FilesMatch "^\.">',
-                '    Require all denied',
-                '</FilesMatch>',
-                '',
-                '<IfModule mod_rewrite.c>',
-                '    RewriteEngine On',
-                '    RewriteBase /',
-                '    ',
-                '    # 2. Aturan "Rakus" (Kirim SEMUA ke fullstuck.php)',
-                '    RewriteRule ^(.*)$ fullstuck.php [L]',
-                '</IfModule>'
-            ]);
+            $htaccess_code = "Options -Indexes -MultiViews\n\n# 1. Block sensitive files, sqlite databases, json configs, and logs\n<FilesMatch \"(\.(sqlite|json|log|ini|env|md|lock)$|^(\.))\">\n    Require all denied\n</FilesMatch>\n\n# 2. Block direct URL access to internal architecture & system folders\n<IfModule mod_rewrite.c>\n    RewriteEngine On\n    RewriteRule ^(app|globals|components|cache|storage)/(.*)$ - [F,L]\n</IfModule>\n\n# 3. Redirect all web traffic to fullstuck.php\n<IfModule mod_rewrite.c>\n    RewriteEngine On\n    RewriteBase /\n    RewriteCond %{REQUEST_FILENAME} !-f\n    RewriteCond %{REQUEST_FILENAME} !-d\n    RewriteRule ^(.*)$ fullstuck.php [L]\n</IfModule>";
             file_put_contents(FST_ROOT_DIR . '/.htaccess', $htaccess_code);
         }
 
         
-        if (isset($input_data['generate_starter']) && $input_data['generate_starter'] !== '0') {
-            @mkdir(FST_ROOT_DIR . '/views', 0755, true);
-            
-            if ($input_data['generate_starter'] === 'minimal') {
-                $html_template = <<<HTML
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome</title>
-    <style>
-        :root {
-            --bg-main: #0b0f19;
-            --bg-surface: #172033;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --primary: #6366f1;
-            --font-sans: system-ui, -apple-system, sans-serif;
-        }
-        body { font-family: var(--font-sans); background: var(--bg-main); color: var(--text-main); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .container { text-align: center; background: var(--bg-surface); padding: 3rem; border-radius: 20px; border: 1px solid #24324f; border-top: 4px solid var(--primary); box-shadow: 0 10px 30px rgba(0,0,0,0.2); transition: opacity 0.3s ease; }
-        h1 { color: var(--primary); margin-bottom: 0.5rem; }
-        p { color: var(--text-muted); }
-        .fst-loading { opacity: 0.5; pointer-events: none; cursor: wait; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Welcome</h1>
-        <p>Your FullStuck.php application is ready.</p>
-    </div>
-</body>
-</html>
-HTML;
-                @file_put_contents(FST_ROOT_DIR . '/views/index.html', $html_template);
+        if (isset($input_data['generate_starter']) && $input_data['generate_starter'] === '1') {
+            _fst_cli_output('info', 'Generating local minimal scaffold for v0.4...');
+            $files = [
+                'globals/helper.php' => "<?php\n/**\n * Globals Example\n * Files in this folder cannot be accessed directly via URL.\n * Useful for helper functions or configurations.\n * All files in the globals/ folder are automatically loaded by the framework.\n */\nfunction my_custom_helper() {\n    return 'Globals Helper Active!';\n}\n\nfunction log_scaffold_visit() {\n    try {\n        fst_db('EXEC', \"CREATE TABLE IF NOT EXISTS scaffold_visits (visited_at VARCHAR(255))\");\n        fst_db('EXEC', \"INSERT INTO scaffold_visits (visited_at) VALUES (?)\", [date('Y-m-d H:i:s')]);\n        return fst_db('SCALAR', \"SELECT COUNT(*) FROM scaffold_visits\");\n    } catch (\\Exception \$e) {\n        return 0;\n    }\n}\n",
+                'app/_layout.fst.php' => "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>FullStuck v0.4</title>\n    <style>\n        body { font-family: system-ui, -apple-system, sans-serif; background: #0b0f19; color: #f8fafc; margin: 0; padding: 20px; }\n        nav { background: #172033; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #24324f; }\n        nav a { color: #6366f1; text-decoration: none; margin-right: 15px; font-weight: bold; }\n        nav a:hover { color: #10b981; }\n        .container { max-width: 800px; margin: 0 auto; }\n        .card { background: #172033; padding: 20px; border-radius: 8px; border: 1px solid #24324f; }\n        code { background: #1e293b; padding: 2px 6px; border-radius: 4px; color: #38bdf8; }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <nav>\n            <a href=\"/\">Home</a>\n            <a href=\"/about\">About</a>\n            <a href=\"/api/hello\">API Endpoint</a>\n        </nav>\n        <main class=\"card\">\n            @yield('content')\n        </main>\n    </div>\n</body>\n</html>",
+                'app/content.fst.php' => "<h1 style=\"color: #10b981; margin-top: 0;\">🚀 Welcome to FullStuck.php</h1>\n<p>Framework is successfully initialized with <b>Path-Based Colocation</b>.</p>\n<p>Message from helper: <code>{{ my_custom_helper() }}</code></p>\n<p>Database Test: This scaffold has been visited <b>{{ log_scaffold_visit() }}</b> times.</p>\n<hr style=\"border-color: #24324f; margin: 20px 0;\">\n<h3>🧹 How to Clean Up This Scaffold:</h3>\n<p>If you want to start from a blank canvas, please delete the following files/folders:</p>\n<ul>\n    <li>Delete the folder <code>app/about/</code></li>\n    <li>Delete the folder <code>app/api/</code></li>\n    <li>Delete the folder <code>globals/</code> (optional)</li>\n    <li>Empty the contents of <code>app/content.fst.php</code></li>\n</ul>\n<p><small>View documentation: <code>php fullstuck.php docs</code></small></p>",
+                'app/about/content.fst.php' => "<h1 style=\"color: #6366f1; margin-top: 0;\">📖 About Page</h1>\n<p>This demonstrates path-based routing. You didn't need to configure any router!</p>\n<p>This page lives in <code>app/about/content.fst.php</code>.</p>\n<p>Notice how fast the navigation is? That's <b>FST-Agent (SPA)</b> at work.</p>",
+                'app/api/hello/action.php' => "<?php\n/**\n * Headless API Example\n * Endpoint: GET|POST /api/hello\n */\n\nfst_json([\n    'status' => 'success',\n    'message' => 'Hello from FullStuck API!',\n    'time' => date('Y-m-d H:i:s')\n]);\n"
+            ];
 
-                $router_code = <<<PHP
-<?php
-// 🤖 AI Assistant: Run `php fullstuck.php docs` in the terminal to read the API documentation.
+            $fst_root_real = realpath(FST_ROOT_DIR);
+            foreach ($files as $path => $content) {
+                if (!is_string($path) || !is_string($content) || str_contains($path, '..')) {
+                    _fst_cli_output('error', "Skipped unsafe scaffold path: {$path}");
+                    continue;
+                }
+                $full_path = FST_ROOT_DIR . '/' . ltrim($path, '/');
+                $dir = dirname($full_path);
+                if (!is_dir($dir) && !@mkdir($dir, 0755, true)) continue;
 
-// Tampilkan Halaman Utama
-fst_get('/', function() {
-    fst_template(FST_ROOT_DIR . '/views/index.html', ['title' => 'Welcome to FullStuck'], [
-        "title" => '\$title',
-        "h1" => '\$title'
-    ]);
-});
-PHP;
-                @file_put_contents(FST_ROOT_DIR . '/router.php', $router_code);
-            } 
-            else if ($input_data['generate_starter'] === '1') {
-                
-                @mkdir(FST_ROOT_DIR . '/assets', 0755, true);
-                
-                
-                $layout_html = <<<HTML
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>App</title>
-    <style>body{font-family:system-ui,sans-serif;max-width:800px;margin:2rem auto;padding:0 1rem}nav a{margin-right:1rem}.flash-msg{background:#d1fae5;border:1px solid #6ee7b7;padding:.5rem 1rem;border-radius:6px}.error-msg{background:#fee2e2;border:1px solid #fca5a5;padding:.5rem 1rem;border-radius:6px}main.fst-loading{opacity:.5;pointer-events:none;cursor:wait;transition:opacity .2s}</style>
-</head>
-<body>
-    <nav>
-        <a href="/" data-fst-fragment="main">Beranda</a>
-        <span class="auth-menu">
-            <a href="/tasks" data-fst-fragment="main">Tasks</a>
-            <a href="/logout" data-fst-normal-load>Logout</a>
-        </span>
-        <span class="guest-menu">
-            <a href="/login" data-fst-fragment="main">Login</a>
-        </span>
-    </nav>
-    <hr>
-    <main></main>
-    <script src="/assets/app.js"></script>
-</body>
-</html>
-HTML;
-                @file_put_contents(FST_ROOT_DIR . '/views/_layout.html', $layout_html);
-
-                
-                $index_html = <<<HTML
-<section>
-    <h1>Selamat Datang</h1>
-    <p>Aplikasi FullStuck.php Anda siap digunakan.</p>
-    <a href="/tasks">Lihat Tasks &rarr;</a>
-</section>
-HTML;
-                @file_put_contents(FST_ROOT_DIR . '/views/index.html', $index_html);
-
-                
-                $login_html = <<<HTML
-<div>
-    <h1>Login</h1>
-    <p class="error-msg"></p>
-    <!-- Gunakan atribut data-fst-normal-load (atau no-history) pada link/form 
-         jika Anda membutuhkan sistem untuk melakukan hard-reload. -->
-    <form action="/login" method="POST" data-fst-normal-load>
-        <div class="fst-csrf"></div>
-        <div>
-            <label>Email</label>
-            <input type="email" name="email" required>
-        </div>
-        <div style="margin-top: 0.5rem;">
-            <label>Password</label>
-            <input type="password" name="password" required>
-        </div>
-        <div style="margin-top: 0.5rem;">
-            <button type="submit">Masuk</button>
-        </div>
-    </form>
-</div>
-HTML;
-                @file_put_contents(FST_ROOT_DIR . '/views/login.html', $login_html);
-
-                
-                $tasks_html = <<<HTML
-<div>
-    <h1>Daftar Tasks</h1>
-    <p class="flash-msg"></p>
-    <form action="/tasks" method="POST" data-fst-fragment="main" data-fst-indicator="fst-loading">
-        <div class="fst-csrf"></div>
-        <div>
-            <input type="text" name="title" placeholder="Tugas baru..." required>
-        </div>
-        <div style="margin-top: 0.5rem;">
-            <textarea name="description" placeholder="Deskripsi tugas (opsional)" rows="3" style="width: 100%;"></textarea>
-        </div>
-        <div style="margin-top: 0.5rem;">
-            <button type="submit">Tambah</button>
-        </div>
-    </form>
-    <ul class="task-list">
-        <li>
-            <span class="task-title">Nama Task</span>
-            <a href="/tasks/1/detail" class="detail-link" data-fst-fragment="main">Detail</a>
-            <form class="delete-form" method="POST" data-fst-no-history data-fst-fragment="main" style="display:inline;">
-                <button type="submit">Hapus</button>
-            </form>
-        </li>
-    </ul>
-</div>
-HTML;
-                @file_put_contents(FST_ROOT_DIR . '/views/tasks.html', $tasks_html);
-
-                
-                $app_js = <<<JS
-fst.set('/preview', (params) => {
-    document.querySelector('main').innerHTML = `  
-        <h1>Preview Mode</h1>  
-        <p>Ini dirender murni di browser, tanpa request ke PHP.</p>  
-        <a href="/tasks" data-fst-fragment="main">Kembali ke Tasks</a>  
-    `;
-});
-
-fst.set('/tasks/:id/detail', async (params) => {
-    const main = document.querySelector('main');
-    main.innerHTML = `<div style="text-align:center; padding:2rem;" class="fst-loading">Memuat detail task...</div>`;
-    
-    const res = await fetch(`/api/tasks/\${params.id}`);
-    
-    if (res.status === 404) {
-        main.innerHTML = `
-            <div style="text-align:center; padding: 2rem; color: red;">
-                <h2>404 Not Found</h2>
-                <p>Task dengan ID #\${fst.e(params.id)} tidak ditemukan di database.</p>
-                <a href="/tasks" data-fst-fragment="main">Kembali</a>
-            </div>
-        `;
-        return;
-    }
-
-    const task = await res.json();
-    main.innerHTML = `  
-        <h1>Detail Task #\${fst.e(task.id)}</h1>  
-        <h3>\${fst.e(task.title)}</h3>
-        <p>\${task.description ? fst.e(task.description) : '<i>Tidak ada deskripsi.</i>'}</p>  
-        <small>Dibuat: \${fst.e(task.created_at)}</small>
-        <br><br>
-        <a href="/tasks" data-fst-fragment="main">&larr; Kembali ke Daftar Tasks</a>
-    `;
-});
-
-// ─── Event Hooks ──────────────────────────────────────────────────────────────  
-document.addEventListener('fst:loading', (e) => {
-    console.log('FST: navigating to', e.detail.url);
-});
-
-document.addEventListener('fst:unload', () => {
-    // Destroy plugins here
-});
-
-document.addEventListener('fst:load', () => {
-    // Init plugins here
-    console.log('FST: page loaded');
-});
-JS;
-                @file_put_contents(FST_ROOT_DIR . '/assets/app.js', $app_js);
-
-                
-                $router_php = <<<PHP
-<?php  
-// --- SETUP DATABASE OTOMATIS (Hanya untuk SQLite Scaffold. Hapus jika menggunakan DB lain/produksi) ---
-try {
-    fst_db('EXEC', "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, email TEXT, password TEXT)");
-    fst_db('EXEC', "CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, description TEXT DEFAULT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
-    if (!fst_db_exists('users')) {
-        fst_db_insert('users', ['name' => 'Demo User', 'email' => 'demo@example.com', 'password' => password_hash('123456', PASSWORD_DEFAULT)]);
-    }
-} catch (Exception \$e) {
-    // Abaikan jika driver bukan SQLite
-}
-// ------------------------------------------------------------------------------------------------------
-
-function cek_login(\$next) {  
-    if (!fst_session_get('user_id')) {  
-        fst_flash_set('error', 'Silakan login terlebih dahulu.');  
-        return fst_redirect('/login');  
-    }  
-    return \$next();  
-}  
-  
-fst_get('/', function() {  
-    \$content = fst_template_render(FST_ROOT_DIR . '/views/index.html', [], []);  
-    fst_template(FST_ROOT_DIR . '/views/_layout.html', [  
-        'title' => 'Beranda',  
-        'content' => \$content,  
-    ], ['title' => '\$title', 'main' => ['@html' => '\$content'], '.auth-menu' => ['@if' => 'fst_session_get("user_id") !== null'], '.guest-menu' => ['@if' => 'fst_session_get("user_id") === null']]);  
-});  
-  
-fst_get('/login', function() {  
-    \$error = fst_flash_get('error');
-    \$content = fst_template_render(FST_ROOT_DIR . '/views/login.html', ['error' => \$error], [  
-        'p.error-msg' => ['@if' => '\$error !== null', '@text' => '\$error'],  
-        '.fst-csrf' => ['@html' => 'fst_csrf_field()'],  
-    ]);  
-    fst_template(FST_ROOT_DIR . '/views/_layout.html', [  
-        'title' => 'Login',  
-        'content' => \$content,  
-    ], ['title' => '\$title', 'main' => ['@html' => '\$content'], '.auth-menu' => ['@if' => 'fst_session_get("user_id") !== null'], '.guest-menu' => ['@if' => 'fst_session_get("user_id") === null']]);  
-});  
-  
-fst_post('/login', function() {  
-    fst_csrf_check();
-    \$val = fst_validate(fst_request(), ['email' => 'required|email', 'password' => 'required|min:6']);  
-    if (!\$val['valid']) {  
-        fst_flash_set('error', implode(', ', array_merge(...array_values(\$val['errors']))));  
-        fst_redirect('/login');  
-    }  
-    \$user = fst_db_row('users', ['email' => \$val['data']['email']]);  
-    if (!\$user || !password_verify(\$val['data']['password'], \$user['password'])) {  
-        fst_flash_set('error', 'Email atau password salah.');  
-        fst_redirect('/login');  
-    }  
-    fst_session_set('user_id', \$user['id']);  
-    fst_session_set('user_name', \$user['name']);  
-    fst_redirect('/tasks');  
-});  
-  
-fst_get('/logout', function() {  
-    fst_session_forget('user_id');  
-    fst_session_forget('user_name');  
-    fst_redirect('/login');  
-});  
-  
-fst_get('/tasks', function() {  
-    \$tasks = fst_db_select('tasks', [], ['order_by' => 'id DESC']);  
-    \$flash = fst_flash_get('msg');  
-    \$content = fst_template_render(FST_ROOT_DIR . '/views/tasks.html', [  
-        'tasks' => \$tasks,  
-        'flashMsg' => \$flash,  
-    ], [  
-        'p.flash-msg' => ['@if' => '\$flashMsg !== null', '@text' => '\$flashMsg'],  
-        '.fst-csrf' => ['@html' => 'fst_csrf_field()'],  
-        'ul.task-list > li' => [  
-            '@foreach' => '\$tasks as \$task',  
-            'span.task-title' => '\$task["title"]',  
-            'a.detail-link' => ['[href]' => '"/tasks/" . \$task["id"] . "/detail"'],
-            'form.delete-form' => [  
-                '[action]' => '"/tasks/delete/" . \$task["id"]',  
-                '[method]' => '"POST"',  
-                '@append' => 'fst_csrf_field()',  
-            ],  
-        ],  
-    ]);  
-    fst_template(FST_ROOT_DIR . '/views/_layout.html', [  
-        'title' => 'Tasks',  
-        'content' => \$content,  
-    ], ['title' => '\$title', 'main' => ['@html' => '\$content'], '.auth-menu' => ['@if' => 'fst_session_get("user_id") !== null'], '.guest-menu' => ['@if' => 'fst_session_get("user_id") === null']]);  
-}, 'cek_login');  
-  
-fst_post('/tasks', function() {  
-    fst_csrf_check();  
-    \$val = fst_validate(fst_request(), [  
-        'title' => 'required|min:3|max:100',
-        'description' => 'optional|max:1000'
-    ]);  
-    if (!\$val['valid']) {  
-        fst_flash_set('msg', 'Error: ' . \$val['errors']['title'][0] ?? 'Input tidak valid.');  
-        fst_redirect('/tasks');  
-    }  
-    fst_db_insert('tasks', [
-        'title' => \$val['data']['title'],
-        'description' => \$val['data']['description'] ?? null
-    ]);  
-    fst_flash_set('msg', 'Task berhasil ditambahkan!');  
-    fst_redirect('/tasks');
-}, 'cek_login');  
-  
-fst_post('/tasks/delete/:id', function(\$params) {  
-    fst_csrf_check();  
-    fst_db_delete('tasks', ['id' => \$params['id']]);  
-    fst_flash_set('msg', 'Task dihapus.');  
-    fst_redirect('/tasks');  
-}, 'cek_login');
-
-function fst_spa_fallback() {
-    fst_template(FST_ROOT_DIR . '/views/_layout.html', [
-        'title' => 'Loading...',
-        'content' => '<div style="text-align:center; padding: 2rem;" class="fst-loading">Loading...</div>'
-    ], ['title' => '\$title', 'main' => ['@html' => '\$content'], '.auth-menu' => ['@if' => 'fst_session_get("user_id") !== null'], '.guest-menu' => ['@if' => 'fst_session_get("user_id") === null']]);
-}
-
-fst_any('/preview', 'fst_spa_fallback');
-fst_any('/tasks/{id}/detail', 'fst_spa_fallback');
-
-fst_get('/api/tasks/{id:i}', function(\$id) {
-    \$task = fst_db_row('tasks', ['id' => \$id]);
-    if (!\$task) fst_abort(404, 'Task not found');
-    fst_json(\$task);
-});
-PHP;
-                @file_put_contents(FST_ROOT_DIR . '/router.php', $router_php);
+                $real_dir = realpath($dir);
+                if (!$real_dir || !str_starts_with($real_dir, $fst_root_real)) {
+                    _fst_cli_output('error', "Skipped path escaping project root: {$path}");
+                    continue;
+                }
+                @file_put_contents($full_path, $content);
             }
+            _fst_cli_output('success', 'Scaffold generated successfully.');
         }
 
         
-        $ai_readme = <<<TXT
-# FullStuck.php AI Assistant Guidelines
-
-Welcome! You are working on a FullStuck.php project. 
-FullStuck is a custom micro-framework. To understand its syntax, features, and strict rules, you MUST read the documentation before writing any code.
-
-**Run the following command in your terminal to view the table of contents:**
-`php fullstuck.php docs`
-
-**To view the comprehensive API Reference directly, run:**
-`php fullstuck.php docs:9`
-TXT;
-        @file_put_contents(FST_ROOT_DIR . '/fullstuck_readme.md', $ai_readme);
+        $brain_url = 'https://raw.githubusercontent.com/stuckfull/fullstuck/refs/heads/main/docs/v0.4/brain.md';
+        $brain_ctx = stream_context_create(['http' => ['header' => "User-Agent: FullStuck CLI\r\n", 'timeout' => 10]]);
+        $brain_content = @file_get_contents($brain_url, false, $brain_ctx);
+        if ($brain_content) {
+            @file_put_contents(FST_ROOT_DIR . '/brain_fullstuck.md', $brain_content);
+            _fst_cli_output('success', 'AI brain file downloaded: brain_fullstuck.md');
+        } else {
+            _fst_cli_output('info', 'Warning: Could not download AI brain file. You can get it later via: php fullstuck.php docs:full');
+        }
 
 
         _fst_cli_output('success', 'FullStuck initialized successfully!');
@@ -1739,379 +1441,156 @@ TXT;
 }
 
 // FILE: template.php
-function fst_template(string $templatePath, array $data, array $rules, ?string $cacheDir = null, bool $forceRebuild = false): void {
-    if ($cacheDir === null) {
-        $cacheDir = defined('FST_ROOT_DIR') ? FST_ROOT_DIR . '/view-cache' : sys_get_temp_dir() . '/fst_view_cache';
+function fst_compile_blade($templatePath) {
+    $cacheDir = FST_ROOT_DIR . '/cache/views';
+    if (!is_dir($cacheDir)) mkdir($cacheDir, 0755, true);
+    
+    $relPath = str_replace(FST_ROOT_DIR, '', $templatePath);
+    $relPath = trim(str_replace(['\\', '/'], '__', $relPath), '_');
+    $cacheFile = $cacheDir . '/__' . $relPath . '.php';
+    
+    if (!fst_is_dev() && file_exists($cacheFile)) {
+        return $cacheFile;
     }
     
-    if (!file_exists($templatePath)) {
-        throw new \RuntimeException("Template not found: {$templatePath}");
-    }
-
-    if (!file_exists($cacheDir)) {
-        mkdir($cacheDir, 0755, true);
+    if (fst_is_dev() && file_exists($cacheFile)) {
+        if (filemtime($templatePath) <= filemtime($cacheFile)) {
+            return $cacheFile;
+        }
     }
     
-    $base = defined('FST_ROOT_DIR') ? FST_ROOT_DIR : '';
-    $relative_path = str_replace([$base, '/', '\\', ':'], ['', '__', '__', ''], $templatePath);
-    $relative_path = ltrim($relative_path, '_');
-    $cacheFile = $cacheDir . '/' . $relative_path . '.php';
-
-    array_walk_recursive($rules, function($item) {
-        if ($item instanceof \Closure) {
-            if (function_exists('fst_abort')) {
-                fst_abort(500, "AI Warning: fst_template does not support Closures. Use PHP expression strings instead!");
-            }
-            throw new \Exception("AI Warning: fst_template does not support Closures. Use PHP expression strings instead!");
-        }
-    });
-
-    $useHtml5 = class_exists('\Dom\HTMLDocument');
-    $rules_hash = md5(serialize($rules) . ($useHtml5 ? 'html5' : 'legacy'));
-    $cache_valid = false;
-    if (!$forceRebuild && file_exists($cacheFile) && filemtime($templatePath) <= filemtime($cacheFile)) {
-        $fp = fopen($cacheFile, 'r');
-        if ($fp) {
-            $first_line = fgets($fp);
-            fclose($fp);
-            if (preg_match('/^\/\/\s*fst_rules_hash:\s*([a-f0-9]{32})/', trim(str_replace(['<?php', '?>'], '', $first_line)), $matches)) {
-                if ($matches[1] === $rules_hash) {
-                    $cache_valid = true;
-                }
-            }
-        }
-    }
-
+    $content = file_get_contents($templatePath);
     
-    if (!$cache_valid) {
-        
-        $html = file_get_contents($templatePath);
-        
-        if ($useHtml5) {
-            $dom = \Dom\HTMLDocument::createFromString($html, \LIBXML_NOERROR | \LIBXML_HTML_NOIMPLIED | \Dom\HTML_NO_DEFAULT_NS);
-        } else {
-            $dom = new DOMDocument();
-            libxml_use_internal_errors(true);
-            if ($html) {
-                
-                $dom->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
-            }
-            libxml_clear_errors();
-        }
-        
-        $replacements = [];
-        $markerCount = 0;
-        
-        
-        $getMarker = function() use (&$markerCount) {
-            $markerCount++;
-            return "@@__FST_MARKER_{$markerCount}__@@";
-        };
-        
-        
-        $getAttrMarker = function() use (&$markerCount) {
-            $markerCount++;
-            return "fst_attr_marker_{$markerCount}";
-        };
-
-        $css2xpath = function(string $selector): string {
-            $selector = trim($selector);
-            
-            
-            if (str_starts_with($selector, '//') || str_starts_with($selector, './/')) {
-                return $selector;
-            }
-            
-            
-            if (strpos($selector, ':') !== false || strpos($selector, '+') !== false || strpos($selector, '~') !== false) {
-                return './/FST_BLACKLISTED_NODE';
-            }
-            
-            $paths = [];
-            foreach (explode(',', $selector) as $sel) {
-                $sel = trim($sel);
-                $sel = preg_replace('/\s*>\s*/', '/', $sel); 
-                $sel = preg_replace('/\s+/', '//', $sel); 
-                $sel = preg_replace('/#([\w\-]+)/', '[@id="$1"]', $sel); 
-                $sel = preg_replace('/\.([\w\-]+)/', '[contains(concat(" ", normalize-space(@class), " "), " $1 ")]', $sel); 
-                
-                
-                $sel = preg_replace('/\[([\w\-]+)=([\'"]?.*?[\'"]?)\]/', '[@$1=$2]', $sel);
-                
-                $sel = preg_replace('/\[([\w\-]+)\]/', '[@$1]', $sel);
-                
-                $sel = preg_replace('/(^|\/|\|)(\[)/', '$1*$2', $sel);
-                
-                
-                if (!str_starts_with($sel, '/') && !str_starts_with($sel, '.')) {
-                    $sel = './/' . $sel;
-                }
-                
-                $paths[] = $sel;
-            }
-            return implode(' | ', $paths);
-        };
-
-        $xpath = $useHtml5 ? null : new DOMXPath($dom);
-        $xpath5 = $useHtml5 ? new \Dom\XPath($dom) : null;
-
-        
-        $applyRules = function(array $currentRules, $context = null) use (&$applyRules, $dom, $xpath, $xpath5, $useHtml5, &$replacements, $getMarker, $getAttrMarker, $css2xpath) {
-            foreach ($currentRules as $key => $value) {
-                
-                
-                if (str_starts_with($key, '[') && str_ends_with($key, ']') && is_object($context) && method_exists($context, 'setAttribute') && strpos($key, '=') === false) {
-                    $attrName = substr($key, 1, -1);
-                    if ($value === '@remove') {
-                        $context->removeAttribute($attrName);
-                    } else {
-                        $marker = $getMarker();
-                        $context->setAttribute($attrName, $marker);
-                        $replacements[$marker] = "<?= htmlspecialchars({$value} ?? '', ENT_QUOTES, 'UTF-8') ?>";
-                    }
-                    continue;
-                }
-
-                
-                if (str_starts_with($key, '@')) {
-                    continue;
-                }
-
-                
-                $isSingleSelection = false;
-                if (str_starts_with($key, '^')) {
-                    $isSingleSelection = true;
-                    $key = substr($key, 1);
-                }
-
-                $targetNodes = [];
-                $useXPath = false;
-                if ($useHtml5 && !str_starts_with($key, '//') && !str_starts_with($key, './/')) {
-                    try {
-                        if ($isSingleSelection) {
-                            $node = $context ? $context->querySelector($key) : $dom->querySelector($key);
-                            if ($node) $targetNodes[] = $node;
-                        } else {
-                            $nodeList = $context ? $context->querySelectorAll($key) : $dom->querySelectorAll($key);
-                            if ($nodeList->length > 0) {
-                                foreach ($nodeList as $n) $targetNodes[] = $n;
-                            }
-                        }
-                    } catch (\Exception $e) {
-                        
-                        $useXPath = true;
-                    }
-                } else {
-                    $useXPath = true;
-                }
-
-                if ($useXPath) {
-                    $xpathSel = $css2xpath($key);
-                    $xp = $useHtml5 ? $xpath5 : $xpath;
-                    $nodeList = $xp->query($xpathSel, $context ?? $dom);
-                    
-                    if ($nodeList !== false && $nodeList->length > 0) {
-                        if ($isSingleSelection) {
-                            $targetNodes[] = $nodeList->item(0);
-                        } else {
-                            foreach ($nodeList as $n) $targetNodes[] = $n;
-                        }
-                    }
-                }
-
-                if (empty($targetNodes)) continue;
-
-                
-                if (is_string($value)) {
-                    if ($value === '@remove') {
-                        foreach ($targetNodes as $node) {
-                            if ($node->parentNode) {
-                                $node->parentNode->removeChild($node);
-                            }
-                        }
-                        continue;
-                    }
-
-                    foreach ($targetNodes as $node) {
-                        $marker = $getMarker();
-                        $node->textContent = $marker;
-                        $replacements[$marker] = "<?= htmlspecialchars({$value} ?? '', ENT_QUOTES, 'UTF-8') ?>";
-                    }
-                } 
-                
-                elseif (is_array($value)) {
-                    
-                    if (isset($value['@attrs'])) {
-                        foreach ($targetNodes as $node) {
-                            $attrMarker = $getAttrMarker();
-                            if (is_object($node) && method_exists($node, 'setAttribute')) {
-                                $node->setAttribute($attrMarker, $attrMarker);
-                                
-                                $replacements[$attrMarker . '="' . $attrMarker . '"'] = "<?= {$value['@attrs']} ?>";
-                            }
-                        }
-                        unset($value['@attrs']);
-                    }
-
-                    if (isset($value['@if'])) {
-                        foreach ($targetNodes as $node) {
-                            $startMarker = $getMarker();
-                            $endMarker = $getMarker();
-                            
-                            $replacements[$startMarker] = "<?php if ({$value['@if']}): ?>";
-                            $replacements[$endMarker] = "<?php endif; ?>";
-                            
-                            
-                            
-                            $startCommentNode = $dom->createComment($startMarker);
-                            $endCommentNode = $dom->createComment($endMarker);
-                            
-                            $node->parentNode->insertBefore($startCommentNode, $node);
-                            if ($node->nextSibling) {
-                                $node->parentNode->insertBefore($endCommentNode, $node->nextSibling);
-                            } else {
-                                $node->parentNode->appendChild($endCommentNode);
-                            }
-                        }
-                        unset($value['@if']);
-                    }
-
-                    if (isset($value['@text'])) {
-                        
-                        foreach ($targetNodes as $node) {
-                            $marker = $getMarker();
-                            $node->textContent = $marker;
-                            $replacements[$marker] = "<?= htmlspecialchars({$value['@text']} ?? '', ENT_QUOTES, 'UTF-8') ?>";
-                        }
-                        unset($value['@text']);
-                    }
-
-                    if (isset($value['@html'])) {
-                        
-                        foreach ($targetNodes as $node) {
-                            $marker = $getMarker();
-                            $node->textContent = $marker;
-                            $replacements[$marker] = "<?= {$value['@html']} ?? '' ?>";
-                        }
-                        unset($value['@html']);
-                    }
-
-                    if (isset($value['@append'])) {
-                        
-                        foreach ($targetNodes as $node) {
-                            $marker = $getMarker();
-                            $replacements[$marker] = "<?= {$value['@append']} ?? '' ?>";
-                            $node->appendChild($dom->createComment($marker));
-                        }
-                        unset($value['@append']);
-                    }
-
-                    if (isset($value['@prepend'])) {
-                        
-                        foreach ($targetNodes as $node) {
-                            $marker = $getMarker();
-                            $replacements[$marker] = "<?= {$value['@prepend']} ?? '' ?>";
-                            $node->insertBefore($dom->createComment($marker), $node->firstChild);
-                        }
-                        unset($value['@prepend']);
-                    }
-
-                    if (isset($value['@foreach'])) {
-                        
-                        $templateNode = $targetNodes[0];
-                        $container = $templateNode->parentNode;
-                        
-                        $foreachStr = $value['@foreach'];
-                        unset($value['@foreach']); 
-                        
-                        $startMarker = $getMarker();
-                        $endMarker = $getMarker();
-                        
-                        $replacements[$startMarker] = "<?php foreach ({$foreachStr}): ?>";
-                        $replacements[$endMarker] = "<?php endforeach; ?>";
-                        
-                        $startCommentNode = $dom->createComment($startMarker);
-                        $endCommentNode = $dom->createComment($endMarker);
-                        
-                        
-                        $container->insertBefore($startCommentNode, $templateNode);
-                        if ($templateNode->nextSibling) {
-                            $container->insertBefore($endCommentNode, $templateNode->nextSibling);
-                        } else {
-                            $container->appendChild($endCommentNode);
-                        }
-                        
-                        
-                        for ($i = 1; $i < count($targetNodes); $i++) {
-                            $nodeToRemove = $targetNodes[$i];
-                            if ($nodeToRemove->parentNode) {
-                                $nodeToRemove->parentNode->removeChild($nodeToRemove);
-                            }
-                        }
-                        
-                        
-                        if (!empty($value)) {
-                            $applyRules($value, $templateNode);
-                        }
-                        
-                    } else {
-                        
-                        if (!empty($value)) {
-                            foreach ($targetNodes as $node) {
-                                $applyRules($value, $node);
-                            }
-                        }
-                    }
-                }
-            }
-        };
-
-        
-        $applyRules($rules);
-        
-        $htmlOut = $useHtml5 ? $dom->saveHtml() : $dom->saveHTML();
-        
-        
-        if ($useHtml5) {
-            $htmlOut = preg_replace_callback('/(<(?:script|style)[^>]*>)(.*?)(<\/(?:script|style)>)/is', function($m) {
-                return $m[1] . htmlspecialchars_decode($m[2], ENT_QUOTES) . $m[3];
-            }, $htmlOut);
-            
-            
-            $htmlOut = str_replace(['<!--?', '?-->'], ['<?', '?>'], $htmlOut);
-            
-            
-            $htmlOut = preg_replace('/<\/(?:area|base|br|col|embed|hr|img|input|link|meta|param|source|track|wbr)>/i', '', $htmlOut);
-        } else {
-            $htmlOut = str_replace('<?xml encoding="utf-8" ?>', '', $htmlOut);
-        }
-        
-        
-        $trans = [];
-        foreach ($replacements as $marker => $phpCode) {
-            $trans['<!--' . $marker . '-->'] = $phpCode; 
-            $trans[$marker] = $phpCode; 
-        }
-        $htmlOut = strtr($htmlOut, $trans);
-        
-        $htmlOut = "<?php // fst_rules_hash: {$rules_hash} ?>\n" . $htmlOut;
-        file_put_contents($cacheFile, $htmlOut);
-    }
-
     
-    $shared_data = function_exists('fst_app') ? (fst_app('shared_view_data') ?? []) : [];
-    $data = array_merge($shared_data, $data);
-    extract($data, EXTR_SKIP);
-    require $cacheFile;
+    $content = str_replace('@{{', '@@FST_ESCAPE_OPEN@@', $content);
+    $content = preg_replace('/\{\{\s*(.+?)\s*\}\}/s', '<?= e($1) ?>', $content);
+    $content = str_replace('@@FST_ESCAPE_OPEN@@', '{{', $content);
+    
+    $content = preg_replace('/\{!!\s*(.+?)\s*!!\}/s', '<?= $1 ?>', $content);
+    
+    
+    $content = preg_replace_callback('/@(if|elseif|foreach)\s*(\((?:[^)(]+|(?2))*\))/', function($m) {
+        $directive = $m[1];
+        $args = substr($m[2], 1, -1);
+        if ($directive === 'if') return "<?php if({$args}): ?>";
+        if ($directive === 'elseif') return "<?php elseif({$args}): ?>";
+        if ($directive === 'foreach') return "<?php foreach({$args}): ?>";
+        return $m[0];
+    }, $content);
+    
+    $content = str_replace('@else', '<?php else: ?>', $content);
+    $content = str_replace('@endif', '<?php endif; ?>', $content);
+    $content = str_replace('@endforeach', '<?php endforeach; ?>', $content);
+    
+    
+    $content = preg_replace('/@yield\s*\(\'([^\']+)\'(?:,\s*\'([^\']+)\')?\)/', '<?= $__sections[\'$1\'] ?? \'$2\' ?>', $content);
+    
+    
+    $content = preg_replace('/@section\s*\(\'([^\']+)\'\)/', '<?php ob_start(); $__section_name = \'$1\'; ?>', $content);
+    $content = str_replace('@endsection', '<?php $__sections[$__section_name] = ob_get_clean(); ?>', $content);
+    
+    
+    $content = preg_replace('/@component\s*\(\'([^\']+)\'\s*(?:,\s*(.+))?\)/', '<?php fst_render_component(\'$1\', $2 ?? []); ?>', $content);
+    
+    $lock = "<?php if(!defined('FST_ROOT_DIR')) { http_response_code(403); exit('Forbidden'); } /* FST_SOURCE_FILE: {$templatePath} */ ?>\n";
+    file_put_contents($cacheFile, $lock . $content, LOCK_EX);
+    return $cacheFile;
 }
 
+function fst_render_component($name, $data = []) {
+    $path = FST_ROOT_DIR . '/components/' . $name . '.fst.php';
+    if (!file_exists($path)) {
+        echo "<!-- Component {$name} not found -->";
+        return;
+    }
+    $compiled = fst_compile_blade($path);
+    
+    
+    call_user_func(function() use ($compiled, $data) {
+        $shared = fst_app('shared_view_data') ?? [];
+        extract($shared, EXTR_SKIP);
+        extract($data, EXTR_SKIP);
+        global $__sections; 
+        require $compiled;
+    });
+}
 
+function fst_wrap_iife($jsCode) {
+    $trimmed = trim($jsCode);
+    if (preg_match('/^\s*\(\s*(?:function\s*\([^\)]*\)\s*\{|(?:\([^\)]*\)|[a-zA-Z0-9_]+)\s*=>\s*\{)/', $trimmed) && preg_match('/\}\s*\)\s*\(\s*\)\s*;?\s*$/', $trimmed)) {
+        return $jsCode;
+    }
+    return "(() => {\n" . $jsCode . "\n})();";
+}
 
-
-function fst_template_render(string $templatePath, array $data, array $rules, ?string $cacheDir = null, bool $forceRebuild = false): string {
-    ob_start();
-    fst_template($templatePath, $data, $rules, $cacheDir, $forceRebuild);
-    return ob_get_clean();
+function fst_render_view($route) {
+    global $__sections;
+    $__sections = [];
+    
+    
+    $shared = fst_app('shared_view_data') ?? [];
+    
+    
+    $viewPath = FST_ROOT_DIR . '/' . $route['view'];
+    if (file_exists($viewPath)) {
+        $compiledView = fst_compile_blade($viewPath);
+        
+        ob_start();
+        call_user_func(function() use ($compiledView, $shared) {
+            extract($shared, EXTR_SKIP);
+            global $__sections;
+            require $compiledView;
+        });
+        $contentOutput = ob_get_clean();
+        
+        if (trim($contentOutput) !== '') {
+            $__sections['content'] = ($__sections['content'] ?? '') . $contentOutput;
+        }
+    }
+    
+    
+    if (!empty($route['layouts'])) {
+        $layouts = array_reverse($route['layouts']);
+        foreach ($layouts as $layout) {
+            $layoutPath = FST_ROOT_DIR . '/' . $layout;
+            if (file_exists($layoutPath)) {
+                $compiledLayout = fst_compile_blade($layoutPath);
+                
+                ob_start();
+                call_user_func(function() use ($compiledLayout, $shared) {
+                    extract($shared, EXTR_SKIP);
+                    global $__sections;
+                    require $compiledLayout;
+                });
+                $layoutOutput = ob_get_clean();
+                
+                if (trim($layoutOutput) !== '') {
+                    $__sections['content'] = $layoutOutput;
+                }
+            }
+        }
+    }
+    
+    
+    $final_html = $__sections['content'] ?? '';
+    
+    
+    if (isset($route['client'])) {
+        $clientPath = FST_ROOT_DIR . '/' . $route['client'];
+        if (file_exists($clientPath)) {
+            $jsCode = file_get_contents($clientPath);
+            $jsCode = fst_wrap_iife($jsCode);
+            $scriptTag = "<script>\n{$jsCode}\n</script>";
+            
+            if (stripos($final_html, '</body>') !== false) {
+                $final_html = str_ireplace('</body>', $scriptTag . "\n</body>", $final_html);
+            } else {
+                $final_html .= "\n" . $scriptTag;
+            }
+        }
+    }
+    
+    echo $final_html;
 }
 
 // FILE: bootstrap.php
@@ -2123,43 +1602,39 @@ if (php_sapi_name() !== 'cli' && strpos($_SERVER['REQUEST_URI'], 'fullstuck.php'
     die('
         <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; border: 1px solid #24324f; border-radius: 8px; background: #172033; color: #f8fafc;">
             <h2 style="color: #ef4444; margin-top: 0;">🚨 Routing Misconfigured!</h2>
-            <p style="color: #94a3b8;">Framework mendeteksi <code>fullstuck.php</code> di dalam URL. Ini menandakan URL Rewriting di web server Anda belum aktif.</p>
-            <p style="color: #94a3b8;"><strong>Solusi:</strong> Pastikan Anda menggunakan web server yang mendukung single-entry routing (Apache dengan .htaccess, Nginx, atau FrankenPHP). Silakan baca dokumentasi FullStuck bagian Deployment.</p>
+            <p style="color: #94a3b8;">The framework detected <code>fullstuck.php</code> in the URL. This indicates that URL Rewriting is not active on your web server.</p>
+            <p style="color: #94a3b8;"><strong>Solution:</strong> Ensure you are using a web server that supports single-entry routing (Apache with .htaccess, Nginx, or FrankenPHP). Please read the Deployment section of the FullStuck documentation.</p>
         </div>
     ');
 }
 
 
 
-$require_items = $fst_config['routing']['require'] ?? [];
+$require_items = $fst_config['require'] ?? ['globals'];
 foreach ($require_items as $item) {
     $raw_path = FST_ROOT_DIR . '/' . ltrim($item, '/');
+    $real_path = realpath($raw_path);
     
-    
-    if (is_dir($raw_path)) {
-        $raw_path = rtrim($raw_path, '/\\') . DIRECTORY_SEPARATOR . '*.php';
-    }
-    
-    
-    $matched_files = glob($raw_path);
-    if ($matched_files) {
-        foreach ($matched_files as $file) {
-            $real_path = realpath($file);
-            
-            if ($real_path && str_starts_with($real_path, realpath(FST_ROOT_DIR)) && is_file($real_path) && str_ends_with($real_path, '.php')) {
-                require_once $real_path;
+    if ($real_path && is_dir($real_path)) {
+        $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($real_path));
+        foreach ($iterator as $file) {
+            if ($file->isFile() && $file->getExtension() === 'php') {
+                require_once $file->getPathname();
             }
         }
-    }
-}
-
-
-$routes_files = (array) ($fst_config['routing']['routes_file'] ?? ['router.php']);
-foreach ($routes_files as $file) {
-    if (file_exists(FST_ROOT_DIR . '/' . $file)) {
-        require FST_ROOT_DIR . '/' . $file;
-    } elseif (!fst_is_dev()) {
-        fst_abort(500, "Configuration Error: Routes file not found at '{$file}'");
+    } else {
+        if (is_dir($raw_path)) {
+            $raw_path = rtrim($raw_path, '/\\') . DIRECTORY_SEPARATOR . '*.php';
+        }
+        $matched_files = glob($raw_path);
+        if ($matched_files) {
+            foreach ($matched_files as $file) {
+                $rp = realpath($file);
+                if ($rp && str_starts_with($rp, realpath(FST_ROOT_DIR)) && is_file($rp) && str_ends_with($rp, '.php')) {
+                    require_once $rp;
+                }
+            }
+        }
     }
 }
 

@@ -7,6 +7,9 @@ class fst_agent {
         this.afterHook = null;
         this.fetchInterceptor = null;
         this._currentGroupPrefix = '';
+        this._activeListeners = [];
+        this._mountCleanups = [];
+        this.store = {};
         this.init();
     }
 
@@ -44,6 +47,7 @@ class fst_agent {
                 const targetElement = document.querySelector(target);
                 if (targetElement) {
                     document.dispatchEvent(new Event('fst:unload'));
+                    this.cleanup();
                     if (e.state.fstBodyAttrs && target === 'body') {
                         const parser = new DOMParser();
                         const doc = parser.parseFromString(`<div ${e.state.fstBodyAttrs}></div>`, 'text/html');
@@ -394,6 +398,7 @@ class fst_agent {
         if (!targetElement) throw new Error('Target not found');
 
         document.dispatchEvent(new Event('fst:unload'));
+        this.cleanup();
         targetElement.innerHTML = html;
 
         if (pushHistory && method === 'GET') {
@@ -412,7 +417,7 @@ class fst_agent {
     reexecuteScripts(targetElement) {
         if (!window._fst_executed_scripts) {
             window._fst_executed_scripts = new Set();
-            // Catat script yang sudah ada saat muat halaman pertama
+            // Record scripts that exist on the initial page load
             document.querySelectorAll('script[src]').forEach(s => window._fst_executed_scripts.add(s.src));
         }
 
@@ -420,9 +425,12 @@ class fst_agent {
         scripts.forEach(oldScript => {
             if (oldScript.id === 'fst-agent' || oldScript.hasAttribute('data-fst-ignore')) return;
             
-            // Auto-ignore jika script eksternal (src) sudah pernah dimuat
+            // Auto-ignore if external script (src) has already been loaded
             if (oldScript.src) {
-                if (window._fst_executed_scripts.has(oldScript.src)) return;
+                if (window._fst_executed_scripts.has(oldScript.src)) {
+                    oldScript.remove();
+                    return;
+                }
                 window._fst_executed_scripts.add(oldScript.src);
             }
 
@@ -473,6 +481,59 @@ class fst_agent {
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#039;');
+    }
+
+    emit(eventName, detail = {}) {
+        window.dispatchEvent(new CustomEvent('fst:' + eventName, { detail }));
+    }
+
+    on(event, arg2, arg3) {
+        let selector = typeof arg2 === 'string' ? arg2 : null;
+        let callback = selector ? arg3 : arg2;
+        let options = (selector ? arguments[3] : arg3) || {};
+
+        let target = window;
+        let eventName = event;
+        let wrapper;
+
+        if (selector) {
+            target = document;
+            wrapper = (e) => {
+                const el = e.target.closest(selector);
+                if (el) callback(e, el);
+            };
+        } else if (!event.startsWith('fst:') && !['click', 'scroll', 'resize', 'keydown', 'keyup', 'submit', 'change', 'input'].includes(event)) {
+            eventName = 'fst:' + event;
+            wrapper = (e) => callback(e.detail);
+        } else {
+            wrapper = callback;
+        }
+
+        target.addEventListener(eventName, wrapper, options);
+        if (!options.global) {
+            this._activeListeners.push({ target, event: eventName, wrapper, options });
+        }
+    }
+
+    onMount(callback) {
+        const wrapper = () => {
+            const cleanup = callback();
+            if (typeof cleanup === 'function') {
+                this._mountCleanups.push(cleanup);
+            }
+        };
+        document.addEventListener('fst:load', wrapper);
+        this._activeListeners.push({ target: document, event: 'fst:load', wrapper, options: {} });
+    }
+
+    cleanup() {
+        this._activeListeners.forEach(({ target, event, wrapper, options }) => {
+            target.removeEventListener(event, wrapper, options);
+        });
+        this._activeListeners = [];
+        
+        this._mountCleanups.forEach(cleanupFn => cleanupFn());
+        this._mountCleanups = [];
     }
 }
 

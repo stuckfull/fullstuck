@@ -1,8 +1,9 @@
 <div align="center">
-  <h1>🚀 FullStuck.php</h1>
-  <p><b>The Zero-Config, AI-Friendly, Single-File PHP Micro-Framework</b></p>
+  <img src="docs/public/logo.svg" alt="FullStuck.php Logo" width="200" height="120">
+  <h1>FullStuck.php</h1>
+  <p><b>Next.js App Router experience, HTMX simplicity, Blade syntax — all in a single PHP file.</b></p>
 
-  ![Version](https://img.shields.io/badge/version-v0.3-6366f1?style=flat-square)
+  ![Version](https://img.shields.io/badge/version-v0.4.0-6366f1?style=flat-square)
   ![PHP](https://img.shields.io/badge/php-%3E%3D_8.2-8892BF?style=flat-square)
   ![License](https://img.shields.io/badge/license-MIT-10b981?style=flat-square)
   ![Architecture](https://img.shields.io/badge/architecture-single--file-orange?style=flat-square)
@@ -10,87 +11,110 @@
 
 ---
 
-**FullStuck.php** adalah *micro-framework* yang mengembalikan kesederhanaan PHP. Seluruh *core engine* berada dalam **satu file tunggal**, memberikan Anda *routing* statis, *database* PDO (SQLite/PostgreSQL/MySQL), templating, dan keajaiban **Hybrid Fragment Routing** (FST Agent) tanpa butuh folder `vendor/` atau instalasi *Composer*. Di versi **v0.3.0**, framework ini telah direvolusi menjadi sangat ringan dengan menghilangkan sistem CMS bawaan dan lebih fokus sebagai fondasi *headless* atau *micro-services* yang sangat lincah.
+**FullStuck.php** adalah inovasi *micro-framework* yang mendisrupsi cara Anda membangun aplikasi PHP. Kami membuang `vendor/`, `composer.json`, dan kerumitan konfigurasi. Semuanya digantikan oleh **satu file tunggal (`fullstuck.php`)** berukuran kurang dari 100KB yang sangat bertenaga.
 
-🌐 **[Kunjungi Landing Page Resmi](https://fullstuck.biz.id/)**
+Di **v0.4.0**, FullStuck menghadirkan era baru pengembangan web:
+- **Routing sekelas Next.js:** Gunakan *Path-Based Colocation*. Tidak ada lagi `router.php`. URL Anda adalah cerminan langsung dari struktur folder `app/`.
+- **SPA secepat HTMX:** Dengan *FST-Agent* bawaan, aplikasi Anda otomatis menjadi Single Page Application (SPA) *HTML-over-the-wire* tanpa perlu menulis kode JavaScript yang rumit.
+- **Templating senyaman Blade:** Tulis view Anda menggunakan file `.fst.php` dengan sintaks intuitif `{{ $var }}`, `@foreach`, dan `@component`.
+
+🌐 **[Kunjungi Landing Page & Dokumentasi Resmi](https://fullstuck.biz.id/)**
 
 ---
 
 ## 🤖 AI Agent / Vibe Coder Setup (Recommended)
 
+FullStuck dirancang 100% *AI-Native*. Framework ini memastikan AI Assistant Anda (Cursor, Windsurf, Cline) tidak pernah kehilangan konteks *(Zero-Grep Architecture)*.
+
+Cukup berikan *prompt* ini ke AI Anda:
+
 ```text
-Install FullStuck.php : https://raw.githubusercontent.com/stuckfull/fullstuck/main/docs/ai-setup.md
+Install fullstuck.php. Panduan: https://raw.githubusercontent.com/stuckfull/fullstuck/refs/heads/main/docs/ai-setup.md
 ```
 
 ---
 
 ## 🚀 Quick Start (Manual)
 
-1.  **Download**: Unduh file `fullstuck.php` ke folder kosong Anda.
-2.  **Initialize**: Jalankan perintah inisialisasi otomatis:
+1.  **Download Engine**: Unduh file `fullstuck.php` ke folder kosong.
+2.  **Initialize**: Jalankan perintah *scaffold* awal:
     ```bash
-    php fullstuck.php init --scaffold=yes
+    php fullstuck.php init
     ```
-3.  **Run**: Jalankan server bawaan PHP:
+3.  **Run Server**: Jalankan PHP Built-in Server:
     ```bash
     php -S localhost:8000 fullstuck.php
     ```
-4.  **Explore**:
-    *   🌐 Aplikasi Anda berjalan di: `http://localhost:8000`
+4.  **Explore**: Buka `http://localhost:8000` di browser Anda!
 
 ---
 
-## 🤔 Mengapa FullStuck?
+## 📁 Struktur Folder (Colocation)
 
-Aplikasi Anda berjalan dengan kecepatan tinggi layaknya Single Page Application (SPA) hanya dengan PHP murni:
+Cara kerja FullStuck sangat sederhana. Struktur folder Anda = URL Anda:
 
-```php
-// router.php
-fst_get('/halo/{nama}', function($nama) {
-    fst_template('halo.html', ['nama' => $nama], [
-        'h1' => ['@text' => 'Halo ' . $nama]
-    ]);
-});
-
-fst_post('/simpan', function() {
-    fst_csrf_check(); // Keamanan bawaan
-    fst_db_insert('users', ['nama' => fst_input('nama')]);
-    fst_redirect('/halo/sukses');
-});
+```text
+app/
+├── content.fst.php           → GET /
+├── _layout.fst.php           → Layout global untuk semua rute
+├── _guard.php                → Middleware global (opsional)
+├── blog/
+│   ├── content.fst.php       → GET /blog
+│   └── [slug]/
+│       ├── content.fst.php   → GET /blog/{slug}
+│       └── action.php        → POST|PUT|DELETE /blog/{slug} (REST API)
+└── api/
+    └── products/
+        └── action.php        → Endpoint murni JSON /api/products
 ```
 
-## ✨ Fitur Unggulan v0.3.0
+- **`content.fst.php`**: File template (UI).
+- **`action.php`**: File logika (Controller/API).
+- **`_layout.fst.php`**: Wrapper layout.
+- **`_guard.php`**: Security middleware pelindung rute.
 
-*   **📦 Single File Distribution**: Cukup satu file `fullstuck.php` untuk menjalankan seluruh aplikasi.
-*   **🎨 Procedural DOM Templating**: Engine templating `fst_template()` memisahkan murni HTML dan PHP. Tidak perlu `<br>` atau `echo` lagi di dalam HTML!
-*   **⚡ Hybrid Front-End Routing (FST Agent)**: Navigasi instan dengan *Fragment Fetching* dari PHP atau atur rute spesifik Anda secara *client-side* menggunakan `fst.set()`!
-*   **🤖 AI-Native Design**: Struktur kode yang sangat ramah untuk asisten AI (Cursor, Windsurf, Cline) untuk memahami konteks proyek secara utuh.
-*   **🔒 Hardened Security**: Proteksi CSRF, perlindungan dari injeksi di templating, dan *Session Security* bawaan.
-*   **🐘 Database Flexible**: Dukungan penuh untuk SQLite, MySQL, dan **PostgreSQL** dengan *connection pooling*.
+Semua file yang relevan berada di folder yang sama. AI Anda tidak perlu lagi melompat-lompat antar file (Zero-Grep)!
 
 ---
 
-## 📚 Dokumentasi
+## ✨ Fitur Unggulan v0.4.0
 
-Dokumentasi FullStuck bersifat **versioned single-file** agar memudahkan pencarian dan memberikan konteks penuh bagi AI:
-
-- 📖 **[Dokumentasi v0.3.0 (Terbaru)](docs/v0.3/index.md)**
-- 📖 **[Dokumentasi v0.2.0 (Legacy)](docs/v0.2/index.md)**
-- 📖 **[Dokumentasi v0.1.0 (Legacy)](docs/v0.1/index.md)**
-- 📋 **[Riwayat Perubahan (Changelog)](CHANGELOG.md)**
+*   **Zero-Grep Architecture**: Logika (`action.php`) dan View (`content.fst.php`) selalu berdampingan.
+*   **FST-Agent (SPA Engine)**: Navigasi perpindahan halaman tanpa *full-page reload* secara otomatis.
+*   **Matryoshka Security**: Letakkan `_guard.php` di dalam sebuah folder, dan seluruh rute di bawah folder tersebut (dan sub-foldernya) akan terlindungi secara otomatis.
+*   **DB Bebas Hambatan**: *Query builder* fungsional bawaan yang mendukung SQLite, MySQL, dan PostgreSQL.
+*   **Anti-OOP (Procedural First)**: Sepenuhnya digerakkan oleh fungsi (`fst_*`). Kode lebih mudah dibaca, dilacak, dan di-*debug* tanpa hirarki *class* yang berbelit-belit.
+*   **Monolith SPA Ready**: Berfungsi mulus untuk melayani file statis hasil *build* React/Vue/Svelte sekaligus bertindak sebagai backend API bebas CORS.
 
 ---
 
-## 🛠️ Pengembangan & Kontribusi
+## 📚 Dokumentasi CLI
 
-Framework ini dikembangkan secara modular di folder `src/`. File `fullstuck.php` adalah hasil kompilasi dari modul-modul tersebut.
+Dokumentasi FullStuck telah tertanam dan dapat diakses langsung dari terminal. Sangat disukai oleh AI!
 
-Bagi Anda yang ingin berkontribusi:
-1.  Baca **[CONTRIBUTING.md](CONTRIBUTING.md)** untuk memahami SOP pengembangan.
-2.  Gunakan `php src/compiler-fullstuck.php` untuk membuild ulang core engine.
+```bash
+php fullstuck.php docs          # Lihat daftar isi
+php fullstuck.php docs:2        # Baca bab 2 (Routing)
+php fullstuck.php docs:11       # Baca API Reference
+php fullstuck.php docs:full     # Tampilkan seluruh dokumentasi
+```
+
+Anda juga bisa membacanya secara online:
+- 📖 **[Dokumentasi Online v0.4.0](https://fullstuck.biz.id/v0.4/)**
+
+---
+
+## 🛠️ Pengembangan (Internal FST)
+
+Jika Anda ingin memodifikasi *core engine* FullStuck:
+1. Edit file-file terpisah di dalam folder `src/`.
+2. Kompilasi menjadi satu file dengan menjalankan:
+   ```bash
+   php src/compiler-fullstuck.php
+   ```
 
 ---
 
 <div align="center">
-  <sub>Dibuat dengan ❤️ untuk ekosistem PHP yang lebih sederhana.</sub>
+  <sub>Dibuat dengan ❤️ untuk ekosistem PHP yang lebih lincah dan menyenangkan.</sub>
 </div>

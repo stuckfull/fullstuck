@@ -13,8 +13,8 @@ if (session_status() === PHP_SESSION_NONE) {
     ]);
     session_start(); 
 }
-define('FST_VERSION', '0.3.0');
-define('FST_DOCS_URL', 'https://raw.githubusercontent.com/stuckfull/fullstuck/refs/heads/main/docs/v0.3/index.md');
+define('FST_VERSION', '0.4.0');
+define('FST_DOCS_URL', 'https://raw.githubusercontent.com/stuckfull/fullstuck/refs/heads/main/docs/v0.4/index.md');
 if (!defined('FST_ROOT_DIR')) {
     $root = __DIR__;
     if (php_sapi_name() === 'cli-server') {
@@ -48,20 +48,8 @@ if (php_sapi_name() === 'cli') {
             exit(0);
         }
         if (strpos($argv[1], 'docs') === 0) {
-            $base_url = 'https://raw.githubusercontent.com/stuckfull/fullstuck/refs/heads/main/docs/v0.3/';
-            $map = [
-                'docs' => 'index.md',
-                'docs:1' => '01-getting-started.md',
-                'docs:2' => '02-routing.md',
-                'docs:3' => '03-database.md',
-                'docs:4' => '04-security.md',
-                'docs:5' => '05-templates.md',
-                'docs:6' => '06-fst-agent.md',
-                'docs:7' => '07-logging.md',
-                'docs:8' => '08-advanced-cookbook.md',
-                'docs:9' => '09-api-reference.md',
-                'docs:full' => 'FULL.md'
-            ];
+            $base_url = 'https://raw.githubusercontent.com/stuckfull/fullstuck/refs/heads/main/docs/v0.4/';
+            $map = ['docs'=>'index.md', 'docs:1'=>'01-getting-started.md', 'docs:2'=>'02-routing.md', 'docs:3'=>'03-templates.md', 'docs:4'=>'04-components.md', 'docs:5'=>'05-fst-agent.md', 'docs:6'=>'06-action-api.md', 'docs:7'=>'07-security.md', 'docs:8'=>'08-database.md', 'docs:9'=>'09-config.md', 'docs:10'=>'10-logging.md', 'docs:11'=>'11-api-reference.md', 'docs:12'=>'12-cookbook.md', 'docs:13'=>'13-monolith-spa.md', 'docs:full'=>'FULL.md'];
             $cmd = $argv[1];
             if (isset($map[$cmd])) {
                 $context = stream_context_create(['http' => ['header' => "User-Agent: FullStuck CLI\r\n"]]);
@@ -107,18 +95,10 @@ function fst_app($key = null, $value = null) {
     return $state[$key] ?? null;
 }
 
-// fst_is_safe_to_debug deprecated in v0.3. Alias to fst_is_dev.
-function fst_is_safe_to_debug() {
-    return fst_is_dev();
-}
 
 $config_content = @file_get_contents(FST_CONFIG_FILE);
 $decoded_config = $config_content ? json_decode($config_content, true) : null;
 if (fst_app('config') === null) fst_app('config', $decoded_config);
-if (fst_app('routes') === null) fst_app('routes', []);
-if (fst_app('route_prefix') === null) fst_app('route_prefix', '');
-if (fst_app('route_found') === null) fst_app('route_found', false);
-
 if ($decoded_config === null && file_exists(FST_CONFIG_FILE)) {
     if (function_exists('fst_abort')) fst_abort(500, "Failed to decode `fullstuck.json`. Check for syntax errors.");
     else die("Error: Failed to decode `fullstuck.json`. Check for syntax errors.");
@@ -129,7 +109,7 @@ if (fst_is_dev()) {
 } else {
     error_reporting(0);
 }
-ini_set('display_errors', '0'); // Nonaktifkan display_errors asli agar digantikan oleh UI kita
+ini_set('display_errors', '0'); // Disable native display_errors to replace it with our UI
 
 function fst_log($level, $message, $context = []) {
     $log_entry = json_encode([
@@ -146,13 +126,10 @@ function fst_log($level, $message, $context = []) {
     }
 }
 
-function _fst_error_handler($errno, $errstr, $errfile, $errline) {
-    if (!(error_reporting() & $errno)) return false;
-    throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
-}
+function _fst_error_handler($errno, $errstr, $errfile, $errline) { if (!(error_reporting() & $errno)) return false; throw new ErrorException($errstr, 0, $errno, $errfile, $errline); }
 
 function _fst_exception_handler($e) {
-    while (ob_get_level() > 0) { ob_end_clean(); } // [PATCH] Bersihkan buffer HTML parsial
+    while (ob_get_level() > 0) { ob_end_clean(); } // [PATCH] Clear partial HTML buffer
     http_response_code(500);
     
     $custom_handler = fst_app('error_handler_callback');
@@ -174,26 +151,44 @@ function _fst_exception_handler($e) {
         }
     }
     
-    // Mode Development: Tampilkan UI Cantik
+    // Development Mode: Display Beautiful UI
     $message = htmlspecialchars($e->getMessage());
-    $file = htmlspecialchars($e->getFile());
+    $file = $e->getFile();
     $line = $e->getLine();
     $trace = htmlspecialchars($e->getTraceAsString());
     
+    $source_file = $file;
+    $source_line = $line;
+    if (strpos($file, 'cache' . DIRECTORY_SEPARATOR . 'views') !== false && file_exists($file)) {
+        $first_line = fgets(fopen($file, 'r'));
+        if (preg_match('/FST_SOURCE_FILE:\s*(.+?)\s*\*\//', $first_line, $m)) {
+            $source_file = trim($m[1]);
+            $source_line = max(1, $line - 1);
+        }
+    }
+    
+    $file_display = htmlspecialchars($source_file);
+    
     $code_snippet = '';
-    if (file_exists($e->getFile())) {
-        $lines = file($e->getFile());
-        $start = max(0, $line - 5);
-        $end = min(count($lines), $line + 4);
+    if (file_exists($source_file)) {
+        $lines = file($source_file);
+        $start = max(0, $source_line - 5);
+        $end = min(count($lines), $source_line + 4);
         for ($i = $start; $i < $end; $i++) {
             $current_line = $i + 1;
             $line_content = htmlspecialchars($lines[$i]);
-            $highlight = ($current_line === $line) ? 'background-color: rgba(239, 68, 68, 0.2); border-left: 3px solid var(--error);' : 'border-left: 3px solid transparent;';
+            $highlight = ($current_line === $source_line) ? 'background-color: rgba(239, 68, 68, 0.2); border-left: 3px solid var(--error);' : 'border-left: 3px solid transparent;';
             $code_snippet .= "<div style='{$highlight} padding: 2px 5px;'><strong>" . str_pad($current_line, 4, ' ', STR_PAD_LEFT) . " |</strong> {$line_content}</div>";
         }
     }
 
     $class_name = get_class($e);
+
+    $is_localhost = in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1']) || str_contains($_SERVER['HTTP_HOST'] ?? '', 'localhost');
+    $exposure_warning = '';
+    if (!$is_localhost) {
+        $exposure_warning = "<div style='background: #f59e0b; color: black; padding: 10px; font-weight: bold; text-align: center; border-radius: 4px; margin-bottom: 20px;'>⚠️ WARNING: You are exposing sensitive error details on a public domain. Please set &quot;production&quot;: true in fullstuck.json!</div>";
+    }
 
     echo <<<HTML
     <!DOCTYPE html>
@@ -227,11 +222,12 @@ function _fst_exception_handler($e) {
     </head>
     <body>
         <div class="container fst-error-container">
+            {$exposure_warning}
             <span class="badge">{$class_name}</span>
             <h1>{$message}</h1>
             <div class="meta">
-                <strong>File:</strong> {$file}<br>
-                <strong>Line:</strong> {$line}
+                <strong>File:</strong> {$file_display}<br>
+                <strong>Line:</strong> {$source_line}
             </div>
             
             <h3>Code Snippet</h3>
@@ -257,14 +253,8 @@ set_error_handler('_fst_error_handler');
 set_exception_handler('_fst_exception_handler');
 register_shutdown_function('_fst_fatal_error_handler');
 
-function fst_error_handler(callable $callback) {
-    fst_app('error_handler_callback', $callback);
-}
-
-function fst_is_dev() {
-    $fst_config = fst_app('config');
-    return !($fst_config['production'] ?? true);
-}
+function fst_error_handler(callable $callback) { fst_app('error_handler_callback', $callback); }
+function fst_is_dev() { $fst_config = fst_app('config'); return !($fst_config['production'] ?? true); }
 
 function _fst_interpolate_env($val) {
     if (is_string($val) && strpos($val, '${') !== false) {
@@ -295,45 +285,29 @@ function fst_config($key = null, $default = null) {
     return _fst_interpolate_env($val);
 }
 
-function fst_is_fragment_request(): bool {
-    $header_name = fst_config('fragment.header_request', 'X-FST-Request');
-    $req_header = 'HTTP_' . str_replace('-', '_', strtoupper($header_name));
-    return isset($_SERVER[$req_header]);
-}
-
-function fst_fragment_target(): string {
-    $header_name = fst_config('fragment.header_target', 'X-FST-Target');
-    $target_header = 'HTTP_' . str_replace('-', '_', strtoupper($header_name));
-    return $_SERVER[$target_header] ?? 'body';
-}
+function fst_is_fragment_request(): bool { return isset($_SERVER['HTTP_X_FST_REQUEST']); }
+function fst_fragment_target(): string { return $_SERVER['HTTP_X_FST_TARGET'] ?? 'body'; }
 
 function fst_extract_html_fragment($html, $selector = 'body') {
     if (empty(trim($html))) return '';
 
-    // [PATCH] Regex Fast-Path untuk tag selector utama (hanya body & main)
-    // Menghindari double DOMDocument parsing ketika digunakan bersama fst_template.
-    // Peringatan: Jangan gunakan regex untuk tag yang bersarang (nested) seperti <div> atau <section>.
+    // [PATCH] Regex Fast-Path for main tag selectors (only body & main)
+    // Avoid double DOMDocument parsing when used with fst_template.
+    // Warning: Do not use regex for nested tags like <div> or <section>.
     $singleton_tags = ['body'];
     if (!str_starts_with($selector, '#') && !str_starts_with($selector, '.')) {
         $tag = strtolower($selector);
         if (in_array($tag, $singleton_tags)) {
-            // Regex: ambil innerHTML dengan lazy match (.*?)
+            // Regex: get innerHTML with lazy match (.*?)
             if (preg_match('/<' . $tag . '[^>]*>(.*?)<\/' . $tag . '>/is', $html, $m)) {
                 return $m[1];
             }
         }
-        // Jika tag bukan singleton, atau tidak ditemukan, kita fallback ke DOMDocument di bawah
+        // If the tag is not a singleton, or not found, fallback to DOMDocument below
     }
 
-    // Fallback DOMDocument: untuk selector #id, .class, dan tag non-singleton (div, section, dll.)
-    // (tidak bisa diandalkan via regex karena butuh traversal DOM)
-    libxml_use_internal_errors(true);
-    $dom = new DOMDocument();
-    $dom->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_NOERROR | LIBXML_NOWARNING | LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
-    libxml_clear_errors();
-
-    // [PATCH] Konversi CSS Selector ke XPath secara dinamis dan aman
-    // Mencegah XPath Injection dengan memblokir karakter pseudo-class dan sibbling yang tidak didukung
+    // [PATCH] Convert CSS Selector to XPath dynamically and safely
+    // Prevent XPath Injection by blocking unsupported pseudo-classes and sibling characters
     if (strpos($selector, ':') !== false || strpos($selector, '+') !== false || strpos($selector, '~') !== false) {
         return $html; 
     }
@@ -362,7 +336,24 @@ function fst_extract_html_fragment($html, $selector = 'body') {
     }
     $xpath_query = implode(' | ', $paths);
 
-    $xpath = new DOMXPath($dom);
+    // --- PROGRESSIVE ENHANCEMENT: PHP 8.4+ Dom\HTMLDocument vs Legacy DOMDocument ---
+    if (class_exists('Dom\HTMLDocument')) {
+        // ✅ MODE PHP 8.4+: WHATWG HTML5 Compliant & Native UTF-8
+        try {
+            $dom = \Dom\HTMLDocument::createFromString($html, LIBXML_NOERROR | LIBXML_NOWARNING);
+            $xpath = new \Dom\XPath($dom);
+        } catch (\Throwable $e) {
+            return $html;
+        }
+    } else {
+        // ⚠️ LEGACY MODE (< PHP 8.4): Fallback using the old DOMDocument
+        libxml_use_internal_errors(true);
+        $dom = new DOMDocument();
+        $dom->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_NOERROR | LIBXML_NOWARNING | LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        libxml_clear_errors();
+        $xpath = new DOMXPath($dom);
+    }
+    // --- END ENHANCEMENT ---
     $nodes = $xpath->query($xpath_query);
     if ($nodes && $nodes->length > 0) {
         $inner_html = '';

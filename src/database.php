@@ -6,7 +6,7 @@ function fst_db_quote_ident($name, $connection = null) {
     $driver = strtolower($db_config['driver'] ?? 'sqlite');
     $q = ($driver === 'pgsql') ? '"' : '`';
     
-    // [PATCH] Dukungan table.column
+    // [PATCH] Support for table.column
     if (str_contains($name, '.')) {
         $parts = explode('.', $name);
         $quoted_parts = array_map(function($p) use ($q) {
@@ -17,12 +17,12 @@ function fst_db_quote_ident($name, $connection = null) {
     return $q . str_replace($q, $q . $q, $name) . $q;
 }
 
-// Sanitasi order_by agar aman dari SQL Injection
+// Sanitize order_by to be safe from SQL Injection
 function _fst_sanitize_order_by($order_by, $connection = null) {
     $parts = array_map('trim', explode(',', $order_by));
     $safe_parts = [];
     foreach ($parts as $part) {
-        // Format yang diizinkan: "column_name" atau "column_name ASC/DESC"
+        // Allowed formats: "column_name" or "column_name ASC/DESC"
         if (preg_match('/^([a-zA-Z_][a-zA-Z0-9_.]*)(\s+(ASC|DESC))?$/i', $part, $m)) {
             $safe_parts[] = fst_db_quote_ident($m[1], $connection) . (isset($m[3]) ? ' ' . strtoupper($m[3]) : '');
         }
@@ -65,7 +65,7 @@ function _fst_get_pdo($connection = null) {
                 PDO::ATTR_EMULATE_PREPARES => false
             ]);
             
-            // Injeksi PRAGMA performa tinggi khusus SQLite
+            // Inject high-performance PRAGMA specifically for SQLite
             if ($driver === 'sqlite') {
                 $pdo_instance->exec('PRAGMA journal_mode = WAL;');
                 $pdo_instance->exec('PRAGMA busy_timeout = 5000;');
@@ -74,29 +74,21 @@ function _fst_get_pdo($connection = null) {
             
             $fst_pdo_pool[$conn_name] = $pdo_instance;
         } catch (PDOException $e) {
-            fst_abort(500, "Database Connection Failed [{$conn_name}]: " . (fst_is_safe_to_debug() ? $e->getMessage() : 'Error.'));
+            fst_abort(500, "Database Connection Failed [{$conn_name}]: " . (fst_is_dev() ? $e->getMessage() : 'Error.'));
         }
     }
     
     return $fst_pdo_pool[$conn_name];
 }
 
-function fst_db_begin($connection = null) {
-    return _fst_get_pdo($connection)->beginTransaction();
-}
-
-function fst_db_commit($connection = null) {
-    return _fst_get_pdo($connection)->commit();
-}
-
-function fst_db_rollback($connection = null) {
-    return _fst_get_pdo($connection)->rollBack();
-}
+function fst_db_begin($connection = null) { return _fst_get_pdo($connection)->beginTransaction(); }
+function fst_db_commit($connection = null) { return _fst_get_pdo($connection)->commit(); }
+function fst_db_rollback($connection = null) { return _fst_get_pdo($connection)->rollBack(); }
 
 function fst_db($mode, $sql, $params = [], $connection = null) {
     $pdo = _fst_get_pdo($connection);
     
-    // [PATCH] Mencegah error PDO generik jika parameter bind berupa array
+    // [PATCH] Prevent generic PDO error if bind parameter is an array
     foreach ($params as $k => $v) {
         if (is_array($v) || is_object($v)) {
             throw new Exception("Database Error: Parameter bind [{$k}] must not be an array or object.");
@@ -208,15 +200,6 @@ function fst_db_delete($table, $conditions, $options = []) {
     return $res['affected_rows'];
 }
 
-function fst_db_row($table, $conditions = [], $options = []) {
-    $options['limit'] = 1;
-    $options['mode'] = 'ROW';
-    return fst_db_select($table, $conditions, $options);
-}
-
-function fst_db_exists($table, $conditions = [], $options = []) {
-    $options['select'] = '1';
-    $row = fst_db_row($table, $conditions, $options);
-    return !empty($row);
-}
+function fst_db_row($table, $conditions = [], $options = []) { $options['limit'] = 1; $options['mode'] = 'ROW'; return fst_db_select($table, $conditions, $options); }
+function fst_db_exists($table, $conditions = [], $options = []) { $options['select'] = '1'; return !empty(fst_db_row($table, $conditions, $options)); }
 ?>

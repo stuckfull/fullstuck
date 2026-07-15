@@ -24,8 +24,8 @@ function fst_handle_installation() {
         echo "Options:\n";
         echo "  --db=sqlite|mysql|pgsql (default: sqlite)\n";
         echo "  --agent_js=yes|no (default: yes)\n";
-        echo "  --scaffold=yes|minimal|no (default: yes)\n";
-        echo "  --htaccess=yes|no (default: no)\n";
+        echo "  --scaffold=yes|no (default: yes)\n";
+        echo "  --htaccess=yes|no (default: yes)\n";
         exit(1);
     }
 
@@ -39,8 +39,11 @@ function fst_handle_installation() {
         $driver = $input_data['db'] ?? 'sqlite';
         $input_data['enable_agent'] = ($input_data['agent_js'] ?? 'yes') === 'yes' ? '1' : '0';
         $scaffold_opt = $input_data['scaffold'] ?? 'yes';
-        $input_data['generate_starter'] = $scaffold_opt === 'minimal' ? 'minimal' : ($scaffold_opt === 'yes' ? '1' : '0');
-        $server_type = ($input_data['htaccess'] ?? 'no') === 'yes' ? 'apache_litespeed' : 'other';
+        $input_data['generate_starter'] = $scaffold_opt === 'yes' ? '1' : '0';
+        $server_type = ($input_data['htaccess'] ?? 'yes') === 'yes' ? 'apache_litespeed' : 'other';
+        if ($server_type !== 'apache_litespeed') {
+            _fst_cli_output('info', 'WARNING: .htaccess was not created. Make sure your web server (Nginx/other) manually blocks direct access to *.sqlite, *.json, *.log, and the app/globals/components/cache folders — these files are NOT protected by PHP if rewrite rules are inactive.');
+        }
 
         if ($driver !== 'none') {
             $h = $input_data['db_host'] ?? 'localhost';
@@ -85,9 +88,9 @@ function fst_handle_installation() {
             "_ai_rules" => "Run `php fullstuck.php docs` in your terminal to read the framework API documentation.",
             "routing" => [
                 "base_path" => "/",
-                "public_folders" => ["assets", "uploads"],
-                "routes_file" => ["router.php"]
+                "public_folders" => ["assets", "uploads"]
             ],
+            "require" => ["globals"],
             "agent_js" => isset($input_data['enable_agent']) && $input_data['enable_agent'] === '1'
         ];
         
@@ -96,381 +99,51 @@ function fst_handle_installation() {
         }
         
         if ($server_type === 'apache_litespeed') {
-            $htaccess_code = implode("\n", [
-                '# 1. Nonaktifkan fitur "Index of" dan "MultiViews"',
-                'Options -Indexes -MultiViews',
-                '',
-                '# Blokir akses ke file hidden (dotfiles)',
-                '<FilesMatch "^\.">',
-                '    Require all denied',
-                '</FilesMatch>',
-                '',
-                '<IfModule mod_rewrite.c>',
-                '    RewriteEngine On',
-                '    RewriteBase /',
-                '    ',
-                '    # 2. Aturan "Rakus" (Kirim SEMUA ke fullstuck.php)',
-                '    RewriteRule ^(.*)$ fullstuck.php [L]',
-                '</IfModule>'
-            ]);
+            $htaccess_code = "Options -Indexes -MultiViews\n\n# 1. Block sensitive files, sqlite databases, json configs, and logs\n<FilesMatch \"(\.(sqlite|json|log|ini|env|md|lock)$|^(\.))\">\n    Require all denied\n</FilesMatch>\n\n# 2. Block direct URL access to internal architecture & system folders\n<IfModule mod_rewrite.c>\n    RewriteEngine On\n    RewriteRule ^(app|globals|components|cache|storage)/(.*)$ - [F,L]\n</IfModule>\n\n# 3. Redirect all web traffic to fullstuck.php\n<IfModule mod_rewrite.c>\n    RewriteEngine On\n    RewriteBase /\n    RewriteCond %{REQUEST_FILENAME} !-f\n    RewriteCond %{REQUEST_FILENAME} !-d\n    RewriteRule ^(.*)$ fullstuck.php [L]\n</IfModule>";
             file_put_contents(FST_ROOT_DIR . '/.htaccess', $htaccess_code);
         }
 
         // Auto-Scaffolding Starter Project
-        if (isset($input_data['generate_starter']) && $input_data['generate_starter'] !== '0') {
-            @mkdir(FST_ROOT_DIR . '/views', 0755, true);
-            
-            if ($input_data['generate_starter'] === 'minimal') {
-                $html_template = <<<HTML
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome</title>
-    <style>
-        :root {
-            --bg-main: #0b0f19;
-            --bg-surface: #172033;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --primary: #6366f1;
-            --font-sans: system-ui, -apple-system, sans-serif;
-        }
-        body { font-family: var(--font-sans); background: var(--bg-main); color: var(--text-main); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .container { text-align: center; background: var(--bg-surface); padding: 3rem; border-radius: 20px; border: 1px solid #24324f; border-top: 4px solid var(--primary); box-shadow: 0 10px 30px rgba(0,0,0,0.2); transition: opacity 0.3s ease; }
-        h1 { color: var(--primary); margin-bottom: 0.5rem; }
-        p { color: var(--text-muted); }
-        .fst-loading { opacity: 0.5; pointer-events: none; cursor: wait; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Welcome</h1>
-        <p>Your FullStuck.php application is ready.</p>
-    </div>
-</body>
-</html>
-HTML;
-                @file_put_contents(FST_ROOT_DIR . '/views/index.html', $html_template);
+        if (isset($input_data['generate_starter']) && $input_data['generate_starter'] === '1') {
+            _fst_cli_output('info', 'Generating local minimal scaffold for v0.4...');
+            $files = [
+                'globals/helper.php' => "<?php\n/**\n * Globals Example\n * Files in this folder cannot be accessed directly via URL.\n * Useful for helper functions or configurations.\n * All files in the globals/ folder are automatically loaded by the framework.\n */\nfunction my_custom_helper() {\n    return 'Globals Helper Active!';\n}\n\nfunction log_scaffold_visit() {\n    try {\n        fst_db('EXEC', \"CREATE TABLE IF NOT EXISTS scaffold_visits (visited_at VARCHAR(255))\");\n        fst_db('EXEC', \"INSERT INTO scaffold_visits (visited_at) VALUES (?)\", [date('Y-m-d H:i:s')]);\n        return fst_db('SCALAR', \"SELECT COUNT(*) FROM scaffold_visits\");\n    } catch (\\Exception \$e) {\n        return 0;\n    }\n}\n",
+                'app/_layout.fst.php' => "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>FullStuck v0.4</title>\n    <style>\n        body { font-family: system-ui, -apple-system, sans-serif; background: #0b0f19; color: #f8fafc; margin: 0; padding: 20px; }\n        nav { background: #172033; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #24324f; }\n        nav a { color: #6366f1; text-decoration: none; margin-right: 15px; font-weight: bold; }\n        nav a:hover { color: #10b981; }\n        .container { max-width: 800px; margin: 0 auto; }\n        .card { background: #172033; padding: 20px; border-radius: 8px; border: 1px solid #24324f; }\n        code { background: #1e293b; padding: 2px 6px; border-radius: 4px; color: #38bdf8; }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <nav>\n            <a href=\"/\">Home</a>\n            <a href=\"/about\">About</a>\n            <a href=\"/api/hello\">API Endpoint</a>\n        </nav>\n        <main class=\"card\">\n            @yield('content')\n        </main>\n    </div>\n</body>\n</html>",
+                'app/content.fst.php' => "<h1 style=\"color: #10b981; margin-top: 0;\">🚀 Welcome to FullStuck.php</h1>\n<p>Framework is successfully initialized with <b>Path-Based Colocation</b>.</p>\n<p>Message from helper: <code>{{ my_custom_helper() }}</code></p>\n<p>Database Test: This scaffold has been visited <b>{{ log_scaffold_visit() }}</b> times.</p>\n<hr style=\"border-color: #24324f; margin: 20px 0;\">\n<h3>🧹 How to Clean Up This Scaffold:</h3>\n<p>If you want to start from a blank canvas, please delete the following files/folders:</p>\n<ul>\n    <li>Delete the folder <code>app/about/</code></li>\n    <li>Delete the folder <code>app/api/</code></li>\n    <li>Delete the folder <code>globals/</code> (optional)</li>\n    <li>Empty the contents of <code>app/content.fst.php</code></li>\n</ul>\n<p><small>View documentation: <code>php fullstuck.php docs</code></small></p>",
+                'app/about/content.fst.php' => "<h1 style=\"color: #6366f1; margin-top: 0;\">📖 About Page</h1>\n<p>This demonstrates path-based routing. You didn't need to configure any router!</p>\n<p>This page lives in <code>app/about/content.fst.php</code>.</p>\n<p>Notice how fast the navigation is? That's <b>FST-Agent (SPA)</b> at work.</p>",
+                'app/api/hello/action.php' => "<?php\n/**\n * Headless API Example\n * Endpoint: GET|POST /api/hello\n */\n\nfst_json([\n    'status' => 'success',\n    'message' => 'Hello from FullStuck API!',\n    'time' => date('Y-m-d H:i:s')\n]);\n"
+            ];
 
-                $router_code = <<<PHP
-<?php
-// 🤖 AI Assistant: Run `php fullstuck.php docs` in the terminal to read the API documentation.
+            $fst_root_real = realpath(FST_ROOT_DIR);
+            foreach ($files as $path => $content) {
+                if (!is_string($path) || !is_string($content) || str_contains($path, '..')) {
+                    _fst_cli_output('error', "Skipped unsafe scaffold path: {$path}");
+                    continue;
+                }
+                $full_path = FST_ROOT_DIR . '/' . ltrim($path, '/');
+                $dir = dirname($full_path);
+                if (!is_dir($dir) && !@mkdir($dir, 0755, true)) continue;
 
-// Tampilkan Halaman Utama
-fst_get('/', function() {
-    fst_template(FST_ROOT_DIR . '/views/index.html', ['title' => 'Welcome to FullStuck'], [
-        "title" => '\$title',
-        "h1" => '\$title'
-    ]);
-});
-PHP;
-                @file_put_contents(FST_ROOT_DIR . '/router.php', $router_code);
-            } 
-            else if ($input_data['generate_starter'] === '1') {
-                // Full Scaffold (Task/Auth SPA Hybrid)
-                @mkdir(FST_ROOT_DIR . '/assets', 0755, true);
-                
-                // _layout.html
-                $layout_html = <<<HTML
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>App</title>
-    <style>body{font-family:system-ui,sans-serif;max-width:800px;margin:2rem auto;padding:0 1rem}nav a{margin-right:1rem}.flash-msg{background:#d1fae5;border:1px solid #6ee7b7;padding:.5rem 1rem;border-radius:6px}.error-msg{background:#fee2e2;border:1px solid #fca5a5;padding:.5rem 1rem;border-radius:6px}main.fst-loading{opacity:.5;pointer-events:none;cursor:wait;transition:opacity .2s}</style>
-</head>
-<body>
-    <nav>
-        <a href="/" data-fst-fragment="main">Beranda</a>
-        <span class="auth-menu">
-            <a href="/tasks" data-fst-fragment="main">Tasks</a>
-            <a href="/logout" data-fst-normal-load>Logout</a>
-        </span>
-        <span class="guest-menu">
-            <a href="/login" data-fst-fragment="main">Login</a>
-        </span>
-    </nav>
-    <hr>
-    <main></main>
-    <script src="/assets/app.js"></script>
-</body>
-</html>
-HTML;
-                @file_put_contents(FST_ROOT_DIR . '/views/_layout.html', $layout_html);
-
-                // index.html
-                $index_html = <<<HTML
-<section>
-    <h1>Selamat Datang</h1>
-    <p>Aplikasi FullStuck.php Anda siap digunakan.</p>
-    <a href="/tasks">Lihat Tasks &rarr;</a>
-</section>
-HTML;
-                @file_put_contents(FST_ROOT_DIR . '/views/index.html', $index_html);
-
-                // login.html
-                $login_html = <<<HTML
-<div>
-    <h1>Login</h1>
-    <p class="error-msg"></p>
-    <!-- Gunakan atribut data-fst-normal-load (atau no-history) pada link/form 
-         jika Anda membutuhkan sistem untuk melakukan hard-reload. -->
-    <form action="/login" method="POST" data-fst-normal-load>
-        <div class="fst-csrf"></div>
-        <div>
-            <label>Email</label>
-            <input type="email" name="email" required>
-        </div>
-        <div style="margin-top: 0.5rem;">
-            <label>Password</label>
-            <input type="password" name="password" required>
-        </div>
-        <div style="margin-top: 0.5rem;">
-            <button type="submit">Masuk</button>
-        </div>
-    </form>
-</div>
-HTML;
-                @file_put_contents(FST_ROOT_DIR . '/views/login.html', $login_html);
-
-                // tasks.html
-                $tasks_html = <<<HTML
-<div>
-    <h1>Daftar Tasks</h1>
-    <p class="flash-msg"></p>
-    <form action="/tasks" method="POST" data-fst-fragment="main" data-fst-indicator="fst-loading">
-        <div class="fst-csrf"></div>
-        <div>
-            <input type="text" name="title" placeholder="Tugas baru..." required>
-        </div>
-        <div style="margin-top: 0.5rem;">
-            <textarea name="description" placeholder="Deskripsi tugas (opsional)" rows="3" style="width: 100%;"></textarea>
-        </div>
-        <div style="margin-top: 0.5rem;">
-            <button type="submit">Tambah</button>
-        </div>
-    </form>
-    <ul class="task-list">
-        <li>
-            <span class="task-title">Nama Task</span>
-            <a href="/tasks/1/detail" class="detail-link" data-fst-fragment="main">Detail</a>
-            <form class="delete-form" method="POST" data-fst-no-history data-fst-fragment="main" style="display:inline;">
-                <button type="submit">Hapus</button>
-            </form>
-        </li>
-    </ul>
-</div>
-HTML;
-                @file_put_contents(FST_ROOT_DIR . '/views/tasks.html', $tasks_html);
-
-                // assets/app.js
-                $app_js = <<<JS
-fst.set('/preview', (params) => {
-    document.querySelector('main').innerHTML = `  
-        <h1>Preview Mode</h1>  
-        <p>Ini dirender murni di browser, tanpa request ke PHP.</p>  
-        <a href="/tasks" data-fst-fragment="main">Kembali ke Tasks</a>  
-    `;
-});
-
-fst.set('/tasks/:id/detail', async (params) => {
-    const main = document.querySelector('main');
-    main.innerHTML = `<div style="text-align:center; padding:2rem;" class="fst-loading">Memuat detail task...</div>`;
-    
-    const res = await fetch(`/api/tasks/\${params.id}`);
-    
-    if (res.status === 404) {
-        main.innerHTML = `
-            <div style="text-align:center; padding: 2rem; color: red;">
-                <h2>404 Not Found</h2>
-                <p>Task dengan ID #\${fst.e(params.id)} tidak ditemukan di database.</p>
-                <a href="/tasks" data-fst-fragment="main">Kembali</a>
-            </div>
-        `;
-        return;
-    }
-
-    const task = await res.json();
-    main.innerHTML = `  
-        <h1>Detail Task #\${fst.e(task.id)}</h1>  
-        <h3>\${fst.e(task.title)}</h3>
-        <p>\${task.description ? fst.e(task.description) : '<i>Tidak ada deskripsi.</i>'}</p>  
-        <small>Dibuat: \${fst.e(task.created_at)}</small>
-        <br><br>
-        <a href="/tasks" data-fst-fragment="main">&larr; Kembali ke Daftar Tasks</a>
-    `;
-});
-
-// ─── Event Hooks ──────────────────────────────────────────────────────────────  
-document.addEventListener('fst:loading', (e) => {
-    console.log('FST: navigating to', e.detail.url);
-});
-
-document.addEventListener('fst:unload', () => {
-    // Destroy plugins here
-});
-
-document.addEventListener('fst:load', () => {
-    // Init plugins here
-    console.log('FST: page loaded');
-});
-JS;
-                @file_put_contents(FST_ROOT_DIR . '/assets/app.js', $app_js);
-
-                // router.php
-                $router_php = <<<PHP
-<?php  
-// --- SETUP DATABASE OTOMATIS (Hanya untuk SQLite Scaffold. Hapus jika menggunakan DB lain/produksi) ---
-try {
-    fst_db('EXEC', "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, email TEXT, password TEXT)");
-    fst_db('EXEC', "CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, description TEXT DEFAULT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
-    if (!fst_db_exists('users')) {
-        fst_db_insert('users', ['name' => 'Demo User', 'email' => 'demo@example.com', 'password' => password_hash('123456', PASSWORD_DEFAULT)]);
-    }
-} catch (Exception \$e) {
-    // Abaikan jika driver bukan SQLite
-}
-// ------------------------------------------------------------------------------------------------------
-
-function cek_login(\$next) {  
-    if (!fst_session_get('user_id')) {  
-        fst_flash_set('error', 'Silakan login terlebih dahulu.');  
-        return fst_redirect('/login');  
-    }  
-    return \$next();  
-}  
-  
-fst_get('/', function() {  
-    \$content = fst_template_render(FST_ROOT_DIR . '/views/index.html', [], []);  
-    fst_template(FST_ROOT_DIR . '/views/_layout.html', [  
-        'title' => 'Beranda',  
-        'content' => \$content,  
-    ], ['title' => '\$title', 'main' => ['@html' => '\$content'], '.auth-menu' => ['@if' => 'fst_session_get("user_id") !== null'], '.guest-menu' => ['@if' => 'fst_session_get("user_id") === null']]);  
-});  
-  
-fst_get('/login', function() {  
-    \$error = fst_flash_get('error');
-    \$content = fst_template_render(FST_ROOT_DIR . '/views/login.html', ['error' => \$error], [  
-        'p.error-msg' => ['@if' => '\$error !== null', '@text' => '\$error'],  
-        '.fst-csrf' => ['@html' => 'fst_csrf_field()'],  
-    ]);  
-    fst_template(FST_ROOT_DIR . '/views/_layout.html', [  
-        'title' => 'Login',  
-        'content' => \$content,  
-    ], ['title' => '\$title', 'main' => ['@html' => '\$content'], '.auth-menu' => ['@if' => 'fst_session_get("user_id") !== null'], '.guest-menu' => ['@if' => 'fst_session_get("user_id") === null']]);  
-});  
-  
-fst_post('/login', function() {  
-    fst_csrf_check();
-    \$val = fst_validate(fst_request(), ['email' => 'required|email', 'password' => 'required|min:6']);  
-    if (!\$val['valid']) {  
-        fst_flash_set('error', implode(', ', array_merge(...array_values(\$val['errors']))));  
-        fst_redirect('/login');  
-    }  
-    \$user = fst_db_row('users', ['email' => \$val['data']['email']]);  
-    if (!\$user || !password_verify(\$val['data']['password'], \$user['password'])) {  
-        fst_flash_set('error', 'Email atau password salah.');  
-        fst_redirect('/login');  
-    }  
-    fst_session_set('user_id', \$user['id']);  
-    fst_session_set('user_name', \$user['name']);  
-    fst_redirect('/tasks');  
-});  
-  
-fst_get('/logout', function() {  
-    fst_session_forget('user_id');  
-    fst_session_forget('user_name');  
-    fst_redirect('/login');  
-});  
-  
-fst_get('/tasks', function() {  
-    \$tasks = fst_db_select('tasks', [], ['order_by' => 'id DESC']);  
-    \$flash = fst_flash_get('msg');  
-    \$content = fst_template_render(FST_ROOT_DIR . '/views/tasks.html', [  
-        'tasks' => \$tasks,  
-        'flashMsg' => \$flash,  
-    ], [  
-        'p.flash-msg' => ['@if' => '\$flashMsg !== null', '@text' => '\$flashMsg'],  
-        '.fst-csrf' => ['@html' => 'fst_csrf_field()'],  
-        'ul.task-list > li' => [  
-            '@foreach' => '\$tasks as \$task',  
-            'span.task-title' => '\$task["title"]',  
-            'a.detail-link' => ['[href]' => '"/tasks/" . \$task["id"] . "/detail"'],
-            'form.delete-form' => [  
-                '[action]' => '"/tasks/delete/" . \$task["id"]',  
-                '[method]' => '"POST"',  
-                '@append' => 'fst_csrf_field()',  
-            ],  
-        ],  
-    ]);  
-    fst_template(FST_ROOT_DIR . '/views/_layout.html', [  
-        'title' => 'Tasks',  
-        'content' => \$content,  
-    ], ['title' => '\$title', 'main' => ['@html' => '\$content'], '.auth-menu' => ['@if' => 'fst_session_get("user_id") !== null'], '.guest-menu' => ['@if' => 'fst_session_get("user_id") === null']]);  
-}, 'cek_login');  
-  
-fst_post('/tasks', function() {  
-    fst_csrf_check();  
-    \$val = fst_validate(fst_request(), [  
-        'title' => 'required|min:3|max:100',
-        'description' => 'optional|max:1000'
-    ]);  
-    if (!\$val['valid']) {  
-        fst_flash_set('msg', 'Error: ' . \$val['errors']['title'][0] ?? 'Input tidak valid.');  
-        fst_redirect('/tasks');  
-    }  
-    fst_db_insert('tasks', [
-        'title' => \$val['data']['title'],
-        'description' => \$val['data']['description'] ?? null
-    ]);  
-    fst_flash_set('msg', 'Task berhasil ditambahkan!');  
-    fst_redirect('/tasks');
-}, 'cek_login');  
-  
-fst_post('/tasks/delete/:id', function(\$params) {  
-    fst_csrf_check();  
-    fst_db_delete('tasks', ['id' => \$params['id']]);  
-    fst_flash_set('msg', 'Task dihapus.');  
-    fst_redirect('/tasks');  
-}, 'cek_login');
-
-function fst_spa_fallback() {
-    fst_template(FST_ROOT_DIR . '/views/_layout.html', [
-        'title' => 'Loading...',
-        'content' => '<div style="text-align:center; padding: 2rem;" class="fst-loading">Loading...</div>'
-    ], ['title' => '\$title', 'main' => ['@html' => '\$content'], '.auth-menu' => ['@if' => 'fst_session_get("user_id") !== null'], '.guest-menu' => ['@if' => 'fst_session_get("user_id") === null']]);
-}
-
-fst_any('/preview', 'fst_spa_fallback');
-fst_any('/tasks/{id}/detail', 'fst_spa_fallback');
-
-fst_get('/api/tasks/{id:i}', function(\$id) {
-    \$task = fst_db_row('tasks', ['id' => \$id]);
-    if (!\$task) fst_abort(404, 'Task not found');
-    fst_json(\$task);
-});
-PHP;
-                @file_put_contents(FST_ROOT_DIR . '/router.php', $router_php);
+                $real_dir = realpath($dir);
+                if (!$real_dir || !str_starts_with($real_dir, $fst_root_real)) {
+                    _fst_cli_output('error', "Skipped path escaping project root: {$path}");
+                    continue;
+                }
+                @file_put_contents($full_path, $content);
             }
+            _fst_cli_output('success', 'Scaffold generated successfully.');
         }
 
-        // Generate fullstuck_readme.md for AI assistance
-        $ai_readme = <<<TXT
-# FullStuck.php AI Assistant Guidelines
-
-Welcome! You are working on a FullStuck.php project. 
-FullStuck is a custom micro-framework. To understand its syntax, features, and strict rules, you MUST read the documentation before writing any code.
-
-**Run the following command in your terminal to view the table of contents:**
-`php fullstuck.php docs`
-
-**To view the comprehensive API Reference directly, run:**
-`php fullstuck.php docs:9`
-TXT;
-        @file_put_contents(FST_ROOT_DIR . '/fullstuck_readme.md', $ai_readme);
+        // Download AI brain file
+        $brain_url = 'https://raw.githubusercontent.com/stuckfull/fullstuck/refs/heads/main/docs/v0.4/brain.md';
+        $brain_ctx = stream_context_create(['http' => ['header' => "User-Agent: FullStuck CLI\r\n", 'timeout' => 10]]);
+        $brain_content = @file_get_contents($brain_url, false, $brain_ctx);
+        if ($brain_content) {
+            @file_put_contents(FST_ROOT_DIR . '/brain_fullstuck.md', $brain_content);
+            _fst_cli_output('success', 'AI brain file downloaded: brain_fullstuck.md');
+        } else {
+            _fst_cli_output('info', 'Warning: Could not download AI brain file. You can get it later via: php fullstuck.php docs:full');
+        }
 
 
         _fst_cli_output('success', 'FullStuck initialized successfully!');

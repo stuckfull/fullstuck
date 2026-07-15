@@ -6,11 +6,18 @@
       font-weight: 800;
       letter-spacing: -2px;
     }
+    /* DEFAULT: LIGHT MODE */
     .f { fill: #6366f1; } /* Electric Indigo */
-    .s { fill: #94a3b8; } /* Slate Text */
-    .t { fill: #f8fafc; } /* Crisp White */
+    .s { fill: #475569; } /* Slate 600 */
+    .t { fill: #0f172a; } /* Slate 900 (Very Dark) */
     .line { fill: #6366f1; }
     .dot { fill: #10b981; } /* Cyber Mint */
+
+    /* DARK MODE */
+    @media (prefers-color-scheme: dark) {
+      .s { fill: #94a3b8; } /* Slate 400 */
+      .t { fill: #f8fafc; } /* Slate 50 (White) */
+    }
   </style>
   
   <g transform="translate(35, 85)">

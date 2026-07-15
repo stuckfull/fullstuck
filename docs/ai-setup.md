@@ -1,38 +1,57 @@
-# 🤖 FullStuck AI Developer SOP & Setup
+# FullStuck v0.4 — AI Skill
 
-> **KONTEKS PENGEMBANGAN:** Anda adalah FullStuck Senior Engineer yang bertugas mengelola proyek ini. Patuhi seluruh aturan main di bawah ini demi efisiensi dan DX.
+> **Instruksi ini ditujukan untuk kamu sebagai AI Assistant.** Baca dan patuhi sebelum menulis kode apapun di proyek FullStuck.
 
-## 🚀 1. Persiapan Proyek
-Asumsikan pengguna sudah berada di direktori proyek dengan PHP terinstal.
-1. **Instalasi Framework:** `php fullstuck.php init --db=sqlite --agent_js=yes --scaffold=yes --htaccess=yes` *(menghasilkan `fullstuck.json` dan struktur dasar)*.
-2. **Jalankan Server:** `php -S localhost:8000 fullstuck.php`
-3. **Dokumentasi AI:** Selalu jalankan `php fullstuck.php docs` di terminal jika Anda kehilangan konteks API terbaru.
+## 1. Setup Proyek Baru
 
-## 🛡️ 2. Aturan Perilaku & Keamanan (Workflow Ethics)
-- **Security:** Selalu gunakan `fst_escape()` / `e()` untuk output HTML, dan `fst_csrf_field()` di dalam form. Jangan percaya input pengguna. Saat menyisipkan konten melalui `@append` atau `@prepend` di `fst_template`, pastikan lolos escaping (kecuali Anda yakin isinya aman).
-- **Credentials:** Gunakan variabel lingkungan (seperti `${DB_HOST}`) di `fullstuck.json` agar rahasia tidak bocor.
-- **Git:** Wajib `git commit` dengan pesan deskriptif setelah setiap fitur fungsional selesai (misal: `git commit -m "feat: tambah login controller"`).
-- **Struktur Folder:** Dilarang menumpuk semua logika di `router.php`. Pecahkan model ke `models/`, middleware ke `middleware/`, dan rute per modul ke `routes/`. Daftarkan via `routing.require` dan `routing.routes_file` di `fullstuck.json`.
-- **Integritas Core:** DILARANG keras menyentuh / memodifikasi `fullstuck.php`.
-- **Advanced Cookbook:** Untuk skenario lanjutan (CORS, JWT, Migrations, Testing), wajib baca Bab 8: Advanced Cookbook di `docs/v0.3/FULL.md` (atau perintah `php fullstuck.php docs --advanced`).
+Jika proyek belum diinisialisasi (belum ada `fullstuck.json`):
 
-## 📋 3. Panduan Implementasi Fitur Baru
+```bash
+# 1. Download core engine
+curl -O https://raw.githubusercontent.com/stuckfull/fullstuck/refs/heads/main/fullstuck.php
 
-### Aturan Logika vs Tampilan
-*ATURAN: Pisahkan HTML & PHP. Tidak boleh ada tag `<?php ?>` di file view!*
-1. Buat HTML statis (gunakan Vanilla CSS, jangan mengasumsikan Tailwind atau Bootstrap kecuali pengguna yang memintanya secara eksplisit).
-2. **Tandai Elemen Dinamis:** Berikan atribut unik `data-fst="kunci"` (misal `<span data-fst="nama">`).
-3. Daftarkan rute di `router.php` atau `controllers/*.php`.
-4. **FST Agent (SPA):** Jika `agent_js` bernilai `true`, pastikan form kecil menggunakan atribut `data-fst-no-history` agar tak merusak tombol Back browser. Gunakan atribut seperti `data-fst-fragment` jika hanya sebagian halaman yang perlu di-update.
-5. Hubungkan DOM dengan data via sintaks deklaratif: `fst_template($data, $rules)`. 
-   - Contoh sederhana: `'[data-fst=nama]' => '$user_name'`
-   - *(Jalankan `php fullstuck.php docs` untuk melihat contoh sintaks Array templating lengkap)*
+# 2. Inisialisasi dengan scaffold lengkap (default)
+php fullstuck.php init
 
-### Deployment & Produksi
-- Set `"production": true` di `fullstuck.json` agar error code/PHP Exception tidak bocor ke publik.
-- Error akan dialihkan ke file `.fst.log`.
+# Opsi tersedia:
+#   --db=sqlite|mysql|pgsql|none  (default: sqlite)
+#   --scaffold=yes|no             (default: yes)
+#   --agent_js=yes|no             (default: yes)
+#   --htaccess=yes|no             (default: yes)
+#   --db_host=... --db_name=... --db_user=... --db_pass=... --db_port=...
+```
 
-## 🚨 4. Panduan Pemulihan Kesalahan (Error Recovery Playbook)
-- **HTTP 500:** Periksa berkas `.fst.log`. Jika error di view, periksa file ter-kompilasi di `view-cache/`.
-- **Cache Template:** Hapus isi folder `view-cache/` untuk memaksa sistem me-rebuild cache jika Anda merasa perubahannya tidak terlihat.
-- **Gagal Migrasi DB:** Jangan lakukan `DROP TABLE` jika sudah ada data, gunakan `ALTER TABLE`.
+Menjalankan server lokal:
+```bash
+php -S localhost:8000 fullstuck.php
+```
+
+## 2. Konteks Framework
+
+Proyek ini menggunakan **FullStuck v0.4**, micro-framework PHP 1-file dengan arsitektur **Path-Based Colocation**.
+
+**Sebelum menulis kode, kamu WAJIB:**
+1. Baca file `brain_fullstuck.md` di root proyek. File ini berisi seluruh aturan sintaksis, arsitektur, dan API reference framework.
+2. Jika `brain_fullstuck.md` tidak ditemukan, gunakan CLI untuk membaca dokumentasi langsung:
+   ```bash
+   php fullstuck.php docs      # daftar isi
+   php fullstuck.php docs:2    # routing & folder
+   php fullstuck.php docs:5    # FST-Agent (SPA)
+   php fullstuck.php docs:11   # API Reference
+   php fullstuck.php docs:full # seluruh dokumentasi
+   ```
+
+## 3. Workflow
+
+1. **Identifikasi rute target.** URL = struktur folder di `app/`. Contoh: rute `/blog/[slug]` → folder `app/blog/[slug]/`.
+2. **Buat/edit file di folder rute tersebut.** Setiap folder rute maksimal berisi:
+   - `content.fst.php` — tampilan GET (Blade syntax)
+   - `action.php` — handler POST/PUT/DELETE atau JSON API
+   - `client.js` — script frontend (auto IIFE, auto cleanup)
+   - `_guard.php` — middleware pelindung (opsional)
+3. **Logika reusable** → taruh di `globals/`. **Komponen UI reusable** → taruh di `components/`.
+4. **Jangan pernah** membuat file `router.php` atau mendefinisikan rute manual (`fst_get`, `fst_post`). Routing sepenuhnya berbasis folder.
+5. **Jangan pernah** memodifikasi `fullstuck.php` secara langsung. Jika perlu mengubah core, edit file di `src/` lalu jalankan:
+   ```bash
+   php src/compiler-fullstuck.php
+   ```

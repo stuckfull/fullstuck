@@ -3,12 +3,12 @@ layout: home
 
 hero:
   name: "FullStuck.php"
-  text: "Zero-Config PHP Framework"
-  tagline: "Micro-framework satu-file untuk membangun Web App & REST API secepat kilat, ramah AI, dan built-in SPA."
+  text: "Path-Based Colocation in a Single File"
+  tagline: "Pengalaman Next.js App Router, kesederhanaan HTMX, sintaks Blade — semuanya dalam micro-framework PHP 1 file."
   actions:
     - theme: brand
-      text: Mulai Cepat v0.3.0
-      link: /v0.3/01-getting-started
+      text: Mulai Cepat v0.4.0
+      link: /v0.4/01-getting-started
     - theme: alt
       text: Panduan AI Setup
       link: /ai-setup
@@ -17,52 +17,81 @@ hero:
       link: https://github.com/stuckfull/fullstuck
 
 features:
+  - icon: 📁
+    title: Path-Based Colocation
+    details: Struktur URL Anda = Struktur folder Anda. Tulis UI dan Logika berdampingan tanpa kerumitan router.php.
   - icon: 📦
     title: Distribusi Satu File
     details: Cukup satu file fullstuck.php. Bebas dari folder vendor/ yang berat, Composer, atau konfigurasi server rumit.
   - icon: ⚡
-    title: Zero-Config SPA
-    details: Navigasi instan dengan Fragment Rendering dan History Caching tanpa menulis JavaScript tambahan.
+    title: Zero-Config SPA (FST-Agent)
+    details: Navigasi perpindahan halaman secepat kilat tanpa full-page reload. HTML-over-the-wire bawaan.
   - icon: 🎨
-    title: DOM-Based Templating
-    details: File HTML Anda 100% murni tanpa tag PHP. Logika injeksi dikelola secara aman dan terpusat di PHP.
+    title: Blade-like Templating
+    details: Tulis view Anda menggunakan file .fst.php dengan sintaks intuitif {{ $var }}, @foreach, dan @component.
   - icon: 🤖
-    title: AI-Agent Friendly
-    details: Dokumentasi terkonsolidasi satu-file dirancang khusus untuk meminimalkan token context asisten AI Anda.
-  - icon: 🪶
-    title: Extreme Minimalist
-    details: Arsitektur baru v0.3 membuang seluruh kompleksitas legacy, menyisakan core murni yang ringan dan sangat mudah dipelajari AI.
+    title: Zero-Grep AI Architecture
+    details: Dokumentasi dan struktur folder dirancang khusus untuk meminimalkan token context asisten AI (Vibe Coding).
   - icon: 🔒
-    title: Hardened Security
-    details: Proteksi CSRF otomatis, sanitasi path traversal, session fixation protection, dan whitelist IP bawaan.
+    title: Matryoshka Security
+    details: Keamanan berlapis hierarkis. Lindungi sebuah folder dengan _guard.php, dan seluruh isinya otomatis aman.
 ---
 
 ## 💡 Filosofi Utama
 
-### 📦 Distribusi Satu File
-Lupakan folder `vendor/` yang berat atau konfigurasi server yang rumit. FullStuck membungkus routing, database, view, dan auth ke dalam satu file `fullstuck.php`.
+### 📁 Zero-Grep Architecture (Colocation)
+Lupakan membuang waktu mencari file *Controller*, *View*, dan *Router* yang tersebar di mana-mana. Di FullStuck v0.4, **File Logika** (`action.php`) dan **File UI** (`content.fst.php`) selalu hidup di folder yang sama. AI Anda tidak akan pernah kebingungan mencari konteks!
 
-### ⚡ Zero-Config SPA
-Nikmati pengalaman aplikasi Single Page Application (SPA) yang mulus hanya dengan menambahkan atribut HTML, tanpa perlu framework JavaScript tambahan seperti React atau Vue.
+### ⚡ SPA Tanpa Javascript
+Nikmati pengalaman aplikasi *Single Page Application* (SPA) yang mulus berkat **FST-Agent**. Framework secara otomatis menangkap perpindahan link dan *form submission* untuk melakukan injeksi DOM dengan halus, lengkap dengan fitur history API.
 
-### 🤖 Dioptimalkan untuk AI (Vibe Coding)
-Kami percaya masa depan *coding* adalah kolaborasi dengan AI. Dokumentasi FullStuck sengaja dibuat dalam format satu-file utuh agar AI dapat memahami seluruh kemampuan framework tanpa harus melakukan *crawling* ke banyak halaman.
+### 🚫 Anti-OOP (Procedural First)
+Framework ini didesain 100% menggunakan fungsi prosedural (`fst_*`). Kode menjadi lebih mudah dibaca, dilacak, dan di-*debug* secara linear, tanpa abstraksi *Object-Oriented Programming* yang menyembunyikan *state*.
 
 ---
 
-## 🛠️ Contoh Kode (DOM Templating v0.3.0)
+## 🛠️ Contoh Kode (v0.4.0)
 
-```php
-// router.php
-fst_get('/', function() {
-    $data = ['name' => 'World'];
-    $rules = ['h1 span' => ['@text' => $data['name']]];
-    return fst_template('views/welcome.html', [], $rules);
-});
+Semuanya berbasis folder. Tidak ada file `router.php`!
+
+```text
+app/
+└── blog/
+    ├── action.php        → Logika HTTP GET & POST
+    └── content.fst.php   → File View HTML
 ```
 
+**Logika: `app/blog/action.php`**
+```php
+<?php
+// Tangani request berdasarkan HTTP method
+if (fst_is_get()) {
+    $posts = fst_db()->table('posts')->get();
+    return ['posts' => $posts]; // Data dikirim ke View
+}
+
+if (fst_is_post()) {
+    $title = fst_input('title', 'required');
+    fst_db()->table('posts')->insert(['title' => $title]);
+    return fst_redirect('/blog');
+}
+```
+
+**Tampilan: `app/blog/content.fst.php`**
 ```html
-<!-- views/welcome.html -->
-<h1>Hello, <span>Placeholder</span>!</h1>
-<p>Dijalankan dengan FullStuck v0.3.0</p>
+@layout('app') <!-- Memanggil app/_layout.fst.php -->
+
+<h1>Daftar Blog</h1>
+
+<!-- Data $posts otomatis tersedia dari action.php -->
+<ul>
+    @foreach($posts as $post)
+        <li>{{ $post['title'] }}</li>
+    @endforeach
+</ul>
+
+<form method="POST">
+    <input type="text" name="title" required>
+    <button type="submit">Simpan</button>
+</form>
 ```

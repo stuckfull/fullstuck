@@ -15,10 +15,6 @@ function fst_dump(...$vars) {
 }
 function fst_dd(...$vars) { fst_dump(...$vars); die(); }
 
-// Helper internal: fallback strlen jika mbstring tidak tersedia
-function _fst_strlen($str) {
-    return function_exists('mb_strlen') ? mb_strlen($str, 'UTF-8') : strlen($str);
-}
 
 function fst_validate($data, $rules) {
     $errors = [];
@@ -56,13 +52,15 @@ function fst_validate($data, $rules) {
                 }
             } elseif ($rule_name === 'min') {
                 $min = (int)($params[0] ?? 0);
-                if (_fst_strlen((string)$value) < $min) {
+                $len = function_exists('mb_strlen') ? mb_strlen((string)$value, 'UTF-8') : strlen((string)$value);
+                if ($len < $min) {
                     $errors[$field][] = "The field '{$field}' must be at least {$min} characters.";
                     $field_valid = false;
                 }
             } elseif ($rule_name === 'max') {
                 $max = (int)($params[0] ?? 0);
-                if (_fst_strlen((string)$value) > $max) {
+                $len = function_exists('mb_strlen') ? mb_strlen((string)$value, 'UTF-8') : strlen((string)$value);
+                if ($len > $max) {
                     $errors[$field][] = "The field '{$field}' must not exceed {$max} characters.";
                     $field_valid = false;
                 }

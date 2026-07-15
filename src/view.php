@@ -29,30 +29,10 @@ function fst_view($path, $data = []) {
 function fst_partial($path, $data = []) { fst_view($path, $data); }
 
 function fst_serve_static_file($file_path) {
-    $fst_config = fst_app('config');
     $ext = strtolower(pathinfo($file_path, PATHINFO_EXTENSION));
     
-    $mime_types = $fst_config['mime_types'] ?? [
-        'css'  => 'text/css',
-        'js'   => 'application/javascript',
-        'json' => 'application/json',
-        'xml'  => 'application/xml',
-        'jpg'  => 'image/jpeg',
-        'jpeg' => 'image/jpeg',
-        'png'  => 'image/png',
-        'gif'  => 'image/gif',
-        'webp' => 'image/webp',
-        'ico'  => 'image/x-icon',
-        'svg'  => 'image/svg+xml',
-        'woff' => 'font/woff',
-        'woff2'=> 'font/woff2',
-        'ttf'  => 'font/ttf',
-        'mp4'  => 'video/mp4',
-        'webm' => 'video/webm',
-        'html' => 'text/html',
-        'txt'  => 'text/plain',
-        'map'  => 'application/json'
-    ];
+    static $mime_types = ['css'=>'text/css', 'js'=>'application/javascript', 'json'=>'application/json', 'xml'=>'application/xml', 'jpg'=>'image/jpeg', 'jpeg'=>'image/jpeg', 'png'=>'image/png', 'gif'=>'image/gif', 'webp'=>'image/webp', 'ico'=>'image/x-icon', 'svg'=>'image/svg+xml', 'woff'=>'font/woff', 'woff2'=>'font/woff2', 'ttf'=>'font/ttf', 'mp4'=>'video/mp4', 'webm'=>'video/webm', 'html'=>'text/html', 'txt'=>'text/plain', 'map'=>'application/json', 'pdf'=>'application/pdf', 'zip'=>'application/zip', 'avif'=>'image/avif'];
+
     
     $content_type = $mime_types[$ext] ?? 'application/octet-stream';
     
