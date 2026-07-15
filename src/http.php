@@ -52,10 +52,21 @@ function fst_redirect($url, $code = 302, $allow_external = false) {
     if (preg_match('/^https?:\/\//', $url)) {
         if (!$allow_external) {
             $url_host = parse_url($url, PHP_URL_HOST);
-            $self_host = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? 'localhost';
-            $self_host = preg_replace('/:\d+$/', '', $self_host);
-            if ($url_host !== null && strtolower($url_host) !== strtolower($self_host)) {
-                fst_abort(403, 'Redirect to external domain is not allowed. Use fst_redirect($url, 302, true) to allow.');
+            $url_port = parse_url($url, PHP_URL_PORT);
+            
+            $self_host_raw = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? 'localhost';
+            $self_host = parse_url('http://' . $self_host_raw, PHP_URL_HOST);
+            $self_port = parse_url('http://' . $self_host_raw, PHP_URL_PORT) ?: $_SERVER['SERVER_PORT'] ?? null;
+            
+            if ($url_host !== null) {
+                if (strtolower($url_host) !== strtolower((string)$self_host)) {
+                    fst_abort(403, 'Redirect to external domain is not allowed. Use fst_redirect($url, 302, true) to allow.');
+                }
+                if ($url_port !== null && $self_port !== null && $url_port != $self_port) {
+                    if (!($url_port == 80 && $self_port == 443) && !($url_port == 443 && $self_port == 80)) {
+                        fst_abort(403, 'Redirect to different port is not allowed.');
+                    }
+                }
             }
         }
     } else {
@@ -91,7 +102,7 @@ function fst_upload($key, $folder, $options = []) {
         
         $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
 
-        $default_allowed = ['jpg','jpeg','png','gif','webp','svg','pdf','doc','docx','xls','xlsx','csv','txt','zip'];
+        $default_allowed = ['jpg','jpeg','png','gif','webp','pdf','doc','docx','xls','xlsx','csv','txt','zip'];
         $allowed_types = $options['allowed_types'] ?? $default_allowed;
         
         if (!in_array($ext, $allowed_types)) {
@@ -112,6 +123,9 @@ function fst_upload($key, $folder, $options = []) {
             }
             if (!empty($options['allowed_mimes']) && !in_array($actual_mime, $options['allowed_mimes'])) {
                 return ['success' => false, 'error' => "Invalid MIME type: " . $actual_mime, 'path' => null];
+            }
+            if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']) && !str_starts_with(strtolower($actual_mime), 'image/')) {
+                return ['success' => false, 'error' => "Security Error: File extension does not match its actual content type.", 'path' => null];
             }
         }
         
