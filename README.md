@@ -7,6 +7,7 @@
   ![PHP](https://img.shields.io/badge/php-%3E%3D_8.2-8892BF?style=flat-square)
   ![License](https://img.shields.io/badge/license-MIT-10b981?style=flat-square)
   ![Architecture](https://img.shields.io/badge/architecture-single--file-orange?style=flat-square)
+  [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/stuckfull/fullstuck)
 </div>
 
 ---
